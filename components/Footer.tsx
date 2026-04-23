@@ -29,7 +29,7 @@ export default function Footer() {
               <Link href="#" className="text-gray-400 hover:text-white transition-colors">
                 <Twitter className="h-5 w-5" />
               </Link>
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+              <Link href="https://instagram.com/confiance_tech" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
                 <Instagram className="h-5 w-5" />
               </Link>
               <Link href="#" className="text-gray-400 hover:text-white transition-colors">
@@ -43,8 +43,8 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li><Link href="/" className="hover:text-white transition-colors">Home</Link></li>
               <li><Link href="/products" className="hover:text-white transition-colors">Products</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">About Us</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Contact</Link></li>
+              <li><Link href="/#faq" className="hover:text-white transition-colors">FAQ</Link></li>
+              <li><Link href="#contact" className="hover:text-white transition-colors">Contact</Link></li>
             </ul>
           </div>
 
@@ -67,11 +67,11 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-primary-500" />
-                <span>+1 (555) 123-4567</span>
+                <span>+234 9035696604</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-primary-500" />
-                <span>support@confiancetech.com</span>
+                <span>daviddiamondsy@gmail.com</span>
               </li>
             </ul>
           </div>

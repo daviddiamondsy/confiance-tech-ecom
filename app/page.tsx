@@ -1,7 +1,6 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
-import CustomerForm from "@/components/CustomerForm";
 import { ArrowRight, Truck, Shield, Headphones, Zap } from "lucide-react";
 import Link from "next/link";
 
@@ -220,17 +219,38 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Newsletter Section */}
-      <section className="py-16 bg-primary-600">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">
-              Stay Updated with Latest Tech
+      {/* FAQ Section */}
+      <section id="faq" className="py-16 bg-white">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Frequently Asked Questions
             </h2>
-            <p className="text-primary-100 mb-8">
-              Subscribe to our newsletter and be the first to know about new products, exclusive deals, and tech tips.
+            <p className="text-gray-600">
+              Got questions? We have got answers.
             </p>
-            <CustomerForm variant="inline" />
+          </div>
+          <div className="space-y-4">
+            <div className="border border-gray-200 rounded-lg p-6">
+              <h3 className="font-semibold text-gray-900 mb-2">How do I place an order?</h3>
+              <p className="text-gray-600">Simply browse our products, click on the one you like, and fill out the order form with your name, address, state, and phone number. We will contact you to confirm your order.</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-6">
+              <h3 className="font-semibold text-gray-900 mb-2">What payment methods do you accept?</h3>
+              <p className="text-gray-600">We accept bank transfers, mobile money, and cash on delivery. Payment details will be shared when we contact you to confirm your order.</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-6">
+              <h3 className="font-semibold text-gray-900 mb-2">How long does delivery take?</h3>
+              <p className="text-gray-600">Delivery typically takes 2-5 business days depending on your location. We will provide an estimated delivery date when confirming your order.</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-6">
+              <h3 className="font-semibold text-gray-900 mb-2">Can I return a product?</h3>
+              <p className="text-gray-600">Yes, we offer a 7-day return policy for defective or damaged items. Please contact us immediately if you receive a faulty product.</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-6">
+              <h3 className="font-semibold text-gray-900 mb-2">How can I contact you?</h3>
+              <p className="text-gray-600">You can reach us via WhatsApp or call at +234 9035696604, or email us at daviddiamondsy@gmail.com.</p>
+            </div>
           </div>
         </div>
       </section>
