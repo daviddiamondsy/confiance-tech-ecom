@@ -38,7 +38,7 @@ const products = [
   {
     id: "4",
     name: "Dell Latitude 3190 Laptop (UK Used)",
-    price: 189000,
+    price: 195000,
     originalPrice: 230000,
     rating: 4.5,
     reviews: 156,
@@ -141,7 +141,7 @@ export default function Home() {
               Featured Products
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Browse our carefully curated selection of premium tech products, designed to enhance your digital lifestyle.
+              Premium refurbished and UK-used tech products at unbeatable prices. Quality tested, certified, and backed by our guarantee.
             </p>
           </div>
 
@@ -185,7 +185,7 @@ export default function Home() {
             </div>
             <div className="border border-gray-200 rounded-lg p-6">
               <h3 className="font-semibold text-gray-900 mb-2">How long does delivery take?</h3>
-              <p className="text-gray-600">Delivery typically takes 2-5 business days depending on your location. We will provide an estimated delivery date when confirming your order.</p>
+              <p className="text-gray-600">Delivery typically takes 1-3 business days depending on your location. We will provide an estimated delivery date when confirming your order.</p>
             </div>
             <div className="border border-gray-200 rounded-lg p-6">
               <h3 className="font-semibold text-gray-900 mb-2">Can I return a product?</h3>

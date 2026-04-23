@@ -336,7 +336,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                   <div className="p-6 bg-gray-50 rounded-xl">
                     <h4 className="font-semibold text-gray-900 mb-2">Fast Delivery Nationwide</h4>
                     <p className="text-gray-600">
-                      Get your order delivered within 2-5 business days anywhere in Nigeria. Track your package every step of the way.
+                      Get your order delivered within 1-3 business days anywhere in Nigeria. Track your package every step of the way.
                     </p>
                   </div>
                   <div className="p-6 bg-gray-50 rounded-xl">
