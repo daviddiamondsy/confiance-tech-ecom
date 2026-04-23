@@ -82,6 +82,25 @@ const products = [
     image: "https://images.unsplash.com/photo-1597872252165-4827a235d8be?w=500&h=500&fit=crop",
     badge: "Hot Deal",
   },
+  {
+    id: "13",
+    name: "Apple iPhone 12 128GB",
+    price: 599.99,
+    originalPrice: 799.99,
+    rating: 4.8,
+    reviews: 892,
+    image: "https://images.unsplash.com/photo-1605236453806-6ff36851218e?w=500&h=500&fit=crop",
+    badge: "Popular",
+  },
+  {
+    id: "14",
+    name: "Dell Latitude 3190 Laptop",
+    price: 349.99,
+    originalPrice: 499.99,
+    rating: 4.5,
+    reviews: 156,
+    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&h=500&fit=crop",
+  },
 ];
 
 const features = [

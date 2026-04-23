@@ -1,8 +1,9 @@
 "use client";
 
-import { ShoppingCart, Menu, X, Search, User } from "lucide-react";
+import { Menu, X, Search, User } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export default function Header() {
@@ -20,9 +21,15 @@ export default function Header() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">C</span>
+            <Link href="/" className="flex items-center gap-3">
+              <div className="relative h-10 w-10">
+                <Image
+                  src="/logo.png"
+                  alt="Confiance Tech Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
               </div>
               <span className="text-xl font-bold text-gray-900">Confiance Tech</span>
             </Link>
@@ -46,12 +53,6 @@ export default function Header() {
             </button>
             <button className="p-2 text-gray-600 hover:text-primary-600 transition-colors hidden sm:block">
               <User className="h-5 w-5" />
-            </button>
-            <button className="p-2 text-gray-600 hover:text-primary-600 transition-colors relative">
-              <ShoppingCart className="h-5 w-5" />
-              <span className="absolute top-0 right-0 h-4 w-4 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
-                0
-              </span>
             </button>
             <button
               className="md:hidden p-2 text-gray-600 hover:text-primary-600 transition-colors"

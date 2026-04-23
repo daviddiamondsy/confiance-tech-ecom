@@ -16,9 +16,9 @@ export default function CustomerForm({
 }: CustomerFormProps) {
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
+    address: "",
+    state: "",
     phone: "",
-    message: "",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,7 +31,7 @@ export default function CustomerForm({
     
     setIsSubmitting(false);
     setIsSubmitted(true);
-    setFormData({ name: "", email: "", phone: "", message: "" });
+    setFormData({ name: "", address: "", state: "", phone: "" });
     
     setTimeout(() => setIsSubmitted(false), 5000);
   };
@@ -47,11 +47,11 @@ export default function CustomerForm({
     return (
       <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
         <input
-          type="email"
-          name="email"
-          value={formData.email}
+          type="text"
+          name="name"
+          value={formData.name}
           onChange={handleChange}
-          placeholder="Enter your email"
+          placeholder="Your name"
           required
           className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
         />
@@ -60,13 +60,13 @@ export default function CustomerForm({
           disabled={isSubmitting}
           className="px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          {isSubmitting ? "Subscribing..." : "Subscribe"}
+          {isSubmitting ? "Submitting..." : "Order Now"}
           <Send className="h-4 w-4" />
         </button>
         {isSubmitted && (
           <div className="sm:absolute sm:mt-16 flex items-center gap-2 text-green-600 text-sm">
             <CheckCircle className="h-4 w-4" />
-            <span>Thank you for subscribing!</span>
+            <span>Thank you! We will contact you shortly.</span>
           </div>
         )}
       </form>
@@ -89,11 +89,11 @@ export default function CustomerForm({
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm"
           />
           <input
-            type="email"
-            name="email"
-            value={formData.email}
+            type="tel"
+            name="phone"
+            value={formData.phone}
             onChange={handleChange}
-            placeholder="Your email"
+            placeholder="Phone number"
             required
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm"
           />
@@ -102,7 +102,7 @@ export default function CustomerForm({
             disabled={isSubmitting}
             className="w-full px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isSubmitting ? "Submitting..." : "Get Updates"}
+            {isSubmitting ? "Submitting..." : "Place Order"}
             <Send className="h-4 w-4" />
           </button>
         </form>
@@ -121,41 +121,24 @@ export default function CustomerForm({
       <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
       <p className="text-gray-600 mb-6">{subtitle}</p>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name *
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="John Doe"
-              required
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address *
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="john@example.com"
-              required
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-            />
-          </div>
+        <div>
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+            Full Name *
+          </label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="John Doe"
+            required
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+          />
         </div>
         <div>
           <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-            Phone Number
+            Phone Number *
           </label>
           <input
             type="tel"
@@ -164,21 +147,38 @@ export default function CustomerForm({
             value={formData.phone}
             onChange={handleChange}
             placeholder="+1 (555) 123-4567"
+            required
             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
           />
         </div>
         <div>
-          <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-            Message
+          <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+            Address *
           </label>
-          <textarea
-            id="message"
-            name="message"
-            value={formData.message}
+          <input
+            type="text"
+            id="address"
+            name="address"
+            value={formData.address}
             onChange={handleChange}
-            rows={4}
-            placeholder="Tell us what you're interested in..."
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none"
+            placeholder="123 Main Street, Apartment 4B"
+            required
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+          />
+        </div>
+        <div>
+          <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+            State / Province / Region *
+          </label>
+          <input
+            type="text"
+            id="state"
+            name="state"
+            value={formData.state}
+            onChange={handleChange}
+            placeholder="California, CA"
+            required
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
           />
         </div>
         <button
@@ -186,7 +186,7 @@ export default function CustomerForm({
           disabled={isSubmitting}
           className="w-full px-6 py-4 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
         >
-          {isSubmitting ? "Submitting..." : "Submit Request"}
+          {isSubmitting ? "Submitting..." : "Place Order"}
           <Send className="h-5 w-5" />
         </button>
       </form>

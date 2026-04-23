@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Star, ShoppingCart } from "lucide-react";
+import { Star } from "lucide-react";
 
 interface Product {
   id: string;
@@ -77,10 +77,11 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
 
-        <button className="w-full py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-primary-600 transition-colors flex items-center justify-center gap-2">
-          <ShoppingCart className="h-4 w-4" />
-          Add to Cart
-        </button>
+        <Link href={`/products/${product.id}`}>
+          <button className="w-full py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-primary-600 transition-colors flex items-center justify-center gap-2">
+            View Product
+          </button>
+        </Link>
       </div>
     </div>
   );

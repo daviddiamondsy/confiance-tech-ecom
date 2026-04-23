@@ -2,7 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CustomerForm from "@/components/CustomerForm";
 import ProductCard from "@/components/ProductCard";
-import { Star, ShoppingCart, Heart, Share2, Truck, Shield, RotateCcw, Check } from "lucide-react";
+import { Star, Truck, Shield, RotateCcw, Check } from "lucide-react";
 import Image from "next/image";
 
 const product = {
@@ -47,6 +47,8 @@ export function generateStaticParams() {
     { id: "10" },
     { id: "11" },
     { id: "12" },
+    { id: "13" },
+    { id: "14" },
   ];
 }
 
@@ -180,21 +182,6 @@ export default function ProductPage() {
               </ul>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <button className="flex-1 py-4 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 text-lg">
-                <ShoppingCart className="h-5 w-5" />
-                Add to Cart
-              </button>
-              <button className="py-4 px-6 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:border-gray-900 hover:text-gray-900 transition-colors flex items-center justify-center gap-2">
-                <Heart className="h-5 w-5" />
-                Wishlist
-              </button>
-              <button className="py-4 px-6 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:border-gray-900 hover:text-gray-900 transition-colors flex items-center justify-center gap-2">
-                <Share2 className="h-5 w-5" />
-                Share
-              </button>
-            </div>
 
             {/* Trust Badges */}
             <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-xl">
