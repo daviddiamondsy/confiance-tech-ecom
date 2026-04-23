@@ -3,6 +3,7 @@ import Footer from "@/components/Footer";
 import CustomerForm from "@/components/CustomerForm";
 import { Star, Truck, Shield, RotateCcw, Check } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 const products = [
@@ -62,14 +63,14 @@ const products = [
   },
   {
     id: "3",
-    name: "Apple iPhone 12 128GB",
-    price: 599.99,
-    originalPrice: 799.99,
+    name: "Apple iPhone 12 128GB (UK Used)",
+    price: 329000,
+    originalPrice: 380000,
     rating: 4.8,
     reviews: 892,
     image: "https://images.unsplash.com/photo-1605236453806-6ff36851218e?w=800&h=800&fit=crop",
     badge: "Popular",
-    description: "The iPhone 12 pushes the boundaries of what's possible. 5G speed, A14 Bionic chip, and the most advanced dual-camera system ever in an iPhone.",
+    description: "The iPhone 12 pushes the boundaries of what's possible. 5G speed, A14 Bionic chip, and the most advanced dual-camera system ever in an iPhone. UK used, tested and certified.",
     features: [
       "Super Retina XDR Display",
       "A14 Bionic Chip",
@@ -89,13 +90,13 @@ const products = [
   },
   {
     id: "4",
-    name: "Dell Latitude 3190 Laptop",
-    price: 349.99,
-    originalPrice: 499.99,
+    name: "Dell Latitude 3190 Laptop (UK Used)",
+    price: 195000,
+    originalPrice: 230000,
     rating: 4.5,
     reviews: 156,
     image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&h=800&fit=crop",
-    description: "The Dell Latitude 3190 is built for education and productivity. Rugged design with all-day battery life for students and professionals alike.",
+    description: "The Dell Latitude 3190 is built for education and productivity. Rugged design with all-day battery life for students and professionals alike. UK used, tested and certified.",
     features: [
       "11.6-inch HD Anti-Glare Display",
       "Intel Celeron Processor",
@@ -144,9 +145,9 @@ export default function ProductPage({ params }: ProductPageProps) {
       <div className="bg-white border-b border-gray-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
           <nav className="flex items-center gap-2 text-sm text-gray-600">
-            <span className="hover:text-gray-900 cursor-pointer">Home</span>
+            <Link href="/" className="hover:text-gray-900 cursor-pointer">Home</Link>
             <span>/</span>
-            <span className="hover:text-gray-900 cursor-pointer">Products</span>
+            <Link href="/products" className="hover:text-gray-900 cursor-pointer">Products</Link>
             <span>/</span>
             <span className="text-gray-900 font-medium">{product.name}</span>
           </nav>
@@ -197,16 +198,16 @@ export default function ProductPage({ params }: ProductPageProps) {
 
             <div className="flex items-center gap-3 mb-6">
               <span className="text-3xl font-bold text-primary-600">
-                ${product.price.toFixed(2)}
+                ₦{product.price.toLocaleString()}
               </span>
               {product.originalPrice && (
                 <span className="text-xl text-gray-400 line-through">
-                  ${product.originalPrice.toFixed(2)}
+                  ₦{product.originalPrice.toLocaleString()}
                 </span>
               )}
               {product.originalPrice && (
                 <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-full">
-                  Save ${(product.originalPrice - product.price).toFixed(2)}
+                  Save ₦{(product.originalPrice - product.price).toLocaleString()}
                 </span>
               )}
             </div>

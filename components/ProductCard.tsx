@@ -68,11 +68,11 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl font-bold text-gray-900">
-            ${product.price.toFixed(2)}
+            ₦{product.price.toLocaleString()}
           </span>
           {product.originalPrice && (
             <span className="text-sm text-gray-500 line-through">
-              ${product.originalPrice.toFixed(2)}
+              ₦{product.originalPrice.toLocaleString()}
             </span>
           )}
         </div>

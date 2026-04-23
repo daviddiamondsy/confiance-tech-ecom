@@ -27,9 +27,9 @@ const products = [
   },
   {
     id: "3",
-    name: "Apple iPhone 12 128GB",
-    price: 599.99,
-    originalPrice: 799.99,
+    name: "Apple iPhone 12 128GB (UK Used)",
+    price: 329000,
+    originalPrice: 380000,
     rating: 4.8,
     reviews: 892,
     image: "https://images.unsplash.com/photo-1605236453806-6ff36851218e?w=500&h=500&fit=crop",
@@ -37,9 +37,9 @@ const products = [
   },
   {
     id: "4",
-    name: "Dell Latitude 3190 Laptop",
-    price: 349.99,
-    originalPrice: 499.99,
+    name: "Dell Latitude 3190 Laptop (UK Used)",
+    price: 189000,
+    originalPrice: 230000,
     rating: 4.5,
     reviews: 156,
     image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&h=500&fit=crop",
@@ -50,7 +50,7 @@ const features = [
   {
     icon: Truck,
     title: "Free Shipping",
-    description: "On orders over $50",
+    description: "On orders over ₦50,000",
   },
   {
     icon: Shield,
