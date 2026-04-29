@@ -8,60 +8,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 const products = [
-  {
-    id: "1",
-    name: "Premium Wireless Headphones Pro",
-    price: 299.99,
-    originalPrice: 399.99,
-    rating: 4.8,
-    reviews: 256,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop",
-    badge: "Best Seller",
-    description: "Experience crystal-clear audio with our Premium Wireless Headphones Pro. Featuring active noise cancellation, 40-hour battery life, and premium comfort for all-day wear.",
-    features: [
-      "Active Noise Cancellation",
-      "40-hour Battery Life",
-      "Premium Comfort Fit",
-      "Bluetooth 5.3 Connectivity",
-      "Spatial Audio Support",
-      "Quick Charge (5 min = 3 hours)",
-    ],
-    specifications: {
-      "Driver Size": "40mm Dynamic",
-      "Frequency Response": "20Hz - 40kHz",
-      "Battery Life": "40 hours (ANC on)",
-      "Charging": "USB-C Fast Charge",
-      "Weight": "250g",
-      "Connectivity": "Bluetooth 5.3, 3.5mm",
-    },
-  },
-  {
-    id: "2",
-    name: "Wireless Earbuds Pro",
-    price: 199.99,
-    originalPrice: 249.99,
-    rating: 4.7,
-    reviews: 412,
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&h=800&fit=crop",
-    badge: "New",
-    description: "Immerse yourself in pure sound with Wireless Earbuds Pro. Active noise cancellation, crystal-clear calls, and a compact charging case that fits in your pocket.",
-    features: [
-      "Active Noise Cancellation",
-      "30-hour Total Battery Life",
-      "IPX5 Water Resistant",
-      "Transparency Mode",
-      "Touch Controls",
-      "Wireless Charging Case",
-    ],
-    specifications: {
-      "Driver Size": "11mm Dynamic",
-      "Frequency Response": "20Hz - 20kHz",
-      "Battery Life": "6 hours + 24 with case",
-      "Charging": "USB-C & Wireless",
-      "Water Resistance": "IPX5",
-      "Connectivity": "Bluetooth 5.2",
-    },
-  },
+
+
   {
     id: "3",
     name: "Apple iPhone 12 128GB (UK Used)",
@@ -242,14 +190,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                 <Truck className="h-6 w-6 text-primary-600 mx-auto mb-2" />
                 <p className="text-sm font-medium text-gray-900">Free Shipping</p>
               </div>
-              <div className="text-center">
-                <Shield className="h-6 w-6 text-primary-600 mx-auto mb-2" />
-                <p className="text-sm font-medium text-gray-900">2 Year Warranty</p>
-              </div>
-              <div className="text-center">
-                <RotateCcw className="h-6 w-6 text-primary-600 mx-auto mb-2" />
-                <p className="text-sm font-medium text-gray-900">30-Day Returns</p>
-              </div>
+          
             </div>
           </div>
         </div>
@@ -263,12 +204,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               <button className="pb-4 border-b-2 border-primary-600 text-primary-600 font-semibold">
                 Description
               </button>
-              <button className="pb-4 border-b-2 border-transparent text-gray-600 hover:text-gray-900 font-medium">
-                Specifications
-              </button>
-              <button className="pb-4 border-b-2 border-transparent text-gray-600 hover:text-gray-900 font-medium">
-                Reviews ({product.reviews})
-              </button>
+            
             </div>
           </div>
 

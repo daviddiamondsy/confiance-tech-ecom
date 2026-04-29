@@ -11,13 +11,34 @@ export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (sessionId) {
-      setTimeout(() => setLoading(false), 1500);
-    } else {
-      setLoading(false);
-    }
+    const confirmOrder = async () => {
+      if (!sessionId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/confirm-paid-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to confirm paid order");
+        }
+      } catch (error) {
+        console.error("Paid order confirmation error:", error);
+        setErrorMessage("Your payment was successful, but we could not complete order confirmation automatically. Please contact support.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    confirmOrder();
   }, [sessionId]);
 
   if (loading) {
@@ -48,6 +69,13 @@ export default function PaymentSuccessPage() {
               Your order has been confirmed and is being processed.
             </p>
           </div>
+          {errorMessage && (
+            <div className="bg-red-50 rounded-xl p-4 mb-6">
+              <p className="text-sm text-red-700">
+                {errorMessage}
+              </p>
+            </div>
+          )}
           <Link
             href="/products"
             className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"

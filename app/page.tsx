@@ -5,26 +5,7 @@ import { ArrowRight, Truck, Shield, Headphones, Zap } from "lucide-react";
 import Link from "next/link";
 
 const products = [
-  {
-    id: "1",
-    name: "Premium Wireless Headphones Pro",
-    price: 299.99,
-    originalPrice: 399.99,
-    rating: 4.8,
-    reviews: 256,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop",
-    badge: "Best Seller",
-  },
-  {
-    id: "2",
-    name: "Wireless Earbuds Pro",
-    price: 199.99,
-    originalPrice: 249.99,
-    rating: 4.7,
-    reviews: 412,
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500&h=500&fit=crop",
-    badge: "New",
-  },
+ 
   {
     id: "3",
     name: "Apple iPhone 12 128GB (UK Used)",
@@ -50,13 +31,9 @@ const features = [
   {
     icon: Truck,
     title: "Free Shipping",
-    description: "On orders over ₦50,000",
+    description: "No extra fees",
   },
-  {
-    icon: Shield,
-    title: "2 Year Warranty",
-    description: "Full coverage protection",
-  },
+
   {
     icon: Headphones,
     title: "24/7 Support",

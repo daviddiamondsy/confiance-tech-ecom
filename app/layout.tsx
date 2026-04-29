@@ -10,6 +10,11 @@ const META_PIXEL_ID = "YOUR_PIXEL_ID_HERE";
 export const metadata: Metadata = {
   title: "Confiance Tech - Premium Electronics",
   description: "Your trusted source for premium tech products",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

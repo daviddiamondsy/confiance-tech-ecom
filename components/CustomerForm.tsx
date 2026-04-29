@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Send, CheckCircle, CreditCard } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 
@@ -80,6 +81,7 @@ export default function CustomerForm({
   productName,
   productId,
 }: CustomerFormProps) {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -89,6 +91,7 @@ export default function CustomerForm({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requiresPayment, setRequiresPayment] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedState = e.target.value;
@@ -108,6 +111,7 @@ export default function CustomerForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage("");
 
     // If state requires payment and we have product details
     if (requiresPayment && productPrice && productName && productId) {
@@ -133,21 +137,43 @@ export default function CustomerForm({
         }
       } catch (error) {
         console.error("Payment error:", error);
+        setErrorMessage("We could not start payment. Please try again.");
+      } finally {
+        setIsSubmitting(false);
       }
+
+      return;
     }
     
     // Regular form submission for eligible states
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    setFormData({ name: "", address: "", state: "", phone: "" });
-    setRequiresPayment(false);
-    
-    // Track Meta Pixel conversion
-    trackLead();
-    
-    setTimeout(() => setIsSubmitted(false), 5000);
+    try {
+      const response = await fetch("/api/send-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId,
+          productName,
+          productPrice,
+          customerData: formData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send order");
+      }
+
+      setIsSubmitted(true);
+      setFormData({ name: "", address: "", state: "", phone: "" });
+      setRequiresPayment(false);
+
+      trackLead();
+      router.push("/thank-you");
+    } catch (error) {
+      console.error("Order submission error:", error);
+      setErrorMessage("We could not submit your order. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -206,6 +232,11 @@ export default function CustomerForm({
             <span>Thank you! We will contact you shortly.</span>
           </div>
         )}
+        {errorMessage && (
+          <div className="sm:absolute sm:mt-16 flex items-center gap-2 text-red-600 text-sm">
+            <span>{errorMessage}</span>
+          </div>
+        )}
       </form>
     );
   }
@@ -259,9 +290,7 @@ export default function CustomerForm({
             disabled={isSubmitting}
             className="w-full px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isSubmitting 
-              ? (requiresPayment ? "Redirecting..." : "Submitting...") 
-              : (requiresPayment ? "Pay 5% & Order" : "Place Order")}
+            {isSubmitting ? "Redirecting..." : requiresPayment ? "Pay 5% & Order" : "Place Order"}
             <Send className="h-4 w-4" />
           </button>
         </form>
@@ -269,6 +298,11 @@ export default function CustomerForm({
           <div className="mt-3 flex items-center gap-2 text-green-600 text-sm">
             <CheckCircle className="h-4 w-4" />
             <span>Thank you! We will be in touch soon.</span>
+          </div>
+        )}
+        {errorMessage && (
+          <div className="mt-3 text-sm text-red-600">
+            <span>{errorMessage}</span>
           </div>
         )}
       </div>
@@ -356,9 +390,7 @@ export default function CustomerForm({
           disabled={isSubmitting}
           className="w-full px-6 py-4 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
         >
-          {isSubmitting 
-            ? (requiresPayment ? "Redirecting to Payment..." : "Submitting...") 
-            : (requiresPayment ? `Pay ₦${productPrice ? Math.round(productPrice * 0.05).toLocaleString() : 0} & Place Order` : "Place Order")}
+          {isSubmitting ? (requiresPayment ? "Redirecting to Payment..." : "Submitting...") : (requiresPayment ? `Pay ₦${productPrice ? Math.round(productPrice * 0.05).toLocaleString() : 0} & Place Order` : "Place Order")}
           <Send className="h-5 w-5" />
         </button>
       </form>
@@ -366,6 +398,11 @@ export default function CustomerForm({
         <div className="mt-4 flex items-center gap-2 text-green-600 bg-green-50 p-4 rounded-lg">
           <CheckCircle className="h-5 w-5" />
           <span>Thank you! We have received your request and will contact you shortly.</span>
+        </div>
+      )}
+      {errorMessage && (
+        <div className="mt-4 text-sm text-red-600 bg-red-50 p-4 rounded-lg">
+          <span>{errorMessage}</span>
         </div>
       )}
     </div>
