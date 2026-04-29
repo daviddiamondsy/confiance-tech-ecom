@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, X, Search, User } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -47,12 +47,6 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-4">
-            <button className="p-2 text-gray-600 hover:text-primary-600 transition-colors">
-              <Search className="h-5 w-5" />
-            </button>
-            <button className="p-2 text-gray-600 hover:text-primary-600 transition-colors hidden sm:block">
-              <User className="h-5 w-5" />
-            </button>
             <button
               className="md:hidden p-2 text-gray-600 hover:text-primary-600 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

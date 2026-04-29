@@ -1,18 +1,84 @@
 "use client";
 
 import { useState } from "react";
-import { Send, CheckCircle } from "lucide-react";
+import { Send, CheckCircle, CreditCard } from "lucide-react";
+import { loadStripe } from "@stripe/stripe-js";
+
+// Meta Pixel conversion tracking
+declare global {
+  interface Window {
+    fbq?: (...args: unknown[]) => void;
+  }
+}
+
+const trackLead = () => {
+  if (typeof window !== "undefined" && window.fbq) {
+    window.fbq("track", "Lead");
+  }
+};
+
+// Nigerian states
+const nigerianStates = [
+  "Abia",
+  "Adamawa",
+  "Akwa Ibom",
+  "Anambra",
+  "Bauchi",
+  "Bayelsa",
+  "Benue",
+  "Borno",
+  "Cross River",
+  "Delta",
+  "Ebonyi",
+  "Edo",
+  "Ekiti",
+  "Enugu",
+  "FCT (Abuja)",
+  "Gombe",
+  "Imo",
+  "Jigawa",
+  "Kaduna",
+  "Kano",
+  "Katsina",
+  "Kebbi",
+  "Kogi",
+  "Kwara",
+  "Lagos",
+  "Nasarawa",
+  "Niger",
+  "Ogun",
+  "Ondo",
+  "Osun",
+  "Oyo",
+  "Plateau",
+  "Rivers (Port Harcourt)",
+  "Sokoto",
+  "Taraba",
+  "Yobe",
+  "Zamfara",
+];
+
+// States that don't require confirmation fee
+const noFeeStates = ["Edo", "Lagos", "FCT (Abuja)", "Rivers (Port Harcourt)"];
 
 interface CustomerFormProps {
   variant?: "default" | "compact" | "inline";
   title?: string;
   subtitle?: string;
+  productPrice?: number;
+  productName?: string;
+  productId?: string;
 }
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 
 export default function CustomerForm({ 
   variant = "default",
   title = "Get Exclusive Updates",
-  subtitle = "Subscribe to receive product updates and special offers."
+  subtitle = "Subscribe to receive product updates and special offers.",
+  productPrice,
+  productName,
+  productId,
 }: CustomerFormProps) {
   const [formData, setFormData] = useState({
     name: "",
@@ -22,16 +88,64 @@ export default function CustomerForm({
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [requiresPayment, setRequiresPayment] = useState(false);
+
+  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedState = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      state: selectedState,
+    }));
+    
+    // Check if state requires confirmation fee
+    if (selectedState && !noFeeStates.includes(selectedState)) {
+      setRequiresPayment(true);
+    } else {
+      setRequiresPayment(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    // If state requires payment and we have product details
+    if (requiresPayment && productPrice && productName && productId) {
+      try {
+        const confirmationFee = Math.round(productPrice * 0.05);
+        
+        const response = await fetch("/api/create-payment-intent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: confirmationFee,
+            productName,
+            productId,
+            customerData: formData,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+      } catch (error) {
+        console.error("Payment error:", error);
+      }
+    }
     
+    // Regular form submission for eligible states
     await new Promise((resolve) => setTimeout(resolve, 1000));
     
     setIsSubmitting(false);
     setIsSubmitted(true);
     setFormData({ name: "", address: "", state: "", phone: "" });
+    setRequiresPayment(false);
+    
+    // Track Meta Pixel conversion
+    trackLead();
     
     setTimeout(() => setIsSubmitted(false), 5000);
   };
@@ -45,7 +159,7 @@ export default function CustomerForm({
 
   if (variant === "inline") {
     return (
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 flex-wrap">
         <input
           type="text"
           name="name"
@@ -53,14 +167,37 @@ export default function CustomerForm({
           onChange={handleChange}
           placeholder="Your name"
           required
-          className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+          className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none min-w-[150px]"
         />
+        <input
+          type="tel"
+          name="phone"
+          value={formData.phone}
+          onChange={handleChange}
+          placeholder="Phone number"
+          required
+          className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none min-w-[150px]"
+        />
+        <select
+          name="state"
+          value={formData.state}
+          onChange={handleStateChange}
+          required
+          className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white min-w-[150px]"
+        >
+          <option value="">Select state</option>
+          {nigerianStates.map((state) => (
+            <option key={state} value={state}>
+              {state}
+            </option>
+          ))}
+        </select>
         <button
           type="submit"
           disabled={isSubmitting}
           className="px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          {isSubmitting ? "Submitting..." : "Order Now"}
+          {isSubmitting ? "Processing..." : requiresPayment ? "Pay 5% & Order" : "Order Now"}
           <Send className="h-4 w-4" />
         </button>
         {isSubmitted && (
@@ -97,12 +234,34 @@ export default function CustomerForm({
             required
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm"
           />
+          <select
+            name="state"
+            value={formData.state}
+            onChange={handleStateChange}
+            required
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm bg-white"
+          >
+            <option value="">Select state</option>
+            {nigerianStates.map((state) => (
+              <option key={state} value={state}>
+                {state}
+              </option>
+            ))}
+          </select>
+          {requiresPayment && productPrice && (
+            <p className="text-xs text-amber-600 flex items-center gap-1">
+              <CreditCard className="h-3 w-3" />
+              5% confirmation fee (₦{Math.round(productPrice * 0.05).toLocaleString()}) required
+            </p>
+          )}
           <button
             type="submit"
             disabled={isSubmitting}
             className="w-full px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isSubmitting ? "Submitting..." : "Place Order"}
+            {isSubmitting 
+              ? (requiresPayment ? "Redirecting..." : "Submitting...") 
+              : (requiresPayment ? "Pay 5% & Order" : "Place Order")}
             <Send className="h-4 w-4" />
           </button>
         </form>
@@ -168,25 +327,38 @@ export default function CustomerForm({
         </div>
         <div>
           <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
-            State / Province / Region *
+            State *
           </label>
-          <input
-            type="text"
+          <select
             id="state"
             name="state"
             value={formData.state}
-            onChange={handleChange}
-            placeholder="California, CA"
+            onChange={handleStateChange}
             required
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-          />
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white"
+          >
+            <option value="">Select a state</option>
+            {nigerianStates.map((state) => (
+              <option key={state} value={state}>
+                {state}
+              </option>
+            ))}
+          </select>
+          {requiresPayment && productPrice && (
+            <p className="mt-2 text-sm text-amber-600 flex items-center gap-1">
+              <CreditCard className="h-4 w-4" />
+              Confirmation fee of ₦{Math.round(productPrice * 0.05).toLocaleString()} (5%) required for this location
+            </p>
+          )}
         </div>
         <button
           type="submit"
           disabled={isSubmitting}
           className="w-full px-6 py-4 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
         >
-          {isSubmitting ? "Submitting..." : "Place Order"}
+          {isSubmitting 
+            ? (requiresPayment ? "Redirecting to Payment..." : "Submitting...") 
+            : (requiresPayment ? `Pay ₦${productPrice ? Math.round(productPrice * 0.05).toLocaleString() : 0} & Place Order` : "Place Order")}
           <Send className="h-5 w-5" />
         </button>
       </form>

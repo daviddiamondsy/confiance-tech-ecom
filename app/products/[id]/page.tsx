@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CustomerForm from "@/components/CustomerForm";
+import MetaPixelViewContent from "@/components/MetaPixel";
 import { Star, Truck, Shield, RotateCcw, Check } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -139,6 +140,13 @@ export default function ProductPage({ params }: ProductPageProps) {
   }
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Meta Pixel ViewContent Tracking */}
+      <MetaPixelViewContent
+        contentName={product.name}
+        contentIds={[product.id]}
+        value={product.price}
+        currency="NGN"
+      />
       <Header />
 
       {/* Breadcrumb */}
@@ -288,6 +296,9 @@ export default function ProductPage({ params }: ProductPageProps) {
                 <CustomerForm 
                   title="Get This Product Today"
                   subtitle="Limited stock available. Fill out the form now and we will contact you within 24 hours."
+                  productPrice={product.price}
+                  productName={product.name}
+                  productId={product.id}
                 />
               </div>
 
@@ -313,7 +324,10 @@ export default function ProductPage({ params }: ProductPageProps) {
               <div className="my-16">
                 <CustomerForm 
                   title="Do not Miss Out - Order Now"
-                  subtitle="Join thousands of satisfied customers. Secure your {product.name} today."
+                  subtitle={`Join thousands of satisfied customers. Secure your ${product.name} today.`}
+                  productPrice={product.price}
+                  productName={product.name}
+                  productId={product.id}
                 />
               </div>
 
@@ -380,7 +394,10 @@ export default function ProductPage({ params }: ProductPageProps) {
                 <div className="bg-primary-50 rounded-2xl p-8">
                   <CustomerForm 
                     title="Ready to Order?"
-                    subtitle="Complete this form now to secure your {product.name}. Stock is limited - order today!"
+                    subtitle={`Complete this form now to secure your ${product.name}. Stock is limited - order today!`}
+                    productPrice={product.price}
+                    productName={product.name}
+                    productId={product.id}
                   />
                 </div>
               </div>
