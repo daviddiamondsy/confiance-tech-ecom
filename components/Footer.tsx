@@ -26,15 +26,11 @@ export default function Footer() {
               <Link href="#" className="text-gray-400 hover:text-white transition-colors">
                 <Facebook className="h-5 w-5" />
               </Link>
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Twitter className="h-5 w-5" />
-              </Link>
+            
               <Link href="https://instagram.com/confiance_tech" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
                 <Instagram className="h-5 w-5" />
               </Link>
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Youtube className="h-5 w-5" />
-              </Link>
+            
             </div>
           </div>
 
@@ -61,10 +57,7 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-4">Contact Us</h3>
             <ul className="space-y-3 text-sm">
-              <li className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary-500" />
-                <span>123 Tech Street, Silicon Valley</span>
-              </li>
+              
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-primary-500" />
                 <span>+234 9035696604</span>
