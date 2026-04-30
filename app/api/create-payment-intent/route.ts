@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-03-25.dahlia",
-});
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+function getStripe(): Stripe {
+  if (!stripeSecretKey) {
+    throw new Error("Missing STRIPE_SECRET_KEY environment variable");
+  }
+  return new Stripe(stripeSecretKey, {
+    apiVersion: "2026-03-25.dahlia",
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
     const { amount, productName, productId, customerData } = await req.json();
 
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [

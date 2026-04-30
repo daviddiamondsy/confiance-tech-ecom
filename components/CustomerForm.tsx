@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Send, CheckCircle, CreditCard } from "lucide-react";
-import { loadStripe } from "@stripe/stripe-js";
+import { Send, CheckCircle } from "lucide-react";
 
 // Meta Pixel conversion tracking
 declare global {
@@ -59,9 +58,6 @@ const nigerianStates = [
   "Zamfara",
 ];
 
-// States that don't require confirmation fee
-const noFeeStates = ["Edo", "Lagos", "FCT (Abuja)", "Rivers (Port Harcourt)"];
-
 interface CustomerFormProps {
   variant?: "default" | "compact" | "inline";
   title?: string;
@@ -71,7 +67,6 @@ interface CustomerFormProps {
   productId?: string;
 }
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 
 export default function CustomerForm({ 
   variant = "default",
@@ -90,7 +85,6 @@ export default function CustomerForm({
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [requiresPayment, setRequiresPayment] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -99,13 +93,6 @@ export default function CustomerForm({
       ...prev,
       state: selectedState,
     }));
-    
-    // Check if state requires confirmation fee
-    if (selectedState && !noFeeStates.includes(selectedState)) {
-      setRequiresPayment(true);
-    } else {
-      setRequiresPayment(false);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,39 +100,6 @@ export default function CustomerForm({
     setIsSubmitting(true);
     setErrorMessage("");
 
-    // If state requires payment and we have product details
-    if (requiresPayment && productPrice && productName && productId) {
-      try {
-        const confirmationFee = Math.round(productPrice * 0.05);
-        
-        const response = await fetch("/api/create-payment-intent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            amount: confirmationFee,
-            productName,
-            productId,
-            customerData: formData,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (data.url) {
-          window.location.href = data.url;
-          return;
-        }
-      } catch (error) {
-        console.error("Payment error:", error);
-        setErrorMessage("We could not start payment. Please try again.");
-      } finally {
-        setIsSubmitting(false);
-      }
-
-      return;
-    }
-    
-    // Regular form submission for eligible states
     try {
       const response = await fetch("/api/send-order", {
         method: "POST",
@@ -164,7 +118,6 @@ export default function CustomerForm({
 
       setIsSubmitted(true);
       setFormData({ name: "", address: "", state: "", phone: "" });
-      setRequiresPayment(false);
 
       trackLead();
       router.push("/thank-you");
@@ -223,7 +176,7 @@ export default function CustomerForm({
           disabled={isSubmitting}
           className="px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          {isSubmitting ? "Processing..." : requiresPayment ? "Pay 5% & Order" : "Order Now"}
+          {isSubmitting ? "Processing..." : "Order Now"}
           <Send className="h-4 w-4" />
         </button>
         {isSubmitted && (
@@ -279,18 +232,12 @@ export default function CustomerForm({
               </option>
             ))}
           </select>
-          {requiresPayment && productPrice && (
-            <p className="text-xs text-amber-600 flex items-center gap-1">
-              <CreditCard className="h-3 w-3" />
-              5% confirmation fee (₦{Math.round(productPrice * 0.05).toLocaleString()}) required
-            </p>
-          )}
-          <button
+                    <button
             type="submit"
             disabled={isSubmitting}
             className="w-full px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isSubmitting ? "Redirecting..." : requiresPayment ? "Pay 5% & Order" : "Place Order"}
+            {isSubmitting ? "Submitting..." : "Place Order"}
             <Send className="h-4 w-4" />
           </button>
         </form>
@@ -378,19 +325,13 @@ export default function CustomerForm({
               </option>
             ))}
           </select>
-          {requiresPayment && productPrice && (
-            <p className="mt-2 text-sm text-amber-600 flex items-center gap-1">
-              <CreditCard className="h-4 w-4" />
-              Confirmation fee of ₦{Math.round(productPrice * 0.05).toLocaleString()} (5%) required for this location
-            </p>
-          )}
-        </div>
+                  </div>
         <button
           type="submit"
           disabled={isSubmitting}
           className="w-full px-6 py-4 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
         >
-          {isSubmitting ? (requiresPayment ? "Redirecting to Payment..." : "Submitting...") : (requiresPayment ? `Pay ₦${productPrice ? Math.round(productPrice * 0.05).toLocaleString() : 0} & Place Order` : "Place Order")}
+          {isSubmitting ? "Submitting..." : "Place Order"}
           <Send className="h-5 w-5" />
         </button>
       </form>
