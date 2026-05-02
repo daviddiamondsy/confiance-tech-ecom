@@ -73,13 +73,31 @@ export async function sendOrderEmail(payload: OrderEmailPayload) {
   const notificationEmail = process.env.ORDER_NOTIFICATION_EMAIL;
   const fromEmail = process.env.ORDER_FROM_EMAIL || "onboarding@resend.dev";
 
+  console.log("[Email][sendOrderEmail] Preparing order email", {
+    productId: payload.productId,
+    productName: payload.productName,
+    paymentStatus: payload.paymentStatus,
+    customerName: payload.customerName,
+    hasResendApiKey: Boolean(resendApiKey),
+    notificationEmail,
+    fromEmail,
+  });
+
   if (!resendApiKey) {
+    console.error("[Email][sendOrderEmail] Missing RESEND_API_KEY environment variable");
     throw new Error("Missing RESEND_API_KEY environment variable.");
   }
 
   if (!notificationEmail) {
+    console.error("[Email][sendOrderEmail] Missing ORDER_NOTIFICATION_EMAIL environment variable");
     throw new Error("Missing ORDER_NOTIFICATION_EMAIL environment variable.");
   }
+
+  console.log("[Email][sendOrderEmail] Sending request to Resend", {
+    to: notificationEmail,
+    from: fromEmail,
+    subject: `New Order${payload.productName ? ` - ${payload.productName}` : ""}`,
+  });
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -99,8 +117,14 @@ export async function sendOrderEmail(payload: OrderEmailPayload) {
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.error("[Email][sendOrderEmail] Resend request failed", {
+      status: response.status,
+      errorText,
+    });
     throw new Error(`Resend request failed: ${response.status} ${errorText}`);
   }
+
+  console.log("[Email][sendOrderEmail] Resend request succeeded");
 
   return response.json();
 }

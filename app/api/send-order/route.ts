@@ -10,12 +10,24 @@ export async function POST(req: NextRequest) {
       customerData,
     } = await req.json();
 
+    console.log("[API][send-order] Received order request", {
+      productId,
+      productName,
+      productPrice,
+      hasCustomerData: Boolean(customerData),
+      customerData,
+    });
+
     if (
       !customerData?.name ||
       !customerData?.phone ||
       !customerData?.address ||
       !customerData?.state
     ) {
+      console.error("[API][send-order] Missing required customer details", {
+        customerData,
+      });
+
       return NextResponse.json(
         { error: "Missing required customer details" },
         { status: 400 }
@@ -33,11 +45,24 @@ export async function POST(req: NextRequest) {
       paymentStatus: "pending",
     });
 
+    console.log("[API][send-order] Order email sent successfully", {
+      productId,
+      productName,
+      customerName: customerData.name,
+      customerPhone: customerData.phone,
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Order email error:", error);
+    const details = error instanceof Error ? error.message : "Unknown error";
+
+    console.error("[API][send-order] Order email error", {
+      error,
+      details,
+    });
+
     return NextResponse.json(
-      { error: "Failed to send order" },
+      { error: "Failed to send order", details },
       { status: 500 }
     );
   }

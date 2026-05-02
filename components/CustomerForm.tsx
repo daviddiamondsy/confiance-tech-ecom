@@ -101,6 +101,13 @@ export default function CustomerForm({
     setErrorMessage("");
 
     try {
+      console.log("[Order] Submitting order request", {
+        productId,
+        productName,
+        productPrice,
+        customerData: formData,
+      });
+
       const response = await fetch("/api/send-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -113,8 +120,20 @@ export default function CustomerForm({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to send order");
+        const errorPayload = await response.json().catch(() => null);
+
+        console.error("[Order] Order submission failed", {
+          status: response.status,
+          statusText: response.statusText,
+          errorPayload,
+        });
+
+        throw new Error(
+          errorPayload?.details || errorPayload?.error || "Failed to send order"
+        );
       }
+
+      console.log("[Order] Order submission succeeded");
 
       setIsSubmitted(true);
       setFormData({ name: "", address: "", state: "", phone: "" });
@@ -122,7 +141,7 @@ export default function CustomerForm({
       trackLead();
       router.push("/thank-you");
     } catch (error) {
-      console.error("Order submission error:", error);
+      console.error("[Order] Order submission error:", error);
       setErrorMessage("We could not submit your order. Please try again.");
     } finally {
       setIsSubmitting(false);
