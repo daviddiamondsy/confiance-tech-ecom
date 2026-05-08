@@ -45,20 +45,22 @@ const products = [
     rating: 4.5,
     reviews: 156,
     image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&h=800&fit=crop",
+    video: "/videos/dell-3190.mp4",
     description: "The Dell Latitude 3190 is built for education and productivity. Rugged design with all-day battery life for students and professionals alike. UK used, tested and certified.",
     features: [
-      "11.6-inch HD Anti-Glare Display",
+      "11.6-inch HD Touchscreen Display",
       "Intel Celeron Processor",
       "4GB RAM + 128GB SSD",
-      "Ruggedized Rubber Bumpers",
+      "360° Foldable Design",
       "All-Day Battery Life",
       "Windows 10 Pro Pre-installed",
     ],
     specifications: {
-      "Display": "11.6-inch HD (1366x768)",
+      "Display": "11.6-inch HD Touchscreen (1366x768)",
       "Processor": "Intel Celeron N4100",
       "Memory": "4GB DDR4",
       "Storage": "128GB SSD",
+      "Form Factor": "360° Foldable (2-in-1)",
       "Battery": "Up to 10 hours",
       "Weight": "2.9 lbs",
     },
@@ -247,7 +249,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                     controls
                     poster={product.image}
                   >
-                    <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+                    <source src={product.video ?? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"} type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
                 </div>
