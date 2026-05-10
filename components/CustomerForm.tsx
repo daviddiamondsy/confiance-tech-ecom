@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Send, CheckCircle } from "lucide-react";
 
 // Meta Pixel conversion tracking
@@ -76,7 +75,6 @@ export default function CustomerForm({
   productName,
   productId,
 }: CustomerFormProps) {
-  const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -108,7 +106,7 @@ export default function CustomerForm({
         customerData: formData,
       });
 
-      const response = await fetch("/api/send-order", {
+      const response = await fetch("/api/create-holdam-deal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -122,24 +120,23 @@ export default function CustomerForm({
       if (!response.ok) {
         const errorPayload = await response.json().catch(() => null);
 
-        console.error("[Order] Order submission failed", {
+        console.error("[Order] Checkout creation failed", {
           status: response.status,
           statusText: response.statusText,
           errorPayload,
         });
 
         throw new Error(
-          errorPayload?.details || errorPayload?.error || "Failed to send order"
+          errorPayload?.details || errorPayload?.error || "Failed to create checkout"
         );
       }
 
-      console.log("[Order] Order submission succeeded");
+      const { checkoutUrl } = await response.json();
 
-      setIsSubmitted(true);
-      setFormData({ name: "", address: "", state: "", phone: "" });
+      console.log("[Order] Redirecting to Holdam checkout", { checkoutUrl });
 
       trackLead();
-      router.push("/thank-you");
+      window.location.href = checkoutUrl;
     } catch (error) {
       console.error("[Order] Order submission error:", error);
       setErrorMessage("We could not submit your order. Please try again.");
