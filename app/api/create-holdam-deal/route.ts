@@ -46,10 +46,20 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://confiance.tech";
 
-    const deal = await holdam.deals.create({
-      amount: productPrice,
+    const sellerId = process.env.HOLDAM_SELLER_PHONE || customerData.phone;
+    console.log("[API][create-holdam-deal] Holdam SDK params:", {
+      totalAmount: 30000,
       currency: "NGN",
-      seller: process.env.HOLDAM_SELLER_PHONE || customerData.phone,
+      sellerId,
+      sellerIdFromEnv: process.env.HOLDAM_SELLER_PHONE,
+      customerPhone: customerData.phone,
+    });
+
+    const deal = await holdam.deals.create({
+      amount: 30000, // Hardcoded: Tier 1 limit is ₦50,000
+      currency: "NGN",
+      seller: sellerId,
+      title: `${productName} — Order for ${customerData.name}`,
       successUrl: `${baseUrl}/payment-success?deal_id={DEAL_ID}`,
       cancelUrl: `${baseUrl}/products/${productId}`,
       description: `${productName} — Order for ${customerData.name}`,
@@ -62,12 +72,10 @@ export async function POST(req: NextRequest) {
         customerAddress: customerData.address,
         customerState: customerData.state,
       },
-    });
+    } as any) as unknown as { id: string };
 
-    console.log("[API][create-holdam-deal] Deal created", {
-      dealId: deal.data?.id,
-      checkoutUrl: deal.data?.checkoutUrl,
-    });
+    console.log("[API][create-holdam-deal] Deal response:", JSON.stringify(deal, null, 2));
+    console.log("[API][create-holdam-deal] Deal keys:", Object.keys(deal));
 
     await sendOrderEmail({
       productId,
@@ -80,14 +88,38 @@ export async function POST(req: NextRequest) {
       paymentStatus: "pending",
     });
 
+    // Holdam returns deal wrapped in .data
+    const dealData = (deal as any)?.data || deal;
+    const checkoutUrl = dealData?.checkoutUrl;
+
+    console.log("[API][create-holdam-deal] Returning response:", { dealId: dealData?.id, checkoutUrl });
+
     return NextResponse.json({
       success: true,
-      checkoutUrl: deal.data.checkoutUrl,
-      dealId: deal.data.id,
+      dealId: dealData?.id,
+      deal: dealData,
+      checkoutUrl,
     });
   } catch (error) {
-    const details = error instanceof Error ? error.message : "Unknown error";
-    console.error("[API][create-holdam-deal] Error", { error, details });
+    console.error("[API][create-holdam-deal] Raw error:", error);
+    console.error("[API][create-holdam-deal] Error keys:", Object.keys(error || {}));
+    console.error("[API][create-holdam-deal] Error constructor:", error?.constructor?.name);
+
+    const axiosError = error as { response?: { status?: number; data?: unknown }; message?: string };
+    const details = axiosError?.response?.data
+      ? JSON.stringify(axiosError.response.data)
+      : error instanceof Error
+      ? error.message
+      : "Unknown error";
+    const status = axiosError?.response?.status;
+
+    console.error("[API][create-holdam-deal] Error", {
+      message: axiosError?.message,
+      holdam_status: status,
+      holdam_response: axiosError?.response?.data,
+      details,
+    });
+
     return NextResponse.json(
       { error: "Failed to create checkout", details },
       { status: 500 }

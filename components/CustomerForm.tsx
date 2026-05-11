@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Send, CheckCircle } from "lucide-react";
 
 // Meta Pixel conversion tracking
@@ -84,6 +85,7 @@ export default function CustomerForm({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const router = useRouter();
 
   const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedState = e.target.value;
@@ -131,12 +133,20 @@ export default function CustomerForm({
         );
       }
 
-      const { checkoutUrl } = await response.json();
+      const responseData = await response.json();
+      console.log("[Order] Full API response:", JSON.stringify(responseData));
 
-      console.log("[Order] Redirecting to Holdam checkout", { checkoutUrl });
+      const { deal, checkoutUrl } = responseData;
+      console.log("[Order] Holdam deal created successfully", { dealId: deal?.id, checkoutUrl });
 
       trackLead();
-      window.location.href = checkoutUrl;
+      
+      // Redirect to Holdam checkout if URL is available
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else {
+        router.push("/thank-you");
+      }
     } catch (error) {
       console.error("[Order] Order submission error:", error);
       setErrorMessage("We could not submit your order. Please try again.");

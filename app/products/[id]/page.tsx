@@ -247,6 +247,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                   <video
                     className="w-full h-full object-cover"
                     controls
+                    preload="metadata"
                     poster={product.image}
                   >
                     <source src={product.video ?? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"} type="video/mp4" />

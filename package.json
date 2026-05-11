@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@holdam/js": "^1.0.0",
+    "@holdam/js": "^1.0.1",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "clsx": "^2.1.0",
