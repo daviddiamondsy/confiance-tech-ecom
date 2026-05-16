@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CustomerForm from "@/components/CustomerForm";
 import MetaPixelViewContent from "@/components/MetaPixel";
+import ImageCarousel from "@/components/ImageCarousel";
 import { Star, Truck, Shield, RotateCcw, Check } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -65,6 +66,43 @@ const products = [
       "Weight": "2.9 lbs",
     },
   },
+  {
+    id: "5",
+    name: "Dell Latitude 3189 Laptop (UK Used)",
+    price: 200000,
+    originalPrice: 250000,
+    rating: 4.4,
+    reviews: 98,
+    image: "/dell-3189-images/dell-latitude-3189-2.jpg.webp",
+    badge: "New",
+    images: [
+      "/dell-3189-images/dell-latitude-3189-2.jpg.webp",
+      "/dell-3189-images/dell-latitude-3189-7.jpg.webp",
+      "/dell-3189-images/83df5907fb7f19d85bd4490ae81d9b0b.jpg",
+      "/dell-3189-images/IMG_20220801_111418_714.webp",
+      "/dell-3189-images/315783314-600x450-1.jpeg",
+      "/dell-3189-images/giant_206446.jpg",
+      "/dell-3189-images/02nqluymzt46hiplfd6qha8-12-hero-image-gallery.webp",
+    ],
+    description: "The Dell Latitude 3189 is a versatile 2-in-1 laptop designed for education and productivity. Features a durable build, long battery life, and responsive performance for students and professionals. UK used, tested and certified.",
+    features: [
+      "11.6-inch HD Touchscreen Display",
+      "Intel Celeron Processor",
+      "4GB RAM + 128GB SSD",
+      "360° Hinge Design",
+      "All-Day Battery Life",
+      "Windows 10 Pro Pre-installed",
+    ],
+    specifications: {
+      "Display": "11.6-inch HD Touchscreen (1366x768)",
+      "Processor": "Intel Celeron N4100",
+      "Memory": "4GB DDR4",
+      "Storage": "128GB SSD",
+      "Form Factor": "360° Hinge (2-in-1)",
+      "Battery": "Up to 10 hours",
+      "Weight": "3.0 lbs",
+    },
+  },
 ];
 
 export function generateStaticParams() {
@@ -73,6 +111,7 @@ export function generateStaticParams() {
     { id: "2" },
     { id: "3" },
     { id: "4" },
+    { id: "5" },
   ];
 }
 
@@ -240,23 +279,32 @@ export default function ProductPage({ params }: ProductPageProps) {
                 />
               </div>
 
-              {/* Video Section */}
+              {/* Video or Image Carousel Section */}
               <div className="my-16">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">See It In Action</h3>
-                <div className="aspect-video bg-gray-900 rounded-2xl overflow-hidden relative">
-                  <video
-                    className="w-full h-full object-cover"
-                    controls
-                    preload="metadata"
-                    poster={product.image}
-                  >
-                    <source src={product.video ?? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                </div>
-                <p className="text-gray-600 mt-4">
-                  Watch how this product performs in real-world scenarios.
-                </p>
+                {product.video ? (
+                  <>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">See It In Action</h3>
+                    <div className="aspect-video bg-gray-900 rounded-2xl overflow-hidden relative">
+                      <video
+                        className="w-full h-full object-cover"
+                        controls
+                        preload="metadata"
+                        poster={product.image}
+                      >
+                        <source src={product.video} type="video/mp4" />
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                    <p className="text-gray-600 mt-4">
+                      Watch how this product performs in real-world scenarios.
+                    </p>
+                  </>
+                ) : product.images && product.images.length > 0 ? (
+                  <>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Product Gallery</h3>
+                    <ImageCarousel images={product.images} productName={product.name} />
+                  </>
+                ) : null}
               </div>
 
               {/* Form 2 */}

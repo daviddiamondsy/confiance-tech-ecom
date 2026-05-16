@@ -46,19 +46,28 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://confiance.tech";
 
-    const sellerId = process.env.HOLDAM_SELLER_PHONE || customerData.phone;
+    const sellerId = process.env.HOLDAM_SELLER_PHONE;
+    if (!sellerId) {
+      console.error("[API][create-holdam-deal] Missing HOLDAM_SELLER_PHONE");
+      return NextResponse.json(
+        { error: "Payment service not configured", details: "Missing HOLDAM_SELLER_PHONE" },
+        { status: 500 }
+      );
+    }
+
     console.log("[API][create-holdam-deal] Holdam SDK params:", {
       totalAmount: 30000,
       currency: "NGN",
       sellerId,
-      sellerIdFromEnv: process.env.HOLDAM_SELLER_PHONE,
-      customerPhone: customerData.phone,
+      buyerPhone: customerData.phone,
     });
 
     const deal = await holdam.deals.create({
       amount: 30000, // Hardcoded: Tier 1 limit is ₦50,000
       currency: "NGN",
       seller: sellerId,
+      buyerPhone: customerData.phone,
+      customerName: customerData.name,
       title: `${productName} — Order for ${customerData.name}`,
       successUrl: `${baseUrl}/payment-success?deal_id={DEAL_ID}`,
       cancelUrl: `${baseUrl}/products/${productId}`,
@@ -67,8 +76,6 @@ export async function POST(req: NextRequest) {
         productId,
         productName,
         productPrice,
-        customerName: customerData.name,
-        customerPhone: customerData.phone,
         customerAddress: customerData.address,
         customerState: customerData.state,
       },

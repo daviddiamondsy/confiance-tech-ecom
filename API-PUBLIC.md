@@ -492,64 +492,9 @@ Authorization: Bearer <jwt_token> | X-API-Key: <key>
 ```json
 { "reason": "Deliverable does not match the agreed scope." }
 ```
-Either buyer or seller may call this. Moves status to `disputed`. An arbitrator reviews off-chain.
+Either buyer or seller may call this. Moves status to `disputed`.
 
 **Response `200`** — updated escrow object with `status: "disputed"` and `hasDispute: true`.
-
-### Sign arbitration ruling
-```
-POST /v1/escrow/:id/sign-arbitration
-Authorization: Bearer <jwt_token>
-```
-User signs the arbitrator's ruling to accept the proposed resolution.
-
-**Body**
-```json
-{ "signature": "0x..." }
-```
-
-**Response `200`**
-```json
-{ "success": true, "message": "Arbitration ruling signed" }
-```
-
-### Initiate mutual agreement resolution
-```
-POST /v1/escrow/:id/mutual-agreement
-Authorization: Bearer <jwt_token>
-```
-Buyer and seller propose a mutual resolution to avoid arbitration.
-
-**Body**
-```json
-{
-  "buyerAmount": 75,
-  "sellerAmount": 75,
-  "reason": "Partial delivery, split refund"
-}
-```
-
-**Response `200`**
-```json
-{ "success": true, "message": "Mutual agreement proposed" }
-```
-
-### Sign mutual agreement
-```
-POST /v1/escrow/:id/sign-mutual-agreement
-Authorization: Bearer <jwt_token>
-```
-User signs the mutual agreement proposal.
-
-**Body**
-```json
-{ "signature": "0x..." }
-```
-
-**Response `200`**
-```json
-{ "success": true, "message": "Mutual agreement signed" }
-```
 
 ### Get deal messages
 ```
@@ -608,7 +553,7 @@ Marks all messages in the deal as read for the authenticated user.
 ```
 pending ──▶ active ──▶ completed
                │
-               └──▶ disputed ──▶ (arbitrator resolves)
+               └──▶ disputed ──▶ resolved
                │
                └──▶ refunded
 ```
@@ -618,7 +563,7 @@ pending ──▶ active ──▶ completed
 | `pending` | Created, waiting for seller to accept |
 | `active` | Seller accepted; buyer can deposit |
 | `completed` | All funds released to seller |
-| `disputed` | Under arbitration |
+| `disputed` | Under review |
 | `refunded` | Declined or cancelled |
 
 ---
@@ -864,6 +809,152 @@ Submit user feedback to the platform.
 **Response `200`**
 ```json
 { "success": true, "message": "Feedback received" }
+```
+
+### Get bank accounts
+```
+GET /v1/user/bank-accounts
+Authorization: Bearer <jwt_token>
+```
+Returns all saved bank accounts for the authenticated user.
+
+**Response `200`**
+```json
+{
+  "bankAccounts": [
+    {
+      "id": "1",
+      "bankName": "GTBank",
+      "bankCode": "058",
+      "accountNumber": "0123456789",
+      "accountName": "Ada Okonkwo",
+      "isDefault": true
+    }
+  ]
+}
+```
+
+### Add bank account
+```
+POST /v1/user/bank-accounts
+Authorization: Bearer <jwt_token>
+```
+Adds a new bank account for the authenticated user.
+
+**Body**
+```json
+{
+  "accountNumber": "0123456789",
+  "bankCode": "058",
+  "bankName": "GTBank",
+  "accountName": "Ada Okonkwo"
+}
+```
+
+**Response `200`**
+```json
+{
+  "bankAccount": {
+    "id": "1",
+    "bankName": "GTBank",
+    "bankCode": "058",
+    "accountNumber": "0123456789",
+    "accountName": "Ada Okonkwo",
+    "isDefault": true
+  }
+}
+```
+
+### Delete bank account
+```
+DELETE /v1/user/bank-accounts/:id
+Authorization: Bearer <jwt_token>
+```
+Deletes a saved bank account.
+
+**Response `200`**
+```json
+{ "success": true }
+```
+
+### Set default bank account
+```
+PUT /v1/user/bank-accounts/:id/default
+Authorization: Bearer <jwt_token>
+```
+Sets a bank account as the default for payouts.
+
+**Response `200`**
+```json
+{ "success": true }
+```
+
+### Get cards
+```
+GET /v1/user/cards
+Authorization: Bearer <jwt_token>
+```
+Returns all saved cards for the authenticated user.
+
+**Response `200`**
+```json
+{
+  "cards": [
+    {
+      "id": "1",
+      "last4": "4242",
+      "brand": "visa",
+      "expiryMonth": "12",
+      "expiryYear": "2025",
+      "cardHolderName": "Ada Okonkwo",
+      "authorizationCode": "AUTH_xxx",
+      "isDefault": true
+    }
+  ]
+}
+```
+
+### Delete card
+```
+DELETE /v1/user/cards/:id
+Authorization: Bearer <jwt_token>
+```
+Deletes a saved card.
+
+**Response `200`**
+```json
+{ "success": true }
+```
+
+### Set default card
+```
+PUT /v1/user/cards/:id/default
+Authorization: Bearer <jwt_token>
+```
+Sets a card as the default for payments.
+
+**Response `200`**
+```json
+{ "success": true }
+```
+
+### Initiate card save
+```
+POST /v1/user/cards/save
+Authorization: Bearer <jwt_token>
+```
+Initiates a Paystack transaction to save a card for future payments.
+
+**Body**
+```json
+{ "amount": 50 }
+```
+
+**Response `200`**
+```json
+{
+  "authorizationUrl": "https://checkout.paystack.com/..."
+}
 ```
 
 ### Get notification preferences
@@ -1207,136 +1298,6 @@ Returns the user's inclusion proof in the reserve Merkle tree.
     "proof": ["0x...", "0x..."],
     "rootHash": "0x..."
   }
-}
-```
-
----
-
-## Admin (Role-Based Access Control)
-
-Admin endpoints require specific permissions.
-
-### Initialize roles and permissions (admin)
-```
-POST /v1/admin/initialize
-Authorization: Bearer <jwt_token>
-```
-Requires `admin:roles` permission. Initializes default roles and permissions.
-
-**Response `200`**
-```json
-{ "success": true, "message": "Roles and permissions initialized" }
-```
-
-### Get all roles (admin)
-```
-GET /v1/admin/roles
-Authorization: Bearer <jwt_token>
-```
-Requires `admin:roles` permission.
-
-**Response `200`**
-```json
-{
-  "roles": [
-    {
-      "id": 1,
-      "name": "admin",
-      "description": "Full system access"
-    },
-    {
-      "id": 2,
-      "name": "user",
-      "description": "Standard user access"
-    }
-  ]
-}
-```
-
-### Get all permissions (admin)
-```
-GET /v1/admin/permissions
-Authorization: Bearer <jwt_token>
-```
-Requires `admin:roles` permission.
-
-**Response `200`**
-```json
-{
-  "permissions": [
-    {
-      "id": 1,
-      "name": "admin:roles",
-      "description": "Manage roles and permissions"
-    },
-    {
-      "id": 2,
-      "name": "admin:users",
-      "description": "Manage users"
-    }
-  ]
-}
-```
-
-### Get role permissions (admin)
-```
-GET /v1/admin/roles/:id/permissions
-Authorization: Bearer <jwt_token>
-```
-Requires `admin:roles` permission.
-
-**Response `200`**
-```json
-{
-  "permissions": [
-    {
-      "id": 1,
-      "name": "admin:roles"
-    }
-  ]
-}
-```
-
-### Assign role to user (admin)
-```
-POST /v1/admin/users/:userId/roles/:roleId
-Authorization: Bearer <jwt_token>
-```
-Requires `admin:users` permission.
-
-**Response `200`**
-```json
-{ "success": true, "message": "Role assigned" }
-```
-
-### Remove role from user (admin)
-```
-DELETE /v1/admin/users/:userId/roles/:roleId
-Authorization: Bearer <jwt_token>
-```
-Requires `admin:users` permission.
-
-**Response `200`**
-```json
-{ "success": true, "message": "Role removed" }
-```
-
-### Get user's roles (admin)
-```
-GET /v1/admin/users/:userId/roles
-Authorization: Bearer <jwt_token>
-```
-Requires `admin:users` permission.
-
-**Response `200`**
-```json
-{
-  "roles": [
-    {
-      "id": 1,
-      "name": "admin"
-    }
-  ]
 }
 ```
 

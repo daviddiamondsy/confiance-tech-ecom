@@ -25,6 +25,16 @@ const products = [
     reviews: 156,
     image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&h=500&fit=crop",
   },
+  {
+    id: "5",
+    name: "Dell Latitude 3189 Laptop (UK Used)",
+    price: 200000,
+    originalPrice: 250000,
+    rating: 4.4,
+    reviews: 98,
+    image: "/dell-3189-images/dell-latitude-3189-2.jpg.webp",
+    badge: "New",
+  },
 ];
 
 const features = [
