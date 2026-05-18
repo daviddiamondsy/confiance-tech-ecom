@@ -1,4 +1,4 @@
-declare module "@holdam/js" {
+declare module "@holdam/ts" {
   interface HoldamOptions {
     baseUrl?: string;
   }

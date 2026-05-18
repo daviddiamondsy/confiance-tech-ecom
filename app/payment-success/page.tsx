@@ -1,11 +1,16 @@
-import { redirect } from "next/navigation";
+'use client';
+
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
-function PaymentSuccessContent({ searchParams }: { searchParams: { deal_id?: string } }) {
-  const dealId = searchParams.deal_id;
+function PaymentSuccessContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const dealId = searchParams.get("deal_id");
 
   if (!dealId) {
-    redirect("/thank-you");
+    router.replace("/thank-you");
+    return null;
   }
 
   return (
@@ -25,7 +30,7 @@ function PaymentSuccessContent({ searchParams }: { searchParams: { deal_id?: str
           <p className="text-sm font-mono font-medium text-gray-900">{dealId}</p>
         </div>
         <button
-          onClick={() => redirect("/thank-you")}
+          onClick={() => router.push("/thank-you")}
           className="w-full px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
         >
           Continue
@@ -35,14 +40,10 @@ function PaymentSuccessContent({ searchParams }: { searchParams: { deal_id?: str
   );
 }
 
-export default function PaymentSuccessPage({
-  searchParams,
-}: {
-  searchParams: { deal_id?: string };
-}) {
+export default function PaymentSuccessPage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-      <PaymentSuccessContent searchParams={searchParams} />
+      <PaymentSuccessContent />
     </Suspense>
   );
 }

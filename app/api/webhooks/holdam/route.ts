@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Holdam from "@holdam/js";
+import Holdam from "@holdam/ts";
 
 export async function POST(req: NextRequest) {
   try {

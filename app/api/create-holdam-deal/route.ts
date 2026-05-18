@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Holdam from "@holdam/js";
+import Holdam from "@holdam/ts";
 import { sendOrderEmail } from "@/lib/order-email";
 
 export async function POST(req: NextRequest) {
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
       paymentStatus: "pending",
     });
 
-    // Holdam returns deal wrapped in .data
+    // Holdam SDK returns { data: { checkoutUrl, ... } }
     const dealData = (deal as any)?.data || deal;
     const checkoutUrl = dealData?.checkoutUrl;
 

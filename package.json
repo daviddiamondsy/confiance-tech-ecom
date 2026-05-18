@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@holdam/ts": "file:../escrow-js",
+    "@holdam/ts": "^1.1.3",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "clsx": "^2.1.0",
