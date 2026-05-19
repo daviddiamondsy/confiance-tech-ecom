@@ -62,22 +62,27 @@ export async function POST(req: NextRequest) {
       buyerPhone: customerData.phone,
     });
 
+    // Split customer name into first and last name
+    const nameParts = customerData.name.trim().split(' ');
+    const buyerFirstName = nameParts[0] || customerData.name;
+    const buyerLastName = nameParts.slice(1).join(' ') || '';
+
     const deal = await holdam.deals.create({
       amount: 30000, // Hardcoded: Tier 1 limit is ₦50,000
       currency: "NGN",
       seller: sellerId,
-      buyerPhone: customerData.phone,
-      customerName: customerData.name,
+      buyerFirstName,
+      buyerLastName,
       title: `${productName} — Order for ${customerData.name}`,
       successUrl: `${baseUrl}/payment-success?deal_id={DEAL_ID}`,
       cancelUrl: `${baseUrl}/products/${productId}`,
-      description: `${productName} — Order for ${customerData.name}`,
       metadata: {
         productId,
         productName,
         productPrice,
         customerAddress: customerData.address,
         customerState: customerData.state,
+        buyerPhone: customerData.phone,
       },
     } as any) as unknown as { id: string };
 
