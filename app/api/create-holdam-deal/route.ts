@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     console.log("[API][create-holdam-deal] Holdam SDK params:", {
-      totalAmount: 30000,
+      totalAmount: productPrice,
       currency: "NGN",
       sellerId,
       buyerPhone: customerData.phone,
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     const buyerLastName = nameParts.slice(1).join(' ') || '';
 
     const deal = await holdam.deals.create({
-      amount: 30000, // Hardcoded: Tier 1 limit is ₦50,000
+      amount: productPrice,
       currency: "NGN",
       seller: sellerId,
       buyerFirstName,
