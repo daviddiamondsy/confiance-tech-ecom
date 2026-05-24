@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Send, CheckCircle } from "lucide-react";
+
+function checkoutStorageKey(productId?: string) {
+  return productId ? `holdam_checkout_${productId}` : "holdam_checkout";
+}
 
 // Meta Pixel conversion tracking
 declare global {
@@ -84,8 +88,44 @@ export default function CustomerForm({
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [pendingCheckoutUrl, setPendingCheckoutUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
+
+  const resetCheckoutUiState = useCallback(() => {
+    setIsRedirecting(false);
+    setIsSubmitting(false);
+  }, []);
+
+  // Browser back from Holdam checkout restores this page from bfcache with stale isRedirecting=true.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = checkoutStorageKey(productId);
+    const saved = sessionStorage.getItem(key);
+    if (saved) setPendingCheckoutUrl(saved);
+
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) resetCheckoutUiState();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [productId, resetCheckoutUiState]);
+
+  const goToCheckout = (checkoutUrl: string) => {
+    if (productId) {
+      sessionStorage.setItem(checkoutStorageKey(productId), checkoutUrl);
+      setPendingCheckoutUrl(checkoutUrl);
+    }
+    setIsRedirecting(true);
+    window.location.assign(checkoutUrl);
+  };
+
+  const handleContinueToCheckout = () => {
+    if (!pendingCheckoutUrl) return;
+    setErrorMessage("");
+    goToCheckout(pendingCheckoutUrl);
+  };
 
   const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedState = e.target.value;
@@ -141,17 +181,18 @@ export default function CustomerForm({
 
       trackLead();
       
-      // Redirect to Holdam checkout if URL is available
       if (checkoutUrl) {
-        window.location.href = checkoutUrl;
-      } else {
-        router.push("/thank-you");
+        goToCheckout(checkoutUrl);
+        return;
       }
+
+      setIsSubmitting(false);
+      router.push("/thank-you");
     } catch (error) {
       console.error("[Order] Order submission error:", error);
       setErrorMessage("We could not submit your order. Please try again.");
-    } finally {
       setIsSubmitting(false);
+      setIsRedirecting(false);
     }
   };
 
@@ -161,6 +202,29 @@ export default function CustomerForm({
       [e.target.name]: e.target.value,
     }));
   };
+
+  const primaryButtonLabel = isRedirecting
+    ? "Opening checkout…"
+    : isSubmitting
+      ? variant === "inline"
+        ? "Processing..."
+        : "Submitting..."
+      : variant === "inline"
+        ? "Order Now"
+        : "Place Order";
+
+  const showContinuePayment =
+    !!pendingCheckoutUrl && !isSubmitting && !isRedirecting;
+
+  const continuePaymentLink = showContinuePayment ? (
+    <button
+      type="button"
+      onClick={handleContinueToCheckout}
+      className="text-sm font-medium text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline"
+    >
+      Continue to payment
+    </button>
+  ) : null;
 
   if (variant === "inline") {
     return (
@@ -199,12 +263,15 @@ export default function CustomerForm({
         </select>
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isRedirecting}
           className="px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          {isSubmitting ? "Processing..." : "Order Now"}
+          {primaryButtonLabel}
           <Send className="h-4 w-4" />
         </button>
+        {continuePaymentLink && (
+          <div className="w-full text-center sm:text-left">{continuePaymentLink}</div>
+        )}
         {isSubmitted && (
           <div className="sm:absolute sm:mt-16 flex items-center gap-2 text-green-600 text-sm">
             <CheckCircle className="h-4 w-4" />
@@ -258,14 +325,17 @@ export default function CustomerForm({
               </option>
             ))}
           </select>
-                    <button
+          <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isRedirecting}
             className="w-full px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isSubmitting ? "Submitting..." : "Place Order"}
+            {primaryButtonLabel}
             <Send className="h-4 w-4" />
           </button>
+          {continuePaymentLink && (
+            <div className="text-center">{continuePaymentLink}</div>
+          )}
         </form>
         {isSubmitted && (
           <div className="mt-3 flex items-center gap-2 text-green-600 text-sm">
@@ -354,12 +424,15 @@ export default function CustomerForm({
                   </div>
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isRedirecting}
           className="w-full px-6 py-4 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
         >
-          {isSubmitting ? "Submitting..." : "Place Order"}
+          {primaryButtonLabel}
           <Send className="h-5 w-5" />
         </button>
+        {continuePaymentLink && (
+          <div className="text-center">{continuePaymentLink}</div>
+        )}
       </form>
       {isSubmitted && (
         <div className="mt-4 flex items-center gap-2 text-green-600 bg-green-50 p-4 rounded-lg">

@@ -1,16 +1,36 @@
 'use client';
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 
 function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dealId = searchParams.get("deal_id");
 
+  useEffect(() => {
+    if (!dealId) {
+      router.replace("/thank-you");
+      return;
+    }
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key?.startsWith("holdam_checkout_")) keysToRemove.push(key);
+      }
+      keysToRemove.forEach((key) => sessionStorage.removeItem(key));
+    } catch {
+      /* ignore */
+    }
+  }, [dealId, router]);
+
   if (!dealId) {
-    router.replace("/thank-you");
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <p className="text-gray-600">Redirecting…</p>
+      </div>
+    );
   }
 
   return (

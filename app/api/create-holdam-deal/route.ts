@@ -121,7 +121,8 @@ export async function POST(req: NextRequest) {
     console.log("[API][create-holdam-deal] Deal response:", JSON.stringify(deal, null, 2));
     console.log("[API][create-holdam-deal] Deal keys:", Object.keys(deal));
 
-    await sendOrderEmail({
+    // Do not block redirect to checkout — email runs in background
+    void sendOrderEmail({
       productId,
       productName,
       productPrice,
@@ -130,6 +131,8 @@ export async function POST(req: NextRequest) {
       customerAddress: customerData.address,
       customerState: customerData.state,
       paymentStatus: "pending",
+    }).catch((err) => {
+      console.error("[API][create-holdam-deal] Order email failed:", err);
     });
 
     // Holdam SDK returns { data: { checkoutUrl, ... } }
