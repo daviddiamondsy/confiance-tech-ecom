@@ -1,3 +1,4 @@
+// Copyright © 2026 Holdam. All rights reserved.
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
