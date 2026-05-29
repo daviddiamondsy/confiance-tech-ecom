@@ -1,4 +1,6 @@
 // Copyright © 2026 Holdam. All rights reserved.
+// TODO: Demo e-commerce shell; redirects buyers to checkout-ui. Could be Vite unless we need
+// Next server features for Meta Pixel / SSR product pages.
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
