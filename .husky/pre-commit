@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+# Git/Cursor hooks use a minimal PATH; load nvm when npm is unavailable.
+if ! command -v npm >/dev/null 2>&1; then
+  export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+fi
+
+echo "Running production build before commit…"
+npm run build
