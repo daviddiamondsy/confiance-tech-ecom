@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const signature = req.headers.get("x-holdam-signature") ?? "";
 
     const holdam = new Holdam(apiKey, {
-      baseUrl: process.env.HOLDAM_BASE_URL || "https://api.holdam.ng/v1",
+      baseUrl: process.env.HOLDAM_BASE_URL || "https://escrow-backend-production-e42c.up.railway.app/v1",
     });
 
     const isValid = holdam.webhooks.verifySignature(rawBody, signature, webhookSecret);

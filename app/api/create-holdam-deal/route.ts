@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     }
 
     const apiKey = process.env.HOLDAM_API_KEY;
-    const baseUrl = process.env.HOLDAM_BASE_URL || "https://api.holdam.ng/v1";
+    const baseUrl = process.env.HOLDAM_BASE_URL || "https://escrow-backend-production-e42c.up.railway.app/v1";
     
     console.log("[API][create-holdam-deal] Configuration check", {
       hasApiKey: !!apiKey,

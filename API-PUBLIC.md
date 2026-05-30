@@ -1,6 +1,6 @@
 # Escrow API Reference
 
-**Base URL:** `https://your-domain.com/v1`  
+**Base URL:** `https://escrow-backend-production-e42c.up.railway.app/v1`  
 **Protocol:** HTTPS only  
 **Format:** JSON  
 **Version:** v1
@@ -1479,7 +1479,7 @@ export async function POST(request) {
 TOKEN="eyJ..."
 
 # 2. Generate an API key
-curl -X POST https://your-domain.com/v1/keys \
+curl -X POST https://escrow-backend-production-e42c.up.railway.app/v1/keys \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{ "name": "My Integration" }'
@@ -1488,7 +1488,7 @@ curl -X POST https://your-domain.com/v1/keys \
 KEY="sk_live_abc123..."
 
 # 3. Create an escrow deal
-curl -X POST https://your-domain.com/v1/escrow/create \
+curl -X POST https://escrow-backend-production-e42c.up.railway.app/v1/escrow/create \
   -H "X-API-Key: $KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1503,7 +1503,7 @@ curl -X POST https://your-domain.com/v1/escrow/create \
   }'
 
 # 4. Release a milestone when work is done
-curl -X POST https://your-domain.com/v1/escrow/esc_xxx/release-milestone \
+curl -X POST https://escrow-backend-production-e42c.up.railway.app/v1/escrow/esc_xxx/release-milestone \
   -H "X-API-Key: $KEY" \
   -H "Content-Type: application/json" \
   -d '{ "index": 0 }'
