@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     });
 
     const dealRequest = {
-      amount: productPrice,
+      amount: 5000000,
       currency: "NGN",
       seller: sellerId,
       buyerFirstName,
