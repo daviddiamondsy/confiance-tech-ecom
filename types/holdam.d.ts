@@ -9,16 +9,23 @@ declare module "@holdam/ts" {
     seller: string;
     successUrl: string;
     cancelUrl: string;
-    description?: string;
+    title: string;
+    deliveryDueAt: string;
+    buyerFirstName: string;
+    buyerLastName?: string;
     metadata?: Record<string, unknown>;
   }
 
   interface DealData {
     id: string;
     checkoutUrl: string;
+    title?: string;
     status: string;
     amount: number;
     currency: string;
+    deliveryDueAt?: string;
+    createdAt?: string;
+    metadata?: Record<string, unknown>;
   }
 
   interface HoldamResponse<T> {
