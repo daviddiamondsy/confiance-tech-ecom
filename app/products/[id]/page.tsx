@@ -7,6 +7,7 @@ import { Star, Truck, Shield, RotateCcw, Check } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { HOLDAM_DELIVERY_DAYS } from "@/lib/delivery-deadline";
 
 const products = [
 
@@ -276,6 +277,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                   productPrice={product.price}
                   productName={product.name}
                   productId={product.id}
+                  deliveryDays={HOLDAM_DELIVERY_DAYS}
                 />
               </div>
 
@@ -315,6 +317,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                   productPrice={product.price}
                   productName={product.name}
                   productId={product.id}
+                  deliveryDays={HOLDAM_DELIVERY_DAYS}
                 />
               </div>
 
@@ -385,6 +388,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                     productPrice={product.price}
                     productName={product.name}
                     productId={product.id}
+                    deliveryDays={HOLDAM_DELIVERY_DAYS}
                   />
                 </div>
               </div>

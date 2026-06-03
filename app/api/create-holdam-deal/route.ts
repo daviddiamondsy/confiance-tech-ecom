@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Holdam from "@holdam/ts";
 import { sendOrderEmail } from "@/lib/order-email";
+import { deliveryDueAtFromDays, resolveDeliveryDays } from "@/lib/delivery-deadline";
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
@@ -9,6 +10,7 @@ export async function POST(req: NextRequest) {
       productId,
       productName,
       productPrice,
+      deliveryDays,
       customerData,
     } = await req.json();
 
@@ -89,19 +91,33 @@ export async function POST(req: NextRequest) {
       buyerLastName,
     });
 
+    const amountNgn = Number(productPrice);
+    if (!Number.isFinite(amountNgn) || amountNgn < 1) {
+      return NextResponse.json(
+        { error: "Invalid product price" },
+        { status: 400 }
+      );
+    }
+
+    const deliverWithinDays = resolveDeliveryDays(deliveryDays);
+    const deliveryDueAt = deliveryDueAtFromDays(deliverWithinDays);
+
     const dealRequest = {
-      amount: 5000000,
+      amount: amountNgn,
       currency: "NGN",
       seller: sellerId,
       buyerFirstName,
       buyerLastName,
       title: `${productName} — Order for ${customerData.name}`,
+      deliveryDueAt,
       successUrl: `${siteBaseUrl}/payment-success?deal_id={DEAL_ID}`,
       cancelUrl: `${siteBaseUrl}/products/${productId}`,
       metadata: {
         productId,
         productName,
-        productPrice,
+        productPrice: amountNgn,
+        deliveryDays: deliverWithinDays,
+        deliveryDueAt,
         customerAddress: customerData.address,
         customerState: customerData.state,
         buyerPhone: customerData.phone,
@@ -111,7 +127,7 @@ export async function POST(req: NextRequest) {
     console.log("[API][create-holdam-deal] Calling Holdam SDK with request:", JSON.stringify(dealRequest, null, 2));
     const sdkCallStart = Date.now();
 
-    const deal = await holdam.deals.create(dealRequest as any) as unknown as { id: string };
+    const deal = await holdam.deals.create(dealRequest);
 
     const sdkCallDuration = Date.now() - sdkCallStart;
     console.log("[API][create-holdam-deal] Holdam SDK call completed", {

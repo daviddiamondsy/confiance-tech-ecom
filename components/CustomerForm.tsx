@@ -69,6 +69,8 @@ interface CustomerFormProps {
   productPrice?: number;
   productName?: string;
   productId?: string;
+  /** Days until delivery due (Holdam deliveryDueAt); defaults to HOLDAM_DELIVERY_DAYS server-side */
+  deliveryDays?: number;
 }
 
 
@@ -79,6 +81,7 @@ export default function CustomerForm({
   productPrice,
   productName,
   productId,
+  deliveryDays,
 }: CustomerFormProps) {
   const [formData, setFormData] = useState({
     name: "Test User",
@@ -155,6 +158,7 @@ export default function CustomerForm({
           productId,
           productName,
           productPrice,
+          deliveryDays,
           customerData: formData,
         }),
       });
