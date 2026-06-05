@@ -1,5 +1,8 @@
-/** Default delivery window for Confiance Tech orders (calendar days). */
-export const HOLDAM_DELIVERY_DAYS = 5;
+/** Default delivery window for Confiance Tech orders (maps to on-chain timeToDeliverDays). */
+export const HOLDAM_DELIVERY_DAYS = (() => {
+  const n = Number(process.env.HOLDAM_DELIVERY_DAYS);
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : 5;
+})();
 
 /**
  * Seller delivery promise for Holdam checkout (maps to SDK deliveryDueAt).
