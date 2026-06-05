@@ -7,9 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prepare": "husky"
+    "prepare": "husky",
+    "hooks:install": "husky"
   },
   "lint-staged": {
+    "*.{js,jsx,ts,tsx}": "next lint --file",
     "*.{ts,tsx}": "tsc-files --noEmit"
   },
   "dependencies": {
@@ -28,6 +30,8 @@
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "autoprefixer": "^10.4.18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.4",
     "postcss": "^8.4.35",
