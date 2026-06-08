@@ -151,9 +151,14 @@ export async function POST(req: NextRequest) {
       console.error("[API][create-holdam-deal] Order email failed:", err);
     });
 
-    // Holdam SDK returns { data: { checkoutUrl, ... } }
-    const dealData = (deal as any)?.data || deal;
-    const checkoutUrl = dealData?.checkoutUrl;
+    const dealRecord = deal && typeof deal === 'object' ? (deal as Record<string, unknown>) : {};
+    const nestedData = dealRecord.data;
+    const dealData =
+      nestedData && typeof nestedData === 'object'
+        ? (nestedData as Record<string, unknown>)
+        : dealRecord;
+    const checkoutUrl =
+      typeof dealData.checkoutUrl === 'string' ? dealData.checkoutUrl : undefined;
 
     console.log("[API][create-holdam-deal] Returning response:", { 
       dealId: dealData?.id, 
