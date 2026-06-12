@@ -87,7 +87,7 @@ export default function CustomerForm({
     name: "Test User",
     address: "123 Test Street, Lagos",
     state: "Lagos",
-    phone: "08012345678",
+    phone: "09012345678",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
