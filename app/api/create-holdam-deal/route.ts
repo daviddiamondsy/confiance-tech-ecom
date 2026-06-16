@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
       seller: sellerId,
       buyerFirstName,
       buyerLastName,
-      title: `${productName} — Order for ${customerData.name}`,
+      title: `${productName}, Order for ${customerData.name}`,
       deliveryDueAt,
       successUrl: `${siteBaseUrl}/payment-success?deal_id={DEAL_ID}`,
       cancelUrl: `${siteBaseUrl}/products/${productId}`,
