@@ -37,11 +37,11 @@ export async function POST(req: NextRequest) {
 
     switch (event.event) {
       case "deal.funded":
-        console.log("[Webhook][holdam] Deal funded — payment secured", { dealId, metadata });
+        console.log("[Webhook][holdam] Deal funded; payment secured", { dealId, metadata });
         break;
 
       case "deal.released":
-        console.log("[Webhook][holdam] Deal released — funds sent to seller", { dealId, metadata });
+        console.log("[Webhook][holdam] Deal released; funds sent to seller", { dealId, metadata });
         break;
 
       case "deal.disputed":

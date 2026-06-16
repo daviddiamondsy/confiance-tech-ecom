@@ -9,7 +9,7 @@
 
 ## Overview
 
-The Escrow API lets you embed programmable escrow directly into any application. Every action your own app takes — create a deal, fund it, release a milestone, raise a dispute — is a clean API call. External developers access the exact same surface.
+The Escrow API lets you embed programmable escrow directly into any application. Every action your own app takes (create a deal, fund it, release a milestone, raise a dispute; is a clean API call. External developers access the exact same surface.
 
 ```
 Your App  ──┐
@@ -67,9 +67,9 @@ All responses follow a consistent shape:
 |------|---------|
 | `200` | OK |
 | `201` | Created |
-| `400` | Bad Request — missing or invalid fields |
-| `401` | Unauthorized — missing/invalid token or API key |
-| `403` | Forbidden — authenticated but not allowed |
+| `400` | Bad Request: missing or invalid fields |
+| `401` | Unauthorized: missing/invalid token or API key |
+| `403` | Forbidden: authenticated but not allowed |
 | `404` | Not Found |
 | `429` | Rate limit exceeded |
 | `500` | Internal server error |
@@ -360,7 +360,7 @@ Authorization: Bearer <jwt_token> | X-API-Key: <key>
 ```
 Returns all escrows where the authenticated user is buyer or seller.
 
-**Response `200`** — array of escrow objects in the same camelCase shape as the create response. Each escrow includes its `milestones` array.
+**Response `200`**; array of escrow objects in the same camelCase shape as the create response. Each escrow includes its `milestones` array.
 
 ### Get a single escrow
 ```
@@ -369,7 +369,7 @@ Authorization: Bearer <jwt_token> | X-API-Key: <key>
 ```
 `:id` accepts either the numeric DB id or the string `escrow_id`. State is synced from the Polygon smart contract on every fetch.
 
-**Response `200`** — escrow object in the same camelCase shape as the create response, including `milestones`.
+**Response `200`**; escrow object in the same camelCase shape as the create response, including `milestones`.
 
 ### Get public checkout data
 ```
@@ -438,7 +438,7 @@ Authorization: Bearer <jwt_token> | X-API-Key: <key>
 ```
 Buyer calls this to lock funds into the smart contract from their wallet. Must be called after seller accepts.
 
-**Response `200`** — updated escrow object with `status: "active"`.
+**Response `200`**; updated escrow object with `status: "active"`.
 
 ### Accept invitation (seller)
 ```
@@ -447,7 +447,7 @@ Authorization: Bearer <jwt_token> | X-API-Key: <key>
 ```
 Only the seller of the escrow can call this. Moves status to `active`.
 
-**Response `200`** — updated escrow object.
+**Response `200`**; updated escrow object.
 
 ### Decline invitation (seller)
 ```
@@ -468,7 +468,7 @@ Authorization: Bearer <jwt_token> | X-API-Key: <key>
 ```
 Buyer confirms all work is delivered. Releases all milestones on-chain and moves status to `completed`.
 
-**Response `200`** — updated escrow object with `status: "completed"` and all milestones `status: "released"`.
+**Response `200`**; updated escrow object with `status: "completed"` and all milestones `status: "released"`.
 
 ### Release a milestone (buyer)
 ```
@@ -481,7 +481,7 @@ Authorization: Bearer <jwt_token> | X-API-Key: <key>
 ```
 Releases a single milestone by index (0-based). Funds are sent to the seller on-chain.
 
-**Response `200`** — updated escrow object with the target milestone's `status` changed to `"released"`.
+**Response `200`**; updated escrow object with the target milestone's `status` changed to `"released"`.
 
 ### Raise a dispute
 ```
@@ -494,7 +494,7 @@ Authorization: Bearer <jwt_token> | X-API-Key: <key>
 ```
 Either buyer or seller may call this. Moves status to `disputed`.
 
-**Response `200`** — updated escrow object with `status: "disputed"` and `hasDispute: true`.
+**Response `200`**; updated escrow object with `status: "disputed"` and `hasDispute: true`.
 
 ### Get deal messages
 ```
@@ -585,7 +585,7 @@ Authorization: Bearer <jwt_token> | X-API-Key: <key>
 GET /v1/wallet/transactions
 Authorization: Bearer <jwt_token> | X-API-Key: <key>
 ```
-**Response `200`** — array of transaction objects:
+**Response `200`**; array of transaction objects:
 ```json
 [
   {
@@ -594,7 +594,7 @@ Authorization: Bearer <jwt_token> | X-API-Key: <key>
     "amount": 150,
     "currency": "NGN",
     "status": "pending",
-    "description": "Top-up via bank — ref: TOPUP-1-1714150800000",
+    "description": "Top-up via bank, ref: TOPUP-1-1714150800000",
     "created_at": "2026-04-26T17:00:00.000Z",
     "escrow_id": null
   }
@@ -756,7 +756,7 @@ Authorization: Bearer <jwt_token> | X-API-Key: <key>
 ```json
 { "name": "Ada Okonkwo" }
 ```
-**Response `200`** — updated user object.
+**Response `200`**; updated user object.
 
 ### Save bank account
 ```
