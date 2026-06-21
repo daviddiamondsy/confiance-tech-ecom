@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { Star, ArrowRight } from "lucide-react";
 
 interface Product {
   id: string;
@@ -23,22 +23,23 @@ export default function ProductCard({ product }: ProductCardProps) {
     : null;
 
   return (
-    <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
-      <Link href={`/products/${product.id}`}>
-        <div className="relative aspect-square bg-gray-100 overflow-hidden">
+    <article className="group card-elevated overflow-hidden hover:-translate-y-1">
+      <Link href={`/products/${product.id}`} className="block">
+        <div className="relative aspect-square bg-slate-100 overflow-hidden">
           <Image
             src={product.image}
             alt={product.name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           {product.badge && (
-            <span className="absolute top-3 left-3 px-3 py-1 bg-primary-600 text-white text-xs font-semibold rounded-full">
+            <span className="absolute top-3 left-3 px-3 py-1 bg-primary-600 text-white text-xs font-semibold rounded-full shadow-soft">
               {product.badge}
             </span>
           )}
           {discount && (
-            <span className="absolute top-3 right-3 px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full">
+            <span className="absolute top-3 right-3 px-3 py-1 bg-rose-500 text-white text-xs font-semibold rounded-full shadow-soft">
               -{discount}%
             </span>
           )}
@@ -46,43 +47,44 @@ export default function ProductCard({ product }: ProductCardProps) {
       </Link>
 
       <div className="p-5">
-        <div className="flex items-center gap-1 mb-2">
+        <div className="flex items-center gap-1 mb-2.5">
           {[...Array(5)].map((_, i) => (
             <Star
               key={i}
-              className={`h-4 w-4 ${
+              className={`h-3.5 w-3.5 ${
                 i < Math.floor(product.rating)
-                  ? "fill-yellow-400 text-yellow-400"
-                  : "text-gray-300"
+                  ? "fill-amber-400 text-amber-400"
+                  : "text-slate-200"
               }`}
             />
           ))}
-          <span className="text-sm text-gray-500 ml-1">({product.reviews})</span>
+          <span className="text-xs text-slate-500 ml-1">({product.reviews})</span>
         </div>
 
         <Link href={`/products/${product.id}`}>
-          <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
+          <h3 className="font-display font-semibold text-slate-900 mb-3 line-clamp-2 group-hover:text-primary-600 transition-colors leading-snug">
             {product.name}
           </h3>
         </Link>
 
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xl font-bold text-gray-900">
+        <div className="flex items-baseline gap-2 mb-4">
+          <span className="text-xl font-bold text-slate-900">
             ₦{product.price.toLocaleString()}
           </span>
           {product.originalPrice && (
-            <span className="text-sm text-gray-500 line-through">
+            <span className="text-sm text-slate-400 line-through">
               ₦{product.originalPrice.toLocaleString()}
             </span>
           )}
         </div>
 
         <Link href={`/products/${product.id}`}>
-          <button className="w-full py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-primary-600 transition-colors flex items-center justify-center gap-2">
+          <span className="w-full py-2.5 bg-slate-900 text-white text-sm font-medium rounded-xl hover:bg-primary-600 transition-all duration-200 flex items-center justify-center gap-2 group/btn">
             View Product
-          </button>
+            <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-0.5 transition-transform" />
+          </span>
         </Link>
       </div>
-    </div>
+    </article>
   );
 }
