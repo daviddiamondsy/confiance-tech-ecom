@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ImageCarouselProps {
   images: string[];
@@ -21,45 +22,60 @@ export default function ImageCarousel({ images, productName }: ImageCarouselProp
   };
 
   return (
-    <div className="relative bg-gray-100 rounded-2xl overflow-hidden">
-      <div className="aspect-video relative">
+    <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-card">
+      <div className="aspect-video relative bg-slate-100">
         <Image
           src={images[currentImageIndex]}
           alt={`${productName} - Image ${currentImageIndex + 1}`}
           fill
           className="object-cover"
         />
-        {/* Navigation Arrows */}
         <button
           onClick={handlePrevImage}
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg transition-colors"
+          className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-900 p-2.5 rounded-xl shadow-soft transition-all hover:scale-105"
+          aria-label="Previous image"
         >
-          <ChevronLeft className="h-6 w-6" />
+          <ChevronLeft className="h-5 w-5" />
         </button>
         <button
           onClick={handleNextImage}
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg transition-colors"
+          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-900 p-2.5 rounded-xl shadow-soft transition-all hover:scale-105"
+          aria-label="Next image"
         >
-          <ChevronRight className="h-6 w-6" />
+          <ChevronRight className="h-5 w-5" />
         </button>
-        {/* Dots Indicator */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
           {images.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentImageIndex(index)}
-              className={`w-3 h-3 rounded-full transition-colors ${
+              aria-label={`Go to image ${index + 1}`}
+              className={cn(
+                "h-2 rounded-full transition-all duration-300",
                 index === currentImageIndex
-                  ? "bg-white"
-                  : "bg-white/50 hover:bg-white/70"
-              }`}
+                  ? "w-6 bg-white"
+                  : "w-2 bg-white/50 hover:bg-white/70"
+              )}
             />
           ))}
         </div>
       </div>
-      <p className="text-gray-600 mt-4 text-center">
-        Image {currentImageIndex + 1} of {images.length}
-      </p>
+      <div className="flex gap-2 p-3 bg-white overflow-x-auto">
+        {images.map((img, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentImageIndex(index)}
+            className={cn(
+              "relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ring-2 transition-all",
+              index === currentImageIndex
+                ? "ring-primary-500"
+                : "ring-transparent hover:ring-slate-300"
+            )}
+          >
+            <Image src={img} alt="" fill className="object-cover" />
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

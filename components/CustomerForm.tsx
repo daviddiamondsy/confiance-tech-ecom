@@ -240,7 +240,7 @@ export default function CustomerForm({
           onChange={handleChange}
           placeholder="Your name"
           required
-          className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none min-w-[150px]"
+          className="input-field flex-1 min-w-[150px]"
         />
         <input
           type="tel"
@@ -249,14 +249,14 @@ export default function CustomerForm({
           onChange={handleChange}
           placeholder="Phone number"
           required
-          className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none min-w-[150px]"
+          className="input-field flex-1 min-w-[150px]"
         />
         <select
           name="state"
           value={formData.state}
           onChange={handleStateChange}
           required
-          className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white min-w-[150px]"
+          className="input-field flex-1 bg-white min-w-[150px]"
         >
           <option value="">Select state</option>
           {nigerianStates.map((state) => (
@@ -268,7 +268,7 @@ export default function CustomerForm({
         <button
           type="submit"
           disabled={isSubmitting || isRedirecting}
-          className="px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          className="btn-primary disabled:opacity-50"
         >
           {primaryButtonLabel}
           <Send className="h-4 w-4" />
@@ -293,9 +293,9 @@ export default function CustomerForm({
 
   if (variant === "compact") {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">{title}</h3>
-        <p className="text-sm text-gray-600 mb-4">{subtitle}</p>
+      <div className="card-elevated p-6">
+        <h3 className="font-display text-lg font-semibold text-slate-900 mb-1">{title}</h3>
+        <p className="text-sm text-slate-600 mb-4">{subtitle}</p>
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
             type="text"
@@ -304,7 +304,7 @@ export default function CustomerForm({
             onChange={handleChange}
             placeholder="Your name"
             required
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm"
+            className="input-field text-sm py-2.5"
           />
           <input
             type="tel"
@@ -313,14 +313,14 @@ export default function CustomerForm({
             onChange={handleChange}
             placeholder="Phone number"
             required
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm"
+            className="input-field text-sm py-2.5"
           />
           <select
             name="state"
             value={formData.state}
             onChange={handleStateChange}
             required
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm bg-white"
+            className="input-field text-sm py-2.5 bg-white"
           >
             <option value="">Select state</option>
             {nigerianStates.map((state) => (
@@ -332,7 +332,7 @@ export default function CustomerForm({
           <button
             type="submit"
             disabled={isSubmitting || isRedirecting}
-            className="w-full px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="btn-primary w-full text-sm py-2.5 disabled:opacity-50"
           >
             {primaryButtonLabel}
             <Send className="h-4 w-4" />
@@ -357,12 +357,12 @@ export default function CustomerForm({
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-8">
-      <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600 mb-6">{subtitle}</p>
+    <div className="card-elevated p-8">
+      <h3 className="font-display text-2xl font-bold text-slate-900 mb-2">{title}</h3>
+      <p className="text-slate-600 mb-6">{subtitle}</p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1.5">
             Full Name *
           </label>
           <input
@@ -373,11 +373,11 @@ export default function CustomerForm({
             onChange={handleChange}
             placeholder="John Doe"
             required
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+            className="input-field"
           />
         </div>
         <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-1.5">
             Phone Number *
           </label>
           <input
@@ -388,11 +388,11 @@ export default function CustomerForm({
             onChange={handleChange}
             placeholder="+1 (555) 123-4567"
             required
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+            className="input-field"
           />
         </div>
         <div>
-          <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="address" className="block text-sm font-medium text-slate-700 mb-1.5">
             Address *
           </label>
           <input
@@ -403,11 +403,11 @@ export default function CustomerForm({
             onChange={handleChange}
             placeholder="123 Main Street, Apartment 4B"
             required
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+            className="input-field"
           />
         </div>
         <div>
-          <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="state" className="block text-sm font-medium text-slate-700 mb-1.5">
             State *
           </label>
           <select
@@ -416,7 +416,7 @@ export default function CustomerForm({
             value={formData.state}
             onChange={handleStateChange}
             required
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white"
+            className="input-field bg-white"
           >
             <option value="">Select a state</option>
             {nigerianStates.map((state) => (
@@ -429,7 +429,7 @@ export default function CustomerForm({
         <button
           type="submit"
           disabled={isSubmitting || isRedirecting}
-          className="w-full px-6 py-4 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
+          className="btn-primary w-full py-4 text-lg disabled:opacity-50"
         >
           {primaryButtonLabel}
           <Send className="h-5 w-5" />
