@@ -24,13 +24,8 @@ const dmSans = DM_Sans({
 const META_PIXEL_ID = "YOUR_PIXEL_ID_HERE";
 
 export const metadata: Metadata = {
-  title: "Confiance Tech - Premium Electronics",
-  description: "Your trusted source for premium tech products",
-  icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
-  },
+  title: "Confiance Tech - Grade A Computing Devices",
+  description: "Clean Grade A computing devices with accessories. Inspected, tested, and delivered with care nationwide.",
 };
 
 export default function RootLayout({

@@ -2,38 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { Filter, Grid3X3, List, ChevronDown, Package } from "lucide-react";
-
-const allProducts = [
-  {
-    id: "3",
-    name: "Apple iPhone 12 128GB",
-    price: 599.99,
-    originalPrice: 799.99,
-    rating: 4.8,
-    reviews: 892,
-    image: "https://images.unsplash.com/photo-1605236453806-6ff36851218e?w=500&h=500&fit=crop",
-    badge: "Popular",
-  },
-  {
-    id: "4",
-    name: "Dell Latitude 3190 Laptop",
-    price: 349.99,
-    originalPrice: 499.99,
-    rating: 4.5,
-    reviews: 156,
-    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&h=500&fit=crop",
-  },
-  {
-    id: "5",
-    name: "Dell Latitude 3189 Laptop",
-    price: 349.99,
-    originalPrice: 449.99,
-    rating: 4.4,
-    reviews: 98,
-    image: "/dell-3189-images/dell-latitude-3189-2.jpg.webp",
-    badge: "New",
-  },
-];
+import { products as allProducts } from "@/lib/products";
 
 const categories = [
   "All Products",
@@ -66,7 +35,7 @@ export default function ProductsPage() {
             All Products
           </h1>
           <p className="text-slate-400 mt-3 max-w-lg">
-            Browse our complete collection of premium refurbished tech products
+            Explore our range of clean Grade A computing devices with accessories included
           </p>
         </div>
       </div>
