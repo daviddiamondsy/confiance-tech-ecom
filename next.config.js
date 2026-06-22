@@ -4,10 +4,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Turbopack for Next.js 14 — dramatically faster HMR and cold starts.
-  experimental: {
-    turbo: {},
-  },
 };
 
 module.exports = nextConfig;

@@ -6,6 +6,11 @@ import { cn } from "@/lib/utils";
 
 const faqs = [
   {
+    question: "What does Grade A mean?",
+    answer:
+      "Grade A means the device is clean, fully functional, and in excellent cosmetic condition. Each unit is inspected and tested before dispatch, and accessories are included where listed.",
+  },
+  {
     question: "How do I place an order?",
     answer:
       "Browse our products, select the one you want, and fill out the order form with your name, address, state, and phone number. We will contact you to confirm your order.",

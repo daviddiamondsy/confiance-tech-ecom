@@ -4,38 +4,7 @@ import ProductCard from "@/components/ProductCard";
 import FaqAccordion from "@/components/FaqAccordion";
 import { ArrowRight, Truck, Headphones, Zap, Shield, Sparkles } from "lucide-react";
 import Link from "next/link";
-
-const products = [
-  {
-    id: "3",
-    name: "Apple iPhone 12 128GB (UK Used)",
-    price: 329000,
-    originalPrice: 380000,
-    rating: 4.8,
-    reviews: 892,
-    image: "https://images.unsplash.com/photo-1605236453806-6ff36851218e?w=500&h=500&fit=crop",
-    badge: "Popular",
-  },
-  {
-    id: "4",
-    name: "Dell Latitude 3190 Laptop (UK Used)",
-    price: 195000,
-    originalPrice: 230000,
-    rating: 4.5,
-    reviews: 156,
-    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&h=500&fit=crop",
-  },
-  {
-    id: "5",
-    name: "Dell Latitude 3189 Laptop (UK Used)",
-    price: 200000,
-    originalPrice: 250000,
-    rating: 4.4,
-    reviews: 98,
-    image: "/dell-3189-images/dell-latitude-3189-2.jpg.webp",
-    badge: "New",
-  },
-];
+import { products } from "@/lib/products";
 
 const features = [
   {
@@ -45,8 +14,8 @@ const features = [
   },
   {
     icon: Shield,
-    title: "Quality Guaranteed",
-    description: "Tested and certified devices",
+    title: "Trusted Quality",
+    description: "Clean, inspected devices",
   },
   {
     icon: Headphones,
@@ -75,16 +44,16 @@ export default function Home() {
           <div className="max-w-3xl animate-slide-up">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 text-primary-300 text-sm font-medium rounded-full mb-8 border border-white/10 backdrop-blur-sm">
               <Sparkles className="h-4 w-4" />
-              New Collection 2026
+              Trusted Tech, Built to Last
             </span>
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-[1.1] tracking-tight">
-              Premium Tech for
+              Computing You Can
               <span className="block mt-1 bg-gradient-to-r from-primary-400 via-violet-400 to-primary-300 bg-clip-text text-transparent">
-                Modern Life
+                Count On
               </span>
             </h1>
             <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-xl leading-relaxed">
-              Discover cutting-edge refurbished electronics designed to elevate your everyday experience. Quality meets innovation.
+              We source clean Grade A devices with accessories included, so you get reliable tech without the guesswork. Every unit is inspected before it ships.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/products" className="btn-primary px-8 py-4 text-base">
@@ -128,7 +97,7 @@ export default function Home() {
               Featured Products
             </h2>
             <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              Premium refurbished and UK-used tech products at unbeatable prices. Quality tested, certified, and backed by our guarantee.
+              Hand-picked Grade A devices with accessories included. Each one is inspected, tested, and backed by our guarantee.
             </p>
           </div>
 
