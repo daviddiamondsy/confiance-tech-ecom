@@ -151,17 +151,11 @@ export async function POST(req: NextRequest) {
       console.error("[API][create-holdam-deal] Order email failed:", err);
     });
 
-    const dealRecord = deal && typeof deal === 'object' ? (deal as Record<string, unknown>) : {};
-    const nestedData = dealRecord.data;
-    const dealData =
-      nestedData && typeof nestedData === 'object'
-        ? (nestedData as Record<string, unknown>)
-        : dealRecord;
-    const checkoutUrl =
-      typeof dealData.checkoutUrl === 'string' ? dealData.checkoutUrl : undefined;
+    const dealData = deal.data;
+    const checkoutUrl = dealData.checkoutUrl;
 
     console.log("[API][create-holdam-deal] Returning response:", { 
-      dealId: dealData?.id, 
+      dealId: dealData.id, 
       checkoutUrl,
       totalDuration: `${Date.now() - startTime}ms`,
     });
@@ -169,7 +163,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      dealId: dealData?.id,
+      dealId: dealData.id,
       deal: dealData,
       checkoutUrl,
     });
