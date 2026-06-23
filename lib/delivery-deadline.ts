@@ -1,3 +1,6 @@
+/** Customer-facing delivery estimate shown on product pages, FAQ, and homepage. */
+export const DELIVERY_ESTIMATE_COPY = "3-5 business days";
+
 /** Default delivery window for Confiance Tech orders (maps to on-chain timeToDeliverDays). */
 export const HOLDAM_DELIVERY_DAYS = (() => {
   const n = Number(process.env.HOLDAM_DELIVERY_DAYS);
@@ -6,7 +9,7 @@ export const HOLDAM_DELIVERY_DAYS = (() => {
 
 /**
  * Seller delivery promise for Holdam checkout (maps to SDK deliveryDueAt).
- * Default 5 days aligns with site copy ("1–3 business days") plus buffer before payment.
+ * Default 5 calendar days aligns with site copy ("3-5 business days").
  */
 export function deliveryDueAtFromDays(days: number, from = new Date()): string {
   const d = Math.max(1, Math.floor(Number(days) || 5));

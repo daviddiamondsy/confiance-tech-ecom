@@ -8,6 +8,7 @@ import { Truck, Shield, RotateCcw, Check } from "lucide-react";
 import Image from "next/image";
 import type { Product } from "@/lib/product-utils";
 import { getSelectedVariant, getDisplaySpecs } from "@/lib/product-utils";
+import { DELIVERY_ESTIMATE_COPY } from "@/lib/delivery-deadline";
 
 interface ProductDetailViewProps {
   product: Product;
@@ -241,7 +242,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                   <div className="p-6 bg-white rounded-2xl border border-slate-100 shadow-soft">
                     <h4 className="font-display font-semibold text-slate-900 mb-2">Fast Delivery Nationwide</h4>
                     <p className="text-slate-600 leading-relaxed">
-                      Get your order delivered within 1-3 business days anywhere in Nigeria. Track your package every step of the way.
+                      Get your order delivered within {DELIVERY_ESTIMATE_COPY} anywhere in Nigeria. Track your package every step of the way.
                     </p>
                   </div>
                   <div className="p-6 bg-white rounded-2xl border border-slate-100 shadow-soft">
