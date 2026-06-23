@@ -318,7 +318,7 @@ export default function CustomerForm({
             name="name"
             value={formData.name}
             onChange={handleChange}
-            placeholder="John Doe"
+            placeholder="Your full name"
             required
             className="input-field"
           />
@@ -333,7 +333,7 @@ export default function CustomerForm({
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            placeholder="08012345678"
+            placeholder="Phone number"
             required
             className="input-field"
           />
@@ -348,7 +348,7 @@ export default function CustomerForm({
             name="address"
             value={formData.address}
             onChange={handleChange}
-            placeholder="123 Main Street, Apartment 4B"
+            placeholder="Delivery address"
             required
             className="input-field"
           />
