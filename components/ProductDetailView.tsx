@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import CustomerForm from "@/components/CustomerForm";
 import ImageCarousel from "@/components/ImageCarousel";
 import ProductSpecifications from "@/components/ProductSpecifications";
-import { Star, Truck, Shield, RotateCcw, Check } from "lucide-react";
+import { Truck, Shield, RotateCcw, Check } from "lucide-react";
 import Image from "next/image";
 import type { Product } from "@/lib/product-utils";
 import { getSelectedVariant, getDisplaySpecs } from "@/lib/product-utils";
@@ -48,22 +48,6 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
           </div>
 
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`h-5 w-5 ${
-                    i < Math.floor(product.rating)
-                      ? "fill-amber-400 text-amber-400"
-                      : "text-slate-200"
-                  }`}
-                />
-              ))}
-              <span className="text-sm text-slate-500 ml-2">
-                {product.rating} ({product.reviews} reviews)
-              </span>
-            </div>
-
             <h1 className="font-display text-3xl md:text-4xl font-bold text-slate-900 mb-4 tracking-tight">
               {variant.displayName}
             </h1>

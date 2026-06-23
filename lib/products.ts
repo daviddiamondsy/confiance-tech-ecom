@@ -25,14 +25,14 @@ function priceFromYuan(yuan: number): number {
 }
 
 /**
- * Charm pricing: largest amount ≤ `price` that ends in 999.
- * Floors to the nearest ₦1,000, sets the last three digits to 999,
+ * Charm pricing: largest amount ≤ `price` that ends in 9999.
+ * Floors to the nearest ₦10,000, sets the last four digits to 9999,
  * and steps down one block if that would exceed the calculated selling price.
  */
 function toCharmPrice(price: number): number {
-  if (price < 999) return price;
-  const candidate = Math.floor(price / 1_000) * 1_000 + 999;
-  return candidate <= price ? candidate : candidate - 1_000;
+  if (price < 9999) return price;
+  const candidate = Math.floor(price / 10_000) * 10_000 + 9999;
+  return candidate <= price ? candidate : candidate - 10_000;
 }
 
 export const products: Product[] = [
@@ -40,8 +40,6 @@ export const products: Product[] = [
     id: "6",
     name: "Apple iPhone 13 256GB (Clean)",
     price: priceFromYuan(1700),
-    rating: 4.8,
-    reviews: 654,
     image: PRODUCT_IMAGES.iphone13,
     badge: "Popular",
     description:
@@ -67,8 +65,6 @@ export const products: Product[] = [
     id: "7",
     name: "Apple iPhone 14 Pro 256GB (Clean)",
     price: priceFromYuan(3000),
-    rating: 4.9,
-    reviews: 421,
     image: PRODUCT_IMAGES.iphone14Pro,
     description:
       "The iPhone 14 Pro introduces Dynamic Island, Always-On display, A16 Bionic chip, and a 48MP Pro camera system. Clean condition with accessories included. Inspected, tested, and certified.",
@@ -93,8 +89,6 @@ export const products: Product[] = [
     id: "8",
     name: "Apple iPhone 15 Pro Max (Clean)",
     price: priceFromYuan(4600),
-    rating: 4.9,
-    reviews: 312,
     image: PRODUCT_IMAGES.iphone15ProMax,
     badge: "New",
     description:
@@ -124,8 +118,6 @@ export const products: Product[] = [
     id: "9",
     name: "Apple iPhone 12 Pro Max (Clean)",
     price: priceFromYuan(2000),
-    rating: 4.8,
-    reviews: 287,
     image: PRODUCT_IMAGES.iphone12ProMax,
     description:
       "The iPhone 12 Pro Max features a 6.7-inch Super Retina XDR display, A14 Bionic chip, and a pro camera system with LiDAR. Clean condition with accessories included. Inspected, tested, and certified.",
@@ -154,8 +146,6 @@ export const products: Product[] = [
     id: "10",
     name: "Apple iPhone 14 Pro Max (Clean)",
     price: priceFromYuan(3500),
-    rating: 4.9,
-    reviews: 356,
     image: PRODUCT_IMAGES.iphone14ProMax,
     badge: "Popular",
     description:
@@ -185,8 +175,6 @@ export const products: Product[] = [
     id: "12",
     name: "Apple iPhone 13 Pro Max 512GB (Clean)",
     price: priceFromYuan(3000),
-    rating: 4.9,
-    reviews: 198,
     image: PRODUCT_IMAGES.iphone13ProMax,
     description:
       "The iPhone 13 Pro Max features a 6.7-inch Super Retina XDR display with ProMotion, A15 Bionic chip, and a pro camera system with 3x telephoto. Clean condition with accessories included. Inspected, tested, and certified.",
@@ -211,8 +199,6 @@ export const products: Product[] = [
     id: "11",
     name: "Apple MacBook Pro M4 24GB 512GB (Clean)",
     price: priceFromYuan(10500),
-    rating: 4.9,
-    reviews: 94,
     image: PRODUCT_IMAGES.macbookPro,
     badge: "New",
     description:
