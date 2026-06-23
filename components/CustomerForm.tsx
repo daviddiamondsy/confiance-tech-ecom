@@ -87,10 +87,10 @@ export default function CustomerForm({
   deliveryDays,
 }: CustomerFormProps) {
   const [formData, setFormData] = useState({
-    name: "Test User",
-    address: "123 Test Street, Lagos",
-    state: "Lagos",
-    phone: "09012345678",
+    name: "",
+    address: "",
+    state: "",
+    phone: "",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
