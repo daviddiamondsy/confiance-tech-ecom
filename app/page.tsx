@@ -2,33 +2,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import FaqAccordion from "@/components/FaqAccordion";
-import { ArrowRight, Truck, Headphones, Zap, Shield, Sparkles } from "lucide-react";
+import TrustFeaturesGrid from "@/components/TrustFeaturesGrid";
+import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { getProducts } from "@/lib/products";
-import { DELIVERY_ESTIMATE_COPY } from "@/lib/delivery-deadline";
-
-const features = [
-  {
-    icon: Truck,
-    title: "Fast Delivery",
-    description: DELIVERY_ESTIMATE_COPY,
-  },
-  {
-    icon: Shield,
-    title: "Trusted Quality",
-    description: "Clean, inspected devices",
-  },
-  {
-    icon: Headphones,
-    title: "24/7 Support",
-    description: "Round the clock help",
-  },
-  {
-    icon: Zap,
-    title: "Clean Devices",
-    description: "Inspected before every shipment",
-  },
-];
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +34,7 @@ export default async function Home() {
               </span>
             </h1>
             <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-xl leading-relaxed">
-              We source clean Grade A devices with accessories included, so you get reliable tech without the guesswork. Every unit is inspected before it ships.
+              We source clean Grade A devices so you get reliable tech without the guesswork. Every unit is inspected before it ships.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/products" className="btn-primary px-8 py-4 text-base">
@@ -74,22 +51,7 @@ export default async function Home() {
 
       {/* Features Section */}
       <section className="relative -mt-8 z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="card-elevated p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:-translate-y-0.5"
-            >
-              <div className="h-11 w-11 bg-gradient-to-br from-primary-500 to-violet-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-glow">
-                <feature.icon className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h3 className="font-display font-semibold text-slate-900 text-sm">{feature.title}</h3>
-                <p className="text-xs text-slate-500 mt-0.5">{feature.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <TrustFeaturesGrid />
       </section>
 
       {/* Products Section */}
@@ -101,7 +63,7 @@ export default async function Home() {
               Featured Products
             </h2>
             <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              Hand-picked Grade A devices with accessories included. Each one is inspected, tested, and backed by our guarantee.
+              Hand-picked Grade A devices. Each one is inspected, tested, and backed by our guarantee.
             </p>
           </div>
 
