@@ -10,6 +10,7 @@ export const CATALOG_YUAN: Record<
   "10": { yuan: 3500, storageYuan: { "256GB": 3500, "512GB": 3900 } },
   "11": { yuan: 10500 },
   "12": { yuan: 3000 },
+  "13": { yuan: 2550 },
 };
 
 /** Catalog filter tag slug per product id. */
@@ -21,6 +22,7 @@ export const CATALOG_FILTERS: Record<string, string> = {
   "10": "iphone",
   "11": "macbook",
   "12": "iphone",
+  "13": "iphone",
 };
 
 /** Default colors shown on product pages (display only). */
@@ -32,4 +34,5 @@ export const DEFAULT_PRODUCT_COLORS: Record<string, string[]> = {
   "10": ["Space Black", "Silver", "Gold", "Deep Purple"],
   "11": ["Space Black", "Silver"],
   "12": ["Graphite", "Gold", "Silver", "Sierra Blue", "Alpine Green"],
+  "13": ["Graphite", "Gold", "Silver", "Sierra Blue", "Alpine Green"],
 };
