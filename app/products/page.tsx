@@ -2,13 +2,14 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductsCatalog from "@/components/ProductsCatalog";
 import { Package } from "lucide-react";
+import { getProductFilterTags } from "@/lib/product-filters";
 import { getProducts } from "@/lib/products";
 import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
-  const allProducts = await getProducts();
+  const [allProducts, filterTags] = await Promise.all([getProducts(), getProductFilterTags()]);
 
   return (
     <div className="min-h-screen bg-surface-muted">
@@ -40,7 +41,7 @@ export default async function ProductsPage() {
             <p className="text-sm text-slate-500">Loading products...</p>
           }
         >
-          <ProductsCatalog products={allProducts} />
+          <ProductsCatalog products={allProducts} filterTags={filterTags} />
         </Suspense>
       </div>
 

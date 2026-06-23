@@ -16,6 +16,7 @@ export interface Product {
   specifications: Record<string, string>;
   storageOptions?: StorageOption[];
   colorOptions?: string[];
+  filterSlug?: string;
   images?: string[];
   video?: string;
 }
