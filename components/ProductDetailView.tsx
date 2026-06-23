@@ -232,7 +232,9 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                         <feature.icon className="h-5 w-5 text-primary-600 flex-shrink-0" />
                         <h4 className="font-display font-semibold text-slate-900">{feature.title}</h4>
                       </div>
-                      <p className="text-slate-600 leading-relaxed">{feature.description}</p>
+                      {feature.description ? (
+                        <p className="text-slate-600 leading-relaxed">{feature.description}</p>
+                      ) : null}
                     </div>
                   ))}
                 </div>

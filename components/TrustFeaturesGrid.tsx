@@ -19,7 +19,9 @@ export default function TrustFeaturesGrid({ variant = "homepage", className }: T
           <div key={feature.title} className="text-center">
             <feature.icon className="h-6 w-6 text-primary-600 mx-auto mb-2" />
             <p className="text-sm font-medium text-slate-900">{feature.title}</p>
-            <p className="text-xs text-slate-500 mt-1 leading-snug">{feature.description}</p>
+            {feature.description ? (
+              <p className="text-xs text-slate-500 mt-1 leading-snug">{feature.description}</p>
+            ) : null}
           </div>
         ))}
       </div>
@@ -38,7 +40,9 @@ export default function TrustFeaturesGrid({ variant = "homepage", className }: T
           </div>
           <div>
             <h3 className="font-display font-semibold text-slate-900 text-sm">{feature.title}</h3>
-            <p className="text-xs text-slate-500 mt-0.5">{feature.description}</p>
+            {feature.description ? (
+              <p className="text-xs text-slate-500 mt-0.5">{feature.description}</p>
+            ) : null}
           </div>
         </div>
       ))}

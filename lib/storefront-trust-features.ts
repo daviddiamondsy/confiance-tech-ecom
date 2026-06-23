@@ -15,8 +15,8 @@ export const STOREFRONT_TRUST_FEATURES: StorefrontTrustFeature[] = [
   },
   {
     icon: Package,
-    title: "With Accessories",
-    description: "Charger, screen guard, and protective phone case",
+    title: "With Charger",
+    description: "",
   },
   {
     icon: Headphones,
