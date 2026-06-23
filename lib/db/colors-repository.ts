@@ -1,4 +1,4 @@
-import { sql } from "@vercel/postgres";
+import { sql } from "@/lib/db/client";
 
 export async function fetchColorsForProduct(productId: string): Promise<string[]> {
   const { rows } = await sql<{ color_name: string }>`

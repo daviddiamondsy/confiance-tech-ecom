@@ -1,4 +1,4 @@
-import { sql } from "@vercel/postgres";
+import { sql } from "@/lib/db/client";
 import {
   DEFAULT_PRICING_CONFIG,
   type PricingConfig,

@@ -5,6 +5,7 @@ export interface StorageOption {
 
 export interface Product {
   id: string;
+  slug: string;
   name: string;
   price: number;
   originalPrice?: number;

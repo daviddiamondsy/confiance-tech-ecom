@@ -1,28 +1,19 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import ProductCard from "@/components/ProductCard";
-import { Filter, Grid3X3, List, ChevronDown, Package } from "lucide-react";
+import ProductsCatalog from "@/components/ProductsCatalog";
+import { Package } from "lucide-react";
 import { getProducts } from "@/lib/products";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
-const categories = [
-  "All Products",
-  "Audio",
-  "Wearables",
-  "Accessories",
-  "Storage",
-  "Gaming",
-  "Smart Home",
-];
-
 export default async function ProductsPage() {
   const allProducts = await getProducts();
+
   return (
     <div className="min-h-screen bg-surface-muted">
       <Header />
 
-      {/* Page Header */}
       <div className="relative bg-slate-950 text-white overflow-hidden">
         <div className="absolute inset-0 bg-hero-mesh opacity-60" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 md:py-16">
@@ -43,78 +34,14 @@ export default async function ProductsPage() {
         </div>
       </div>
 
-      {/* Products Section */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        {/* Filters & Sort */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-            <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl font-medium text-sm shadow-soft flex-shrink-0">
-              <Filter className="h-4 w-4" />
-              Filters
-            </button>
-            {categories.map((category, index) => (
-              <button
-                key={category}
-                className={`px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all flex-shrink-0 ${
-                  index === 0
-                    ? "bg-primary-100 text-primary-700 ring-1 ring-primary-200"
-                    : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-500">Sort by:</span>
-              <button className="flex items-center gap-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
-                Featured
-                <ChevronDown className="h-4 w-4 text-slate-400" />
-              </button>
-            </div>
-            <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-xl p-1">
-              <button className="p-2 bg-slate-100 rounded-lg text-slate-900">
-                <Grid3X3 className="h-4 w-4" />
-              </button>
-              <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400">
-                <List className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <p className="text-sm text-slate-500 mb-6">
-          Showing <span className="font-medium text-slate-900">{allProducts.length}</span> products
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {allProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-center gap-2 mt-14">
-          <button className="px-4 py-2.5 border border-slate-200 rounded-xl text-slate-400 hover:bg-white transition-colors text-sm font-medium disabled:opacity-50">
-            Previous
-          </button>
-          {[1, 2, 3, "...", 8].map((page, index) => (
-            <button
-              key={index}
-              className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                page === 1
-                  ? "bg-primary-600 text-white shadow-soft"
-                  : "border border-slate-200 text-slate-600 hover:bg-white"
-              }`}
-            >
-              {page}
-            </button>
-          ))}
-          <button className="px-4 py-2.5 border border-slate-200 rounded-xl text-slate-600 hover:bg-white transition-colors text-sm font-medium">
-            Next
-          </button>
-        </div>
+        <Suspense
+          fallback={
+            <p className="text-sm text-slate-500">Loading products...</p>
+          }
+        >
+          <ProductsCatalog products={allProducts} />
+        </Suspense>
       </div>
 
       <Footer />

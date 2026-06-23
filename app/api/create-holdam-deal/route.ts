@@ -8,6 +8,7 @@ export async function POST(req: NextRequest) {
   try {
     const {
       productId,
+      productSlug,
       productName,
       productPrice,
       deliveryDays,
@@ -102,6 +103,8 @@ export async function POST(req: NextRequest) {
     const deliverWithinDays = resolveDeliveryDays(deliveryDays);
     const deliveryDueAt = deliveryDueAtFromDays(deliverWithinDays);
 
+    const cancelProductPath = productSlug || productId;
+
     const dealRequest = {
       amount: amountNgn,
       currency: "NGN",
@@ -111,7 +114,7 @@ export async function POST(req: NextRequest) {
       title: `${productName}, Order for ${customerData.name}`,
       deliveryDueAt,
       successUrl: `${siteBaseUrl}/payment-success?deal_id={DEAL_ID}`,
-      cancelUrl: `${siteBaseUrl}/products/${productId}`,
+      cancelUrl: `${siteBaseUrl}/products/${cancelProductPath}`,
       metadata: {
         productId,
         productName,

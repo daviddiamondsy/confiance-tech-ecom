@@ -1,12 +1,15 @@
 import { config } from "dotenv";
+import { isPostgresConfigured } from "@/lib/db/client";
 import { runMigrations } from "@/lib/db/migrate";
 import { seedCatalog } from "@/lib/db/seed";
 
 config({ path: ".env.local" });
 
 async function main() {
-  if (!process.env.POSTGRES_URL) {
-    console.error("POSTGRES_URL is not set. Link Vercel Postgres or add it to .env.local");
+  if (!isPostgresConfigured()) {
+    console.error(
+      "No database URL found. Set POSTGRES_URL or DATABASE_URL in .env.local (Neon/Vercel integration provides DATABASE_URL)."
+    );
     process.exit(1);
   }
 

@@ -10,8 +10,8 @@ import { DELIVERY_ESTIMATE_COPY } from "@/lib/delivery-deadline";
 const features = [
   {
     icon: Truck,
-    title: "Free Shipping",
-    description: "No extra fees on all orders",
+    title: "Fast Delivery",
+    description: DELIVERY_ESTIMATE_COPY,
   },
   {
     icon: Shield,
@@ -25,8 +25,8 @@ const features = [
   },
   {
     icon: Zap,
-    title: "Fast Delivery",
-    description: DELIVERY_ESTIMATE_COPY,
+    title: "Clean Devices",
+    description: "Inspected before every shipment",
   },
 ];
 

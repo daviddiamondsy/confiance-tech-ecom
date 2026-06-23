@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS pricing_config (
 
 CREATE TABLE IF NOT EXISTS products (
   id TEXT PRIMARY KEY,
+  slug TEXT,
   name TEXT NOT NULL,
   price INTEGER NOT NULL,
   yuan_cost NUMERIC(12, 2),
@@ -43,6 +44,7 @@ CREATE TABLE IF NOT EXISTS product_colors (
 );
 
 CREATE INDEX IF NOT EXISTS idx_products_sort_order ON products (sort_order);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_products_slug ON products (slug);
 CREATE INDEX IF NOT EXISTS idx_product_storage_options_product_id
   ON product_storage_options (product_id);
 CREATE INDEX IF NOT EXISTS idx_product_colors_product_id ON product_colors (product_id);
@@ -55,6 +57,21 @@ ON CONFLICT (id) DO NOTHING;
 
 ALTER TABLE products ADD COLUMN IF NOT EXISTS yuan_cost NUMERIC(12, 2);
 ALTER TABLE product_storage_options ADD COLUMN IF NOT EXISTS yuan_cost NUMERIC(12, 2);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS slug TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_products_slug ON products (slug);
+
+UPDATE products
+SET slug = CASE id
+  WHEN '6' THEN 'iphone-13-256gb'
+  WHEN '7' THEN 'iphone-14-pro-256gb'
+  WHEN '8' THEN 'iphone-15-pro-max'
+  WHEN '9' THEN 'iphone-12-pro-max'
+  WHEN '10' THEN 'iphone-14-pro-max'
+  WHEN '11' THEN 'macbook-pro-m4'
+  WHEN '12' THEN 'iphone-13-pro-max-512gb'
+  ELSE slug
+END
+WHERE slug IS NULL AND id IN ('6', '7', '8', '9', '10', '11', '12');
 ALTER TABLE pricing_config ADD COLUMN IF NOT EXISTS expensive_yuan_threshold NUMERIC(12, 2);
 ALTER TABLE pricing_config ADD COLUMN IF NOT EXISTS expensive_selling_markup NUMERIC(6, 3) DEFAULT 1.15;
 
