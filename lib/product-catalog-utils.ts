@@ -1,15 +1,11 @@
 import type { Product } from "@/lib/product-utils";
+import type { ProductFilterTag } from "@/lib/product-filters";
 
-export type ProductCategory = "all" | "iphone" | "macbook";
 export type ProductSort = "featured" | "price-asc" | "price-desc" | "name-asc";
 export type ProductView = "grid" | "list";
 
 export const PRODUCTS_PAGE_SIZE = 6;
-
-export const CATEGORY_LABELS: Record<Exclude<ProductCategory, "all">, string> = {
-  iphone: "iPhone",
-  macbook: "MacBook",
-};
+export const ALL_PRODUCTS_FILTER = "all";
 
 export const SORT_LABELS: Record<ProductSort, string> = {
   featured: "Featured",
@@ -18,25 +14,34 @@ export const SORT_LABELS: Record<ProductSort, string> = {
   "name-asc": "Name: A to Z",
 };
 
-export function getProductCategory(product: Product): Exclude<ProductCategory, "all"> | null {
+export function getProductFilterSlug(product: Product): string | null {
+  if (product.filterSlug) return product.filterSlug;
   const name = product.name.toLowerCase();
   if (name.includes("macbook")) return "macbook";
   if (name.includes("iphone")) return "iphone";
   return null;
 }
 
-export function getAvailableCategories(products: Product[]): ProductCategory[] {
-  const categories = new Set<ProductCategory>(["all"]);
+export function getAvailableFilterSlugs(products: Product[]): string[] {
+  const slugs = new Set<string>();
   for (const product of products) {
-    const category = getProductCategory(product);
-    if (category) categories.add(category);
+    const slug = getProductFilterSlug(product);
+    if (slug) slugs.add(slug);
   }
-  return Array.from(categories);
+  return Array.from(slugs);
 }
 
-export function parseProductCategory(value: string | null): ProductCategory {
-  if (value === "iphone" || value === "macbook") return value;
-  return "all";
+export function getCatalogFilterOptions(
+  products: Product[],
+  filterTags: ProductFilterTag[]
+): ProductFilterTag[] {
+  const usedSlugs = new Set(getAvailableFilterSlugs(products));
+  return filterTags.filter((tag) => usedSlugs.has(tag.slug));
+}
+
+export function parseCatalogFilter(value: string | null): string {
+  if (!value || value === ALL_PRODUCTS_FILTER) return ALL_PRODUCTS_FILTER;
+  return value;
 }
 
 export function parseProductSort(value: string | null): ProductSort {
@@ -54,9 +59,9 @@ export function parsePage(value: string | null): number {
   return Math.floor(page);
 }
 
-export function filterProducts(products: Product[], category: ProductCategory): Product[] {
-  if (category === "all") return products;
-  return products.filter((product) => getProductCategory(product) === category);
+export function filterProducts(products: Product[], filterSlug: string): Product[] {
+  if (filterSlug === ALL_PRODUCTS_FILTER) return products;
+  return products.filter((product) => getProductFilterSlug(product) === filterSlug);
 }
 
 export function sortProducts(products: Product[], sort: ProductSort): Product[] {

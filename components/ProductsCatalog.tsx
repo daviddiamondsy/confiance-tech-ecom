@@ -3,44 +3,48 @@
 import ProductCard from "@/components/ProductCard";
 import type { Product } from "@/lib/product-utils";
 import {
-  CATEGORY_LABELS,
+  ALL_PRODUCTS_FILTER,
   PRODUCTS_PAGE_SIZE,
   SORT_LABELS,
   filterProducts,
-  getAvailableCategories,
+  getCatalogFilterOptions,
   getPaginationRange,
   paginateProducts,
+  parseCatalogFilter,
   parsePage,
-  parseProductCategory,
   parseProductSort,
   parseProductView,
   sortProducts,
-  type ProductCategory,
   type ProductSort,
   type ProductView,
 } from "@/lib/product-catalog-utils";
+import type { ProductFilterTag } from "@/lib/product-filters";
 import { ChevronDown, Grid3X3, List } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
 
 interface ProductsCatalogProps {
   products: Product[];
+  filterTags: ProductFilterTag[];
 }
 
-export default function ProductsCatalog({ products }: ProductsCatalogProps) {
+export default function ProductsCatalog({ products, filterTags }: ProductsCatalogProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const category = parseProductCategory(searchParams.get("category"));
+  const activeFilter = parseCatalogFilter(searchParams.get("category"));
   const sort = parseProductSort(searchParams.get("sort"));
   const view = parseProductView(searchParams.get("view"));
   const page = parsePage(searchParams.get("page"));
 
-  const availableCategories = useMemo(() => getAvailableCategories(products), [products]);
+  const catalogFilters = useMemo(
+    () => getCatalogFilterOptions(products, filterTags),
+    [products, filterTags]
+  );
 
   const filtered = useMemo(
-    () => sortProducts(filterProducts(products, category), sort),
-    [products, category, sort]
+    () => sortProducts(filterProducts(products, activeFilter), sort),
+    [products, activeFilter, sort]
   );
 
   const pagination = useMemo(
@@ -71,9 +75,9 @@ export default function ProductsCatalog({ products }: ProductsCatalogProps) {
     [router, searchParams]
   );
 
-  function handleCategoryChange(nextCategory: ProductCategory) {
+  function handleFilterChange(nextFilter: string) {
     updateQuery({
-      category: nextCategory === "all" ? null : nextCategory,
+      category: nextFilter === ALL_PRODUCTS_FILTER ? null : nextFilter,
       page: null,
     });
   }
@@ -105,18 +109,29 @@ export default function ProductsCatalog({ products }: ProductsCatalogProps) {
     <>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-          {availableCategories.map((item) => (
+          <button
+            type="button"
+            onClick={() => handleFilterChange(ALL_PRODUCTS_FILTER)}
+            className={`px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all flex-shrink-0 ${
+              activeFilter === ALL_PRODUCTS_FILTER
+                ? "bg-primary-100 text-primary-700 ring-1 ring-primary-200"
+                : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
+            }`}
+          >
+            All Products
+          </button>
+          {catalogFilters.map((filter) => (
             <button
-              key={item}
+              key={filter.slug}
               type="button"
-              onClick={() => handleCategoryChange(item)}
+              onClick={() => handleFilterChange(filter.slug)}
               className={`px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all flex-shrink-0 ${
-                category === item
+                activeFilter === filter.slug
                   ? "bg-primary-100 text-primary-700 ring-1 ring-primary-200"
                   : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
               }`}
             >
-              {item === "all" ? "All Products" : CATEGORY_LABELS[item]}
+              {filter.label}
             </button>
           ))}
         </div>
@@ -199,7 +214,7 @@ export default function ProductsCatalog({ products }: ProductsCatalogProps) {
           <p className="text-slate-600 mb-4">Try another category or clear your filters.</p>
           <button
             type="button"
-            onClick={() => handleCategoryChange("all")}
+            onClick={() => handleFilterChange(ALL_PRODUCTS_FILTER)}
             className="btn-primary text-sm py-2.5 px-5"
           >
             View all products

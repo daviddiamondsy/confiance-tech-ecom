@@ -8,9 +8,17 @@ CREATE TABLE IF NOT EXISTS pricing_config (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS product_filters (
+  slug TEXT PRIMARY KEY,
+  label TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS products (
   id TEXT PRIMARY KEY,
   slug TEXT,
+  filter_slug TEXT REFERENCES product_filters(slug) ON DELETE SET NULL,
   name TEXT NOT NULL,
   price INTEGER NOT NULL,
   yuan_cost NUMERIC(12, 2),
@@ -47,7 +55,7 @@ CREATE INDEX IF NOT EXISTS idx_products_sort_order ON products (sort_order);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_products_slug ON products (slug);
 CREATE INDEX IF NOT EXISTS idx_product_storage_options_product_id
   ON product_storage_options (product_id);
-CREATE INDEX IF NOT EXISTS idx_product_colors_product_id ON product_colors (product_id);
+CREATE INDEX IF NOT EXISTS idx_products_filter_slug ON products (filter_slug);
 
 INSERT INTO pricing_config (
   id, yuan_to_naira, shipping_ngn, selling_markup, expensive_yuan_threshold, expensive_selling_markup
@@ -72,6 +80,19 @@ SET slug = CASE id
   ELSE slug
 END
 WHERE slug IS NULL AND id IN ('6', '7', '8', '9', '10', '11', '12');
+
+INSERT INTO product_filters (slug, label, sort_order) VALUES
+  ('iphone', 'iPhone', 0),
+  ('macbook', 'MacBook', 1)
+ON CONFLICT (slug) DO NOTHING;
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS filter_slug TEXT;
+ALTER TABLE product_filters ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
+
+UPDATE products SET filter_slug = 'iphone'
+WHERE id IN ('6', '7', '8', '9', '10', '12') AND filter_slug IS NULL;
+UPDATE products SET filter_slug = 'macbook'
+WHERE id = '11' AND filter_slug IS NULL;
 ALTER TABLE pricing_config ADD COLUMN IF NOT EXISTS expensive_yuan_threshold NUMERIC(12, 2);
 ALTER TABLE pricing_config ADD COLUMN IF NOT EXISTS expensive_selling_markup NUMERIC(6, 3) DEFAULT 1.15;
 

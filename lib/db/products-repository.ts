@@ -8,6 +8,7 @@ import type { Product, StorageOption } from "@/lib/product-utils";
 interface ProductRow {
   id: string;
   slug: string | null;
+  filter_slug: string | null;
   name: string;
   price: number;
   yuan_cost: string | null;
@@ -66,6 +67,7 @@ function mapRowToProduct(
     specifications: row.specifications,
     storageOptions,
     colorOptions: colors.length > 0 ? colors : undefined,
+    filterSlug: row.filter_slug ?? undefined,
   };
 }
 
@@ -74,7 +76,7 @@ export async function fetchProductsFromDb(): Promise<Product[]> {
 
   const { rows: productRows } = await sql<ProductRow>`
     SELECT
-      id, slug, name, price, yuan_cost, original_price, image, badge,
+      id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
       description, features, specifications, sort_order
     FROM products
     ORDER BY sort_order ASC, id ASC
@@ -114,7 +116,7 @@ export async function fetchProductByIdFromDb(id: string): Promise<Product | unde
 
   const { rows } = await sql<ProductRow>`
     SELECT
-      id, slug, name, price, yuan_cost, original_price, image, badge,
+      id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
       description, features, specifications, sort_order
     FROM products
     WHERE id = ${id}
@@ -141,7 +143,7 @@ export async function fetchProductBySlugFromDb(slug: string): Promise<Product | 
 
   const { rows } = await sql<ProductRow>`
     SELECT
-      id, slug, name, price, yuan_cost, original_price, image, badge,
+      id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
       description, features, specifications, sort_order
     FROM products
     WHERE slug = ${slug}
@@ -165,6 +167,7 @@ export async function fetchProductBySlugFromDb(slug: string): Promise<Product | 
 
 export interface SeedProductInput extends Omit<Product, "slug"> {
   slug?: string;
+  filterSlug?: string;
   yuanCost?: number;
   storageYuan?: Record<string, number>;
 }
@@ -175,11 +178,12 @@ export async function upsertCatalogProducts(products: SeedProductInput[]): Promi
     const slug = product.slug || slugForProductId(product.id, product.name);
     await sql.query(
       `INSERT INTO products (
-        id, slug, name, price, yuan_cost, original_price, image, badge, description,
+        id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge, description,
         features, specifications, sort_order, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12, NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12::jsonb, $13, NOW())
       ON CONFLICT (id) DO UPDATE SET
         slug = EXCLUDED.slug,
+        filter_slug = EXCLUDED.filter_slug,
         name = EXCLUDED.name,
         price = EXCLUDED.price,
         yuan_cost = EXCLUDED.yuan_cost,
@@ -194,6 +198,7 @@ export async function upsertCatalogProducts(products: SeedProductInput[]): Promi
       [
         product.id,
         slug,
+        product.filterSlug ?? null,
         product.name,
         product.price,
         product.yuanCost ?? null,
@@ -224,12 +229,25 @@ export async function upsertCatalogProducts(products: SeedProductInput[]): Promi
 }
 
 export async function fetchAdminProductSummaries(): Promise<
-  Array<{ id: string; name: string; yuanCost: number | null; price: number; colors: string[] }>
+  Array<{
+    id: string;
+    name: string;
+    yuanCost: number | null;
+    price: number;
+    filterSlug: string | null;
+    colors: string[];
+  }>
 > {
   const config = await fetchPricingConfig();
 
-  const { rows } = await sql<{ id: string; name: string; price: number; yuan_cost: string | null }>`
-    SELECT id, name, price, yuan_cost FROM products ORDER BY sort_order ASC, id ASC
+  const { rows } = await sql<{
+    id: string;
+    name: string;
+    price: number;
+    yuan_cost: string | null;
+    filter_slug: string | null;
+  }>`
+    SELECT id, name, price, yuan_cost, filter_slug FROM products ORDER BY sort_order ASC, id ASC
   `;
 
   const colorsByProduct = await fetchColorsByProductIds(rows.map((row) => row.id));
@@ -241,6 +259,7 @@ export async function fetchAdminProductSummaries(): Promise<
       name: row.name,
       yuanCost,
       price: resolvePrice(yuanCost, row.price, config),
+      filterSlug: row.filter_slug,
       colors: colorsByProduct.get(row.id) ?? [],
     };
   });
@@ -251,6 +270,7 @@ export interface CreateProductInput {
   yuanCost: number;
   image: string;
   description: string;
+  filterSlug: string;
   slug?: string;
   badge?: string;
   storage?: string;
@@ -301,6 +321,7 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
   name: string;
   yuanCost: number;
   price: number;
+  filterSlug: string;
   colors: string[];
 }> {
   const config = await fetchPricingConfig();
@@ -309,6 +330,14 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
   const name = normalizeProductName(input.name);
   const baseSlug = input.slug?.trim() || slugifyProductName(name);
   const slug = await uniqueSlug(baseSlug);
+
+  const { rows: filterRows } = await sql`
+    SELECT slug FROM product_filters WHERE slug = ${input.filterSlug} LIMIT 1
+  `;
+  if (filterRows.length === 0) {
+    throw new Error("INVALID_FILTER");
+  }
+
   const price = priceFromYuan(input.yuanCost, config);
   const storage = input.storage?.trim() || undefined;
   const features =
@@ -320,12 +349,13 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
 
   await sql.query(
     `INSERT INTO products (
-      id, slug, name, price, yuan_cost, original_price, image, badge, description,
+      id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge, description,
       features, specifications, sort_order, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, $8, $9::jsonb, $10::jsonb, $11, NOW())`,
+    ) VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, $8, $9, $10::jsonb, $11::jsonb, $12, NOW())`,
     [
       id,
       slug,
+      input.filterSlug,
       name,
       price,
       input.yuanCost,
@@ -356,5 +386,13 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
     await replaceProductColors(id, colors);
   }
 
-  return { id, slug, name, yuanCost: input.yuanCost, price, colors };
+  return {
+    id,
+    slug,
+    name,
+    yuanCost: input.yuanCost,
+    price,
+    filterSlug: input.filterSlug,
+    colors,
+  };
 }

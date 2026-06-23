@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { replaceProductColors } from "@/lib/db/colors-repository";
+import { updateProductFilterSlug } from "@/lib/db/filters-repository";
 import {
   createAdminProduct,
   fetchAdminProductSummaries,
@@ -56,6 +57,7 @@ export async function POST(req: NextRequest) {
   const name = String(body.name ?? "").trim();
   const image = String(body.image ?? "").trim();
   const description = String(body.description ?? "").trim();
+  const filterSlug = String(body.filterSlug ?? "").trim();
   const yuanCost = Number(body.yuanCost);
   const badge = body.badge ? String(body.badge).trim() : undefined;
   const storage = body.storage ? String(body.storage).trim() : undefined;
@@ -76,9 +78,9 @@ export async function POST(req: NextRequest) {
       : undefined;
   const storageVariants = parseStorageVariants(body.storageVariants);
 
-  if (!name || !image || !description) {
+  if (!name || !image || !description || !filterSlug) {
     return NextResponse.json(
-      { error: "name, image, description, and yuanCost are required" },
+      { error: "name, image, description, filterSlug, and yuanCost are required" },
       { status: 400 }
     );
   }
@@ -93,6 +95,7 @@ export async function POST(req: NextRequest) {
       yuanCost,
       image,
       description,
+      filterSlug,
       badge,
       storage,
       colors,
@@ -101,6 +104,9 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ product }, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && error.message === "INVALID_FILTER") {
+      return NextResponse.json({ error: "Invalid filter tag" }, { status: 400 });
+    }
     console.error("[admin/products] create failed", error);
     return NextResponse.json({ error: "Could not create product" }, { status: 500 });
   }
@@ -114,12 +120,37 @@ export async function PUT(req: NextRequest) {
     return postgresRequired();
   }
 
-  const { productId, colors } = await req.json();
+  const body = await req.json();
+  const productId = String(body.productId ?? "");
 
-  if (!productId || !Array.isArray(colors)) {
-    return NextResponse.json({ error: "productId and colors[] required" }, { status: 400 });
+  if (!productId) {
+    return NextResponse.json({ error: "productId is required" }, { status: 400 });
   }
 
-  const updated = await replaceProductColors(String(productId), colors);
-  return NextResponse.json({ productId, colors: updated });
+  if (body.colors !== undefined) {
+    if (!Array.isArray(body.colors)) {
+      return NextResponse.json({ error: "colors must be an array" }, { status: 400 });
+    }
+    const updated = await replaceProductColors(productId, body.colors);
+    return NextResponse.json({ productId, colors: updated });
+  }
+
+  if (body.filterSlug !== undefined) {
+    const filterSlug =
+      body.filterSlug === "" || body.filterSlug == null ? null : String(body.filterSlug).trim();
+    try {
+      await updateProductFilterSlug(productId, filterSlug);
+      return NextResponse.json({ productId, filterSlug });
+    } catch (error) {
+      if (error instanceof Error && error.message === "INVALID_FILTER") {
+        return NextResponse.json({ error: "Invalid filter tag" }, { status: 400 });
+      }
+      throw error;
+    }
+  }
+
+  return NextResponse.json(
+    { error: "Provide colors[] or filterSlug to update a product" },
+    { status: 400 }
+  );
 }

@@ -5,7 +5,7 @@ export { productPath, slugifyProductName } from "@/lib/product-slug";
 export { priceFromYuan, sellingMarkupForYuan, toCharmPrice } from "@/lib/pricing";
 
 import { buildCatalogProducts } from "@/lib/catalog-seed";
-import { DEFAULT_PRODUCT_COLORS } from "@/lib/catalog-yuan";
+import { CATALOG_FILTERS, DEFAULT_PRODUCT_COLORS } from "@/lib/catalog-yuan";
 import { slugForProductId } from "@/lib/product-slug";import { isPostgresConfigured } from "@/lib/db/client";
 import {
   fetchProductByIdFromDb,
@@ -16,6 +16,7 @@ import {
 const staticProducts = buildCatalogProducts().map((product) => ({
   ...product,
   slug: slugForProductId(product.id, product.name),
+  filterSlug: CATALOG_FILTERS[product.id],
   colorOptions: DEFAULT_PRODUCT_COLORS[product.id],
 }));
 

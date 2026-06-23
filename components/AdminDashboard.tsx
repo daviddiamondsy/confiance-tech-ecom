@@ -17,7 +17,13 @@ interface AdminProduct {
   name: string;
   yuanCost: number | null;
   price: number;
+  filterSlug: string | null;
   colors: string[];
+}
+
+interface ProductFilterTag {
+  slug: string;
+  label: string;
 }
 
 const emptyProductForm = {
@@ -25,11 +31,17 @@ const emptyProductForm = {
   yuanCost: "",
   image: "/product-images/",
   description: "",
+  filterSlug: "",
   badge: "",
   storage: "",
   storageVariants: "",
   colors: "",
   features: "",
+};
+
+const emptyFilterForm = {
+  label: "",
+  slug: "",
 };
 
 export default function AdminDashboard() {
@@ -43,12 +55,22 @@ export default function AdminDashboard() {
     expensiveSellingMarkup: 1.15,
   });
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [filterTags, setFilterTags] = useState<ProductFilterTag[]>([]);
+  const [filterForm, setFilterForm] = useState(emptyFilterForm);
+  const [draftFilterLabels, setDraftFilterLabels] = useState<Record<string, string>>({});
+  const [draftProductFilters, setDraftProductFilters] = useState<Record<string, string>>({});
   const [draftColors, setDraftColors] = useState<Record<string, string>>({});
   const [pricingMessage, setPricingMessage] = useState("");
   const [colorMessages, setColorMessages] = useState<Record<string, string>>({});
+  const [filterMessages, setFilterMessages] = useState<Record<string, string>>({});
+  const [filterFormMessage, setFilterFormMessage] = useState("");
+  const [filterFormError, setFilterFormError] = useState("");
   const [loading, setLoading] = useState(true);
   const [savingPricing, setSavingPricing] = useState(false);
   const [savingProductId, setSavingProductId] = useState<string | null>(null);
+  const [savingFilterSlug, setSavingFilterSlug] = useState<string | null>(null);
+  const [creatingFilter, setCreatingFilter] = useState(false);
+  const [deletingFilterSlug, setDeletingFilterSlug] = useState<string | null>(null);
   const [productForm, setProductForm] = useState(emptyProductForm);
   const [creatingProduct, setCreatingProduct] = useState(false);
   const [createMessage, setCreateMessage] = useState("");
@@ -69,12 +91,17 @@ export default function AdminDashboard() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [pricingRes, productsRes] = await Promise.all([
+      const [pricingRes, productsRes, filtersRes] = await Promise.all([
         fetch("/api/admin/pricing"),
         fetch("/api/admin/products"),
+        fetch("/api/admin/filters"),
       ]);
 
-      if (pricingRes.status === 401 || productsRes.status === 401) {
+      if (
+        pricingRes.status === 401 ||
+        productsRes.status === 401 ||
+        filtersRes.status === 401
+      ) {
         router.push("/admin/login");
         return;
       }
@@ -83,15 +110,34 @@ export default function AdminDashboard() {
         setPricing(await pricingRes.json());
       }
 
+      let loadedFilters: ProductFilterTag[] = [];
+      if (filtersRes.ok) {
+        const filterData = await filtersRes.json();
+        loadedFilters = filterData.filters ?? [];
+        setFilterTags(loadedFilters);
+        const labelDrafts: Record<string, string> = {};
+        for (const filter of loadedFilters) {
+          labelDrafts[filter.slug] = filter.label;
+        }
+        setDraftFilterLabels(labelDrafts);
+      }
+
       if (productsRes.ok) {
         const data = await productsRes.json();
         const list: AdminProduct[] = data.products ?? [];
         setProducts(list);
-        const drafts: Record<string, string> = {};
+        const colorDrafts: Record<string, string> = {};
+        const productFilterDrafts: Record<string, string> = {};
         for (const product of list) {
-          drafts[product.id] = product.colors.join(", ");
+          colorDrafts[product.id] = product.colors.join(", ");
+          productFilterDrafts[product.id] = product.filterSlug ?? loadedFilters[0]?.slug ?? "";
         }
-        setDraftColors(drafts);
+        setDraftColors(colorDrafts);
+        setDraftProductFilters(productFilterDrafts);
+        setProductForm((prev) => ({
+          ...prev,
+          filterSlug: prev.filterSlug || loadedFilters[0]?.slug || "",
+        }));
       }
     } finally {
       setLoading(false);
@@ -155,7 +201,14 @@ export default function AdminDashboard() {
         ...prev,
         [created.id]: created.colors.join(", "),
       }));
-      setProductForm(emptyProductForm);
+      setDraftProductFilters((prev) => ({
+        ...prev,
+        [created.id]: created.filterSlug ?? productForm.filterSlug,
+      }));
+      setProductForm({
+        ...emptyProductForm,
+        filterSlug: filterTags[0]?.slug ?? "",
+      });
       setCreateMessage(
         `Added ${created.name} at ₦${created.price.toLocaleString()} (yuan ${created.yuanCost}).`
       );
@@ -163,6 +216,147 @@ export default function AdminDashboard() {
       setCreateError("Could not reach the server. Try again.");
     } finally {
       setCreatingProduct(false);
+    }
+  }
+
+  async function handleCreateFilter(event: FormEvent) {
+    event.preventDefault();
+    setFilterFormMessage("");
+    setFilterFormError("");
+    setCreatingFilter(true);
+
+    try {
+      const response = await fetch("/api/admin/filters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(filterForm),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFilterFormError(data.error ?? "Could not create filter tag");
+        return;
+      }
+
+      const created = data.filter as ProductFilterTag;
+      setFilterTags((prev) => [...prev, created]);
+      setDraftFilterLabels((prev) => ({ ...prev, [created.slug]: created.label }));
+      setFilterForm(emptyFilterForm);
+      setProductForm((prev) => ({ ...prev, filterSlug: prev.filterSlug || created.slug }));
+      setFilterFormMessage(`Added filter tag "${created.label}".`);
+    } catch {
+      setFilterFormError("Could not reach the server. Try again.");
+    } finally {
+      setCreatingFilter(false);
+    }
+  }
+
+  async function handleFilterLabelSave(slug: string) {
+    setFilterMessages((prev) => ({ ...prev, [slug]: "" }));
+
+    try {
+      const response = await fetch("/api/admin/filters", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, label: draftFilterLabels[slug] ?? "" }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFilterMessages((prev) => ({
+          ...prev,
+          [slug]: data.error ?? "Could not save filter label",
+        }));
+        return;
+      }
+
+      const updated = data.filter as ProductFilterTag;
+      setFilterTags((prev) =>
+        prev.map((filter) => (filter.slug === slug ? updated : filter))
+      );
+      setFilterMessages((prev) => ({
+        ...prev,
+        [slug]: "Filter label saved.",
+      }));
+    } catch {
+      setFilterMessages((prev) => ({
+        ...prev,
+        [slug]: "Could not reach the server. Try again.",
+      }));
+    }
+  }
+
+  async function handleDeleteFilter(slug: string) {
+    setFilterMessages((prev) => ({ ...prev, [slug]: "" }));
+    setDeletingFilterSlug(slug);
+
+    try {
+      const response = await fetch(`/api/admin/filters?slug=${encodeURIComponent(slug)}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFilterMessages((prev) => ({
+          ...prev,
+          [slug]: data.error ?? "Could not delete filter tag",
+        }));
+        return;
+      }
+
+      setFilterTags((prev) => prev.filter((filter) => filter.slug !== slug));
+      setFilterFormMessage(`Removed filter tag "${slug}".`);
+    } catch {
+      setFilterMessages((prev) => ({
+        ...prev,
+        [slug]: "Could not reach the server. Try again.",
+      }));
+    } finally {
+      setDeletingFilterSlug(null);
+    }
+  }
+
+  async function handleProductFilterSave(productId: string) {
+    setFilterMessages((prev) => ({ ...prev, [`product-${productId}`]: "" }));
+    setSavingFilterSlug(productId);
+
+    try {
+      const response = await fetch("/api/admin/products", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId,
+          filterSlug: draftProductFilters[productId] ?? null,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFilterMessages((prev) => ({
+          ...prev,
+          [`product-${productId}`]: data.error ?? "Could not save filter tag",
+        }));
+        return;
+      }
+
+      setProducts((prev) =>
+        prev.map((product) =>
+          product.id === productId
+            ? { ...product, filterSlug: data.filterSlug ?? null }
+            : product
+        )
+      );
+      setFilterMessages((prev) => ({
+        ...prev,
+        [`product-${productId}`]: "Filter tag saved.",
+      }));
+    } catch {
+      setFilterMessages((prev) => ({
+        ...prev,
+        [`product-${productId}`]: "Could not reach the server. Try again.",
+      }));
+    } finally {
+      setSavingFilterSlug(null);
     }
   }
 
@@ -235,7 +429,7 @@ export default function AdminDashboard() {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div>
             <h1 className="font-display text-xl font-bold text-slate-900">Catalog admin</h1>
-            <p className="text-sm text-slate-600">Pricing, products, and colors</p>
+            <p className="text-sm text-slate-600">Pricing, filters, products, and colors</p>
           </div>
           <button type="button" onClick={handleLogout} className="btn-outline text-sm py-2 px-4">
             Sign out
@@ -383,6 +577,113 @@ export default function AdminDashboard() {
         </section>
 
         <section className="card-elevated p-6">
+          <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Product filter tags</h2>
+          <p className="text-sm text-slate-600 mb-6">
+            These tags power the filters on the All Products page. Assign a tag when adding or
+            editing a product.
+          </p>
+
+          <form onSubmit={handleCreateFilter} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div>
+              <label htmlFor="filterLabel" className="block text-sm font-medium text-slate-700 mb-2">
+                Filter label
+              </label>
+              <input
+                id="filterLabel"
+                type="text"
+                className="input-field"
+                placeholder="iPad"
+                value={filterForm.label}
+                onChange={(event) =>
+                  setFilterForm((prev) => ({ ...prev, label: event.target.value }))
+                }
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="filterSlug" className="block text-sm font-medium text-slate-700 mb-2">
+                Slug (optional)
+              </label>
+              <input
+                id="filterSlug"
+                type="text"
+                className="input-field"
+                placeholder="ipad"
+                value={filterForm.slug}
+                onChange={(event) =>
+                  setFilterForm((prev) => ({ ...prev, slug: event.target.value }))
+                }
+              />
+              <p className="text-xs text-slate-500 mt-1">Auto-generated from label if left blank.</p>
+            </div>
+            <div className="flex items-end">
+              <button type="submit" className="btn-primary w-full sm:w-auto" disabled={creatingFilter}>
+                {creatingFilter ? "Adding..." : "Add filter tag"}
+              </button>
+            </div>
+          </form>
+
+          {(filterFormMessage || filterFormError) && (
+            <p
+              className={`text-sm mb-4 ${filterFormError ? "text-red-600" : "text-emerald-700"}`}
+              role={filterFormError ? "alert" : "status"}
+            >
+              {filterFormError || filterFormMessage}
+            </p>
+          )}
+
+          <div className="space-y-4">
+            {filterTags.map((filter) => (
+              <div
+                key={filter.slug}
+                className="border border-slate-100 rounded-xl p-4 bg-slate-50/50 flex flex-col sm:flex-row gap-3 sm:items-center"
+              >
+                <code className="text-xs text-slate-500 sm:w-28">{filter.slug}</code>
+                <input
+                  type="text"
+                  className="input-field flex-1"
+                  value={draftFilterLabels[filter.slug] ?? filter.label}
+                  onChange={(event) =>
+                    setDraftFilterLabels((prev) => ({
+                      ...prev,
+                      [filter.slug]: event.target.value,
+                    }))
+                  }
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="btn-primary text-sm py-2 px-4"
+                    onClick={() => handleFilterLabelSave(filter.slug)}
+                  >
+                    Save label
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-outline text-sm py-2 px-4"
+                    disabled={deletingFilterSlug === filter.slug}
+                    onClick={() => handleDeleteFilter(filter.slug)}
+                  >
+                    {deletingFilterSlug === filter.slug ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+                {filterMessages[filter.slug] && (
+                  <p className="text-sm text-emerald-700 sm:col-span-3" role="status">
+                    {filterMessages[filter.slug]}
+                  </p>
+                )}
+              </div>
+            ))}
+
+            {filterTags.length === 0 && (
+              <p className="text-sm text-slate-600">
+                No filter tags yet. Add one above, or run <code className="text-xs">npm run db:seed</code>.
+              </p>
+            )}
+          </div>
+        </section>
+
+        <section className="card-elevated p-6">
           <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Add product</h2>
           <p className="text-sm text-slate-600 mb-6">
             Enter the yuan cost and product details. Selling price is calculated from the pricing
@@ -431,6 +732,30 @@ export default function AdminDashboard() {
                     {previewMarkup != null && ` (markup x${previewMarkup})`}
                   </p>
                 )}
+              </div>
+
+              <div>
+                <label htmlFor="productFilter" className="block text-sm font-medium text-slate-700 mb-2">
+                  Filter tag
+                </label>
+                <select
+                  id="productFilter"
+                  className="input-field"
+                  value={productForm.filterSlug}
+                  onChange={(event) =>
+                    setProductForm((prev) => ({ ...prev, filterSlug: event.target.value }))
+                  }
+                  required
+                >
+                  <option value="" disabled>
+                    Select a filter tag
+                  </option>
+                  {filterTags.map((filter) => (
+                    <option key={filter.slug} value={filter.slug}>
+                      {filter.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -570,25 +895,59 @@ export default function AdminDashboard() {
         </section>
 
         <section className="card-elevated p-6">
-          <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Product colors</h2>
+          <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Manage products</h2>
           <p className="text-sm text-slate-600 mb-6">
-            Comma-separated list per product. Colors are shown on the product page only and do not
-            affect price.
+            Update each product filter tag and color list. Colors are display-only and do not affect
+            price.
           </p>
 
           <div className="space-y-6">
             {products.map((product) => (
               <div
                 key={product.id}
-                className="border border-slate-100 rounded-xl p-4 bg-slate-50/50"
+                className="border border-slate-100 rounded-xl p-4 bg-slate-50/50 space-y-4"
               >
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="font-medium text-slate-900">{product.name}</p>
                   <p className="text-sm text-slate-600">
                     {product.yuanCost != null ? `Yuan ${product.yuanCost}` : "No yuan cost"} · ₦
                     {product.price.toLocaleString()}
                   </p>
                 </div>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <select
+                    className="input-field sm:max-w-xs"
+                    value={draftProductFilters[product.id] ?? ""}
+                    onChange={(event) =>
+                      setDraftProductFilters((prev) => ({
+                        ...prev,
+                        [product.id]: event.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">No filter tag</option>
+                    {filterTags.map((filter) => (
+                      <option key={filter.slug} value={filter.slug}>
+                        {filter.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn-outline sm:w-auto w-full text-sm py-2.5"
+                    disabled={savingFilterSlug === product.id}
+                    onClick={() => handleProductFilterSave(product.id)}
+                  >
+                    {savingFilterSlug === product.id ? "Saving..." : "Save filter tag"}
+                  </button>
+                </div>
+                {filterMessages[`product-${product.id}`] && (
+                  <p className="text-sm text-emerald-700" role="status">
+                    {filterMessages[`product-${product.id}`]}
+                  </p>
+                )}
+
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     type="text"
@@ -612,7 +971,7 @@ export default function AdminDashboard() {
                   </button>
                 </div>
                 {colorMessages[product.id] && (
-                  <p className="text-sm text-emerald-700 mt-2" role="status">
+                  <p className="text-sm text-emerald-700" role="status">
                     {colorMessages[product.id]}
                   </p>
                 )}
