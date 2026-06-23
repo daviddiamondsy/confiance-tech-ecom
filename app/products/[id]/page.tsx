@@ -5,9 +5,12 @@ import ProductDetailView from "@/components/ProductDetailView";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { HOLDAM_DELIVERY_DAYS } from "@/lib/delivery-deadline";
-import { products, getProductById } from "@/lib/products";
+import { getProductById, getProducts } from "@/lib/products";
 
-export function generateStaticParams() {
+export const dynamic = "force-dynamic";
+
+export async function generateStaticParams() {
+  const products = await getProducts();
   return products.map((p) => ({ id: p.id }));
 }
 
@@ -17,8 +20,8 @@ interface ProductPageProps {
   };
 }
 
-export default function ProductPage({ params }: ProductPageProps) {
-  const product = getProductById(params.id);
+export default async function ProductPage({ params }: ProductPageProps) {
+  const product = await getProductById(params.id);
 
   if (!product) {
     notFound();
