@@ -9,7 +9,7 @@ import {
 
 function postgresRequired() {
   return NextResponse.json(
-    { error: "POSTGRES_URL is required to manage products" },
+    { error: "DATABASE_URL or POSTGRES_URL is required to manage products" },
     { status: 503 }
   );
 }

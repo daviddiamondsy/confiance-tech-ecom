@@ -1,18 +1,21 @@
 import type { Product } from "@/lib/product-utils";
 export type { Product, StorageOption } from "@/lib/product-utils";
 export { getSelectedVariant, getDisplaySpecs } from "@/lib/product-utils";
+export { productPath, slugifyProductName } from "@/lib/product-slug";
 export { priceFromYuan, sellingMarkupForYuan, toCharmPrice } from "@/lib/pricing";
 
 import { buildCatalogProducts } from "@/lib/catalog-seed";
 import { DEFAULT_PRODUCT_COLORS } from "@/lib/catalog-yuan";
-import { isPostgresConfigured } from "@/lib/db/client";
+import { slugForProductId } from "@/lib/product-slug";import { isPostgresConfigured } from "@/lib/db/client";
 import {
   fetchProductByIdFromDb,
+  fetchProductBySlugFromDb,
   fetchProductsFromDb,
 } from "@/lib/db/products-repository";
 
 const staticProducts = buildCatalogProducts().map((product) => ({
   ...product,
+  slug: slugForProductId(product.id, product.name),
   colorOptions: DEFAULT_PRODUCT_COLORS[product.id],
 }));
 
@@ -30,6 +33,25 @@ export async function getProducts(): Promise<Product[]> {
   } catch (error) {
     console.error("[products] Postgres fetch failed, using static catalog", error);
     return staticProducts;
+  }
+}
+
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  const staticMatch = staticProducts.find(
+    (product) => product.slug === slug || product.id === slug
+  );
+  if (!isPostgresConfigured()) {
+    return staticMatch;
+  }
+
+  try {
+    const product = await fetchProductBySlugFromDb(slug);
+    if (product) return product;
+    if (staticMatch) return staticMatch;
+    return getProductById(slug);
+  } catch (error) {
+    console.error("[products] Postgres fetch failed, using static catalog", error);
+    return staticMatch ?? staticProducts.find((product) => product.id === slug);
   }
 }
 

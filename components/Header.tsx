@@ -34,9 +34,6 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
-            <Link href="/products" className="ml-3 btn-primary text-sm py-2.5 px-5">
-              Shop Now
-            </Link>
           </nav>
 
           <button
@@ -52,7 +49,7 @@ export default function Header() {
       <div
         className={cn(
           "md:hidden border-t border-slate-100 bg-white/95 backdrop-blur-xl transition-all duration-300",
-          mobileMenuOpen ? "max-h-72 opacity-100" : "max-h-0 opacity-0 overflow-hidden"
+          mobileMenuOpen ? "max-h-56 opacity-100" : "max-h-0 opacity-0 overflow-hidden"
         )}
       >
         <nav className="flex flex-col px-4 py-3">
@@ -66,13 +63,6 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/products"
-            className="mt-2 btn-primary text-sm py-3"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Shop Now
-          </Link>
         </nav>
       </div>
     </header>

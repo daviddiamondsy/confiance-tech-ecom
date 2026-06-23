@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { sql } from "@vercel/postgres";
+import { sql } from "@/lib/db/client";
 
 export async function runMigrations(): Promise<void> {
   const schemaPath = path.join(process.cwd(), "lib/db/schema.sql");

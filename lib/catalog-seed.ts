@@ -1,6 +1,8 @@
 import { priceFromYuan } from "@/lib/pricing";
 import type { Product } from "@/lib/product-utils";
 
+type CatalogProductSeed = Omit<Product, "slug">;
+
 const PRODUCT_IMAGES = {
   iphone13: "/product-images/iphone-13.png",
   iphone13ProMax: "/product-images/iphone-13-pro-max.png",
@@ -12,7 +14,7 @@ const PRODUCT_IMAGES = {
 } as const;
 
 /** Canonical catalog used for static fallback and Postgres seeding. */
-export function buildCatalogProducts(): Product[] {
+export function buildCatalogProducts(): CatalogProductSeed[] {
   return [
     {
       id: "6",

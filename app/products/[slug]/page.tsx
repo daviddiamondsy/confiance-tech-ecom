@@ -3,28 +3,33 @@ import Footer from "@/components/Footer";
 import MetaPixelViewContent from "@/components/MetaPixel";
 import ProductDetailView from "@/components/ProductDetailView";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { HOLDAM_DELIVERY_DAYS } from "@/lib/delivery-deadline";
-import { getProductById, getProducts } from "@/lib/products";
+import { productPath } from "@/lib/product-slug";
+import { getProductBySlug, getProducts } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
 
 export async function generateStaticParams() {
   const products = await getProducts();
-  return products.map((p) => ({ id: p.id }));
+  return products.map((product) => ({ slug: product.slug }));
 }
 
 interface ProductPageProps {
   params: {
-    id: string;
+    slug: string;
   };
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const product = await getProductById(params.id);
+  const product = await getProductBySlug(params.slug);
 
   if (!product) {
     notFound();
+  }
+
+  if (product.slug !== params.slug) {
+    redirect(productPath(product));
   }
 
   return (

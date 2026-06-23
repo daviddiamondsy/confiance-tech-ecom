@@ -131,7 +131,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
             <div className="grid grid-cols-3 gap-4 p-5 bg-white rounded-2xl border border-slate-100 shadow-soft">
               <div className="text-center">
                 <Truck className="h-6 w-6 text-primary-600 mx-auto mb-2" />
-                <p className="text-sm font-medium text-slate-900">Free Shipping</p>
+                <p className="text-sm font-medium text-slate-900">Fast Delivery</p>
               </div>
               <div className="text-center">
                 <Shield className="h-6 w-6 text-primary-600 mx-auto mb-2" />
@@ -182,6 +182,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                   productPrice={variant.price}
                   productName={variant.displayName}
                   productId={product.id}
+                  productSlug={product.slug}
                   deliveryDays={deliveryDays}
                 />
               </div>
@@ -220,6 +221,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                   productPrice={variant.price}
                   productName={variant.displayName}
                   productId={product.id}
+                  productSlug={product.slug}
                   deliveryDays={deliveryDays}
                 />
               </div>
@@ -283,6 +285,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                     productPrice={variant.price}
                     productName={variant.displayName}
                     productId={product.id}
+                    productSlug={product.slug}
                     deliveryDays={deliveryDays}
                   />
                 </div>

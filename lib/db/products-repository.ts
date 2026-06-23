@@ -1,4 +1,5 @@
-import { sql } from "@vercel/postgres";
+import { sql } from "@/lib/db/client";
+import { slugForProductId, slugifyProductName } from "@/lib/product-slug";
 import { fetchColorsByProductIds, fetchColorsForProduct } from "@/lib/db/colors-repository";
 import { fetchPricingConfig } from "@/lib/db/pricing-config-repository";
 import { priceFromYuan } from "@/lib/pricing";
@@ -6,6 +7,7 @@ import type { Product, StorageOption } from "@/lib/product-utils";
 
 interface ProductRow {
   id: string;
+  slug: string | null;
   name: string;
   price: number;
   yuan_cost: string | null;
@@ -53,6 +55,7 @@ function mapRowToProduct(
 
   return {
     id: row.id,
+    slug: row.slug ?? slugForProductId(row.id, row.name),
     name: row.name,
     price: resolvePrice(baseYuan, row.price, config),
     originalPrice: row.original_price ?? undefined,
@@ -71,7 +74,7 @@ export async function fetchProductsFromDb(): Promise<Product[]> {
 
   const { rows: productRows } = await sql<ProductRow>`
     SELECT
-      id, name, price, yuan_cost, original_price, image, badge,
+      id, slug, name, price, yuan_cost, original_price, image, badge,
       description, features, specifications, sort_order
     FROM products
     ORDER BY sort_order ASC, id ASC
@@ -111,7 +114,7 @@ export async function fetchProductByIdFromDb(id: string): Promise<Product | unde
 
   const { rows } = await sql<ProductRow>`
     SELECT
-      id, name, price, yuan_cost, original_price, image, badge,
+      id, slug, name, price, yuan_cost, original_price, image, badge,
       description, features, specifications, sort_order
     FROM products
     WHERE id = ${id}
@@ -133,7 +136,35 @@ export async function fetchProductByIdFromDb(id: string): Promise<Product | unde
   return mapRowToProduct(row, storageRows, colors, config);
 }
 
-export interface SeedProductInput extends Product {
+export async function fetchProductBySlugFromDb(slug: string): Promise<Product | undefined> {
+  const config = await fetchPricingConfig();
+
+  const { rows } = await sql<ProductRow>`
+    SELECT
+      id, slug, name, price, yuan_cost, original_price, image, badge,
+      description, features, specifications, sort_order
+    FROM products
+    WHERE slug = ${slug}
+    LIMIT 1
+  `;
+
+  const row = rows[0];
+  if (!row) return undefined;
+
+  const { rows: storageRows } = await sql<StorageRow>`
+    SELECT product_id, storage, price, yuan_cost, sort_order
+    FROM product_storage_options
+    WHERE product_id = ${row.id}
+    ORDER BY sort_order ASC
+  `;
+
+  const colors = await fetchColorsForProduct(row.id);
+
+  return mapRowToProduct(row, storageRows, colors, config);
+}
+
+export interface SeedProductInput extends Omit<Product, "slug"> {
+  slug?: string;
   yuanCost?: number;
   storageYuan?: Record<string, number>;
 }
@@ -141,12 +172,14 @@ export interface SeedProductInput extends Product {
 export async function upsertCatalogProducts(products: SeedProductInput[]): Promise<void> {
   for (let index = 0; index < products.length; index += 1) {
     const product = products[index];
+    const slug = product.slug || slugForProductId(product.id, product.name);
     await sql.query(
       `INSERT INTO products (
-        id, name, price, yuan_cost, original_price, image, badge, description,
+        id, slug, name, price, yuan_cost, original_price, image, badge, description,
         features, specifications, sort_order, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11, NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12, NOW())
       ON CONFLICT (id) DO UPDATE SET
+        slug = EXCLUDED.slug,
         name = EXCLUDED.name,
         price = EXCLUDED.price,
         yuan_cost = EXCLUDED.yuan_cost,
@@ -160,6 +193,7 @@ export async function upsertCatalogProducts(products: SeedProductInput[]): Promi
         updated_at = NOW()`,
       [
         product.id,
+        slug,
         product.name,
         product.price,
         product.yuanCost ?? null,
@@ -217,6 +251,7 @@ export interface CreateProductInput {
   yuanCost: number;
   image: string;
   description: string;
+  slug?: string;
   badge?: string;
   storage?: string;
   colors?: string[];
@@ -246,8 +281,23 @@ async function nextSortOrder(): Promise<number> {
   return rows[0]?.next_order ?? 0;
 }
 
+async function uniqueSlug(baseSlug: string): Promise<string> {
+  let slug = baseSlug;
+  let suffix = 2;
+
+  while (true) {
+    const { rows } = await sql<{ id: string }>`
+      SELECT id FROM products WHERE slug = ${slug} LIMIT 1
+    `;
+    if (rows.length === 0) return slug;
+    slug = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+}
+
 export async function createAdminProduct(input: CreateProductInput): Promise<{
   id: string;
+  slug: string;
   name: string;
   yuanCost: number;
   price: number;
@@ -257,6 +307,8 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
   const id = await nextProductId();
   const sortOrder = await nextSortOrder();
   const name = normalizeProductName(input.name);
+  const baseSlug = input.slug?.trim() || slugifyProductName(name);
+  const slug = await uniqueSlug(baseSlug);
   const price = priceFromYuan(input.yuanCost, config);
   const storage = input.storage?.trim() || undefined;
   const features =
@@ -268,11 +320,12 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
 
   await sql.query(
     `INSERT INTO products (
-      id, name, price, yuan_cost, original_price, image, badge, description,
+      id, slug, name, price, yuan_cost, original_price, image, badge, description,
       features, specifications, sort_order, updated_at
-    ) VALUES ($1, $2, $3, $4, NULL, $5, $6, $7, $8::jsonb, $9::jsonb, $10, NOW())`,
+    ) VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, $8, $9::jsonb, $10::jsonb, $11, NOW())`,
     [
       id,
+      slug,
       name,
       price,
       input.yuanCost,
@@ -303,5 +356,5 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
     await replaceProductColors(id, colors);
   }
 
-  return { id, name, yuanCost: input.yuanCost, price, colors };
+  return { id, slug, name, yuanCost: input.yuanCost, price, colors };
 }

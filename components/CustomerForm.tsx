@@ -69,6 +69,8 @@ interface CustomerFormProps {
   productPrice?: number;
   productName?: string;
   productId?: string;
+  /** URL slug for checkout cancel redirect back to the product page */
+  productSlug?: string;
   /** Days until delivery due (Holdam deliveryDueAt); defaults to HOLDAM_DELIVERY_DAYS server-side */
   deliveryDays?: number;
 }
@@ -81,6 +83,7 @@ export default function CustomerForm({
   productPrice,
   productName,
   productId,
+  productSlug,
   deliveryDays,
 }: CustomerFormProps) {
   const [formData, setFormData] = useState({
@@ -156,6 +159,7 @@ export default function CustomerForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productId,
+          productSlug,
           productName,
           productPrice,
           deliveryDays,
