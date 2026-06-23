@@ -51,7 +51,7 @@ fi
 echo -e "${YELLOW}Starting Next.js on port 3002...${NC}"
 cd "$REPO_DIR"
 : > "$LOG_FILE"
-PORT=3002 env -u MallocStackLogging npx next dev -p 3002 --turbo >> "$LOG_FILE" 2>&1 &
+PORT=3002 env -u MallocStackLogging npx next dev -p 3002 >> "$LOG_FILE" 2>&1 &
 CONFIA_PID=$!
 echo $CONFIA_PID > "$PID_FILE"
 

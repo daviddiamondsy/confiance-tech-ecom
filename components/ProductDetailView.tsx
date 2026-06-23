@@ -37,7 +37,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                 src={product.image}
                 alt={variant.displayName}
                 fill
-                className="object-cover"
+                className="object-contain p-6"
               />
               {product.badge && (
                 <span className="absolute top-4 left-4 px-4 py-1.5 bg-primary-600 text-white text-sm font-semibold rounded-full shadow-soft">
@@ -127,7 +127,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
               </div>
               <div className="text-center">
                 <Shield className="h-6 w-6 text-primary-600 mx-auto mb-2" />
-                <p className="text-sm font-medium text-slate-900">Grade A Tested</p>
+                <p className="text-sm font-medium text-slate-900">Clean & Tested</p>
               </div>
               <div className="text-center">
                 <RotateCcw className="h-6 w-6 text-primary-600 mx-auto mb-2" />
@@ -220,13 +220,13 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                 <div className="bg-gradient-to-br from-primary-600 via-primary-700 to-violet-700 rounded-2xl p-8 text-white mb-8 shadow-glow">
                   <h3 className="font-display text-3xl font-bold mb-4">Why Choose {variant.displayName}?</h3>
                   <p className="text-primary-100 text-lg leading-relaxed">
-                    Reliable tech in clean Grade A condition, with accessories included and a team that stands behind every order.
+                    Reliable tech in clean condition, with accessories included and a team that stands behind every order.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                   <div className="p-6 bg-white rounded-2xl border border-slate-100 shadow-soft">
-                    <h4 className="font-display font-semibold text-slate-900 mb-2">Clean Grade A Condition</h4>
+                    <h4 className="font-display font-semibold text-slate-900 mb-2">Clean Condition</h4>
                     <p className="text-slate-600 leading-relaxed">
                       Every device is clean, fully functional, and checked before it leaves our hands. We only sell units we would use ourselves.
                     </p>

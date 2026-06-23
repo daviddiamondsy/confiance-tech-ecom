@@ -26,7 +26,7 @@ export function getSelectedVariant(product: Product, storageIndex = 0) {
   const price = option?.price ?? product.price;
   const displayName =
     storage && product.storageOptions
-      ? product.name.replace(" (Grade A)", ` ${storage} (Grade A)`)
+      ? product.name.replace(" (Clean)", ` ${storage} (Clean)`)
       : product.name;
 
   return { storage: storage ?? product.specifications.Storage, price, displayName };
