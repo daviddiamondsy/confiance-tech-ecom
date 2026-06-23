@@ -34,7 +34,7 @@ const faqs = [
   {
     question: "How can I contact you?",
     answer:
-      "Reach us via WhatsApp or call at +234 9035696604, or email us at daviddiamondsy@gmail.com.",
+      "Reach us via WhatsApp or call at 07065093454.",
   },
 ];
 

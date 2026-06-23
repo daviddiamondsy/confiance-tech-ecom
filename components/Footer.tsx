@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Facebook, Instagram, Mail, Phone } from "lucide-react";
+import { Facebook, Instagram, Phone } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -94,13 +94,7 @@ export default function Footer() {
                 <span className="flex-shrink-0 p-2 rounded-lg bg-primary-500/10">
                   <Phone className="h-4 w-4 text-primary-400" />
                 </span>
-                <span>+234 9035696604</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="flex-shrink-0 p-2 rounded-lg bg-primary-500/10">
-                  <Mail className="h-4 w-4 text-primary-400" />
-                </span>
-                <span>daviddiamondsy@gmail.com</span>
+                <span>07065093454</span>
               </li>
             </ul>
           </div>
