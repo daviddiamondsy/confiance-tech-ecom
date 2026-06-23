@@ -4,11 +4,12 @@ import { useMemo, useState } from "react";
 import CustomerForm from "@/components/CustomerForm";
 import ImageCarousel from "@/components/ImageCarousel";
 import ProductSpecifications from "@/components/ProductSpecifications";
-import { Truck, Shield, RotateCcw, Check } from "lucide-react";
+import TrustFeaturesGrid from "@/components/TrustFeaturesGrid";
+import { Check } from "lucide-react";
 import Image from "next/image";
 import type { Product } from "@/lib/product-utils";
 import { getSelectedVariant, getDisplaySpecs } from "@/lib/product-utils";
-import { DELIVERY_ESTIMATE_COPY } from "@/lib/delivery-deadline";
+import { STOREFRONT_TRUST_FEATURES } from "@/lib/storefront-trust-features";
 
 interface ProductDetailViewProps {
   product: Product;
@@ -128,20 +129,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
               </ul>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 p-5 bg-white rounded-2xl border border-slate-100 shadow-soft">
-              <div className="text-center">
-                <Truck className="h-6 w-6 text-primary-600 mx-auto mb-2" />
-                <p className="text-sm font-medium text-slate-900">Fast Delivery</p>
-              </div>
-              <div className="text-center">
-                <Shield className="h-6 w-6 text-primary-600 mx-auto mb-2" />
-                <p className="text-sm font-medium text-slate-900">Clean & Tested</p>
-              </div>
-              <div className="text-center">
-                <RotateCcw className="h-6 w-6 text-primary-600 mx-auto mb-2" />
-                <p className="text-sm font-medium text-slate-900">7-Day Returns</p>
-              </div>
-            </div>
+            <TrustFeaturesGrid variant="compact" className="mb-8" />
           </div>
         </div>
       </div>
@@ -230,35 +218,23 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                 <div className="bg-gradient-to-br from-primary-600 via-primary-700 to-violet-700 rounded-2xl p-8 text-white mb-8 shadow-glow">
                   <h3 className="font-display text-3xl font-bold mb-4">Why Choose {variant.displayName}?</h3>
                   <p className="text-primary-100 text-lg leading-relaxed">
-                    Reliable tech in clean condition, with accessories included and a team that stands behind every order.
+                    Reliable tech in clean condition and a team that stands behind every order.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  <div className="p-6 bg-white rounded-2xl border border-slate-100 shadow-soft">
-                    <h4 className="font-display font-semibold text-slate-900 mb-2">Clean Condition</h4>
-                    <p className="text-slate-600 leading-relaxed">
-                      Every device is clean, fully functional, and checked before it leaves our hands. We only sell units we would use ourselves.
-                    </p>
-                  </div>
-                  <div className="p-6 bg-white rounded-2xl border border-slate-100 shadow-soft">
-                    <h4 className="font-display font-semibold text-slate-900 mb-2">Fast Delivery Nationwide</h4>
-                    <p className="text-slate-600 leading-relaxed">
-                      Get your order delivered within {DELIVERY_ESTIMATE_COPY} anywhere in Nigeria. Track your package every step of the way.
-                    </p>
-                  </div>
-                  <div className="p-6 bg-white rounded-2xl border border-slate-100 shadow-soft">
-                    <h4 className="font-display font-semibold text-slate-900 mb-2">7-Day Return Policy</h4>
-                    <p className="text-slate-600 leading-relaxed">
-                      Not satisfied? Return within 7 days for a full refund. Your satisfaction is our priority.
-                    </p>
-                  </div>
-                  <div className="p-6 bg-white rounded-2xl border border-slate-100 shadow-soft">
-                    <h4 className="font-display font-semibold text-slate-900 mb-2">24/7 Customer Support</h4>
-                    <p className="text-slate-600 leading-relaxed">
-                      Have questions? Our team is available around the clock to assist you via WhatsApp, phone, or email.
-                    </p>
-                  </div>
+                  {STOREFRONT_TRUST_FEATURES.map((feature) => (
+                    <div
+                      key={feature.title}
+                      className="p-6 bg-white rounded-2xl border border-slate-100 shadow-soft"
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <feature.icon className="h-5 w-5 text-primary-600 flex-shrink-0" />
+                        <h4 className="font-display font-semibold text-slate-900">{feature.title}</h4>
+                      </div>
+                      <p className="text-slate-600 leading-relaxed">{feature.description}</p>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100">
