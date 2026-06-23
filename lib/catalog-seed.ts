@@ -152,6 +152,31 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
       ],
     },
     {
+      id: "13",
+      name: "Apple iPhone 13 Pro Max 256GB (Clean)",
+      price: priceFromYuan(2550),
+      image: PRODUCT_IMAGES.iphone13ProMax,
+      badge: "Popular",
+      description:
+        "The iPhone 13 Pro Max features a 6.7-inch Super Retina XDR display with ProMotion, A15 Bionic chip, and a pro camera system with 3x telephoto. Clean condition with accessories included. Inspected, tested, and certified.",
+      features: [
+        "6.7-inch Super Retina XDR with ProMotion",
+        "A15 Bionic Chip",
+        "Pro 12MP Camera System",
+        "Cinematic Mode",
+        "MagSafe Compatible",
+        "Face ID Security",
+      ],
+      specifications: {
+        Display: "6.7-inch Super Retina XDR with ProMotion",
+        Processor: "A15 Bionic chip",
+        Storage: "256GB",
+        Camera: "12MP Wide + 12MP Ultra Wide + 12MP Telephoto",
+        Battery: "Up to 28 hours video",
+        Connectivity: "5G, Wi-Fi 6, Bluetooth 5.0",
+      },
+    },
+    {
       id: "12",
       name: "Apple iPhone 13 Pro Max 512GB (Clean)",
       price: priceFromYuan(3000),
