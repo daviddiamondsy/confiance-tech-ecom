@@ -4,7 +4,7 @@ import ProductCard from "@/components/ProductCard";
 import FaqAccordion from "@/components/FaqAccordion";
 import { ArrowRight, Truck, Headphones, Zap, Shield, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { products } from "@/lib/products";
+import { getProducts } from "@/lib/products";
 
 const features = [
   {
@@ -29,7 +29,10 @@ const features = [
   },
 ];
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const products = await getProducts();
   return (
     <div className="min-h-screen bg-surface-muted">
       <Header />

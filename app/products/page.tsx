@@ -2,7 +2,9 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { Filter, Grid3X3, List, ChevronDown, Package } from "lucide-react";
-import { products as allProducts } from "@/lib/products";
+import { getProducts } from "@/lib/products";
+
+export const dynamic = "force-dynamic";
 
 const categories = [
   "All Products",
@@ -14,7 +16,8 @@ const categories = [
   "Smart Home",
 ];
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const allProducts = await getProducts();
   return (
     <div className="min-h-screen bg-surface-muted">
       <Header />
