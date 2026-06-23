@@ -4,12 +4,12 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DELIVERY_ESTIMATE_COPY } from "@/lib/delivery-deadline";
+import { GRADE_A_FAQ_ANSWER } from "@/lib/device-quality-copy";
 
 const faqs = [
   {
     question: "What does Grade A mean?",
-    answer:
-      "Grade A means the device is clean, fully functional, and in excellent cosmetic condition. Each unit is inspected and tested before dispatch, and accessories are included where listed.",
+    answer: GRADE_A_FAQ_ANSWER,
   },
   {
     question: "How do I place an order?",

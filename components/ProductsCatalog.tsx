@@ -11,17 +11,19 @@ import {
   getPaginationRange,
   paginateProducts,
   parseCatalogFilter,
+  parseCatalogSearch,
   parsePage,
   parseProductSort,
   parseProductView,
+  searchProducts,
   sortProducts,
   type ProductSort,
   type ProductView,
 } from "@/lib/product-catalog-utils";
 import type { ProductFilterTag } from "@/lib/product-filters";
-import { ChevronDown, Grid3X3, List } from "lucide-react";
+import { ChevronDown, Grid3X3, List, Search, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface ProductsCatalogProps {
   products: Product[];
@@ -33,29 +35,11 @@ export default function ProductsCatalog({ products, filterTags }: ProductsCatalo
   const searchParams = useSearchParams();
 
   const activeFilter = parseCatalogFilter(searchParams.get("category"));
+  const searchQuery = parseCatalogSearch(searchParams.get("q"));
   const sort = parseProductSort(searchParams.get("sort"));
   const view = parseProductView(searchParams.get("view"));
   const page = parsePage(searchParams.get("page"));
-
-  const catalogFilters = useMemo(
-    () => getCatalogFilterOptions(products, filterTags),
-    [products, filterTags]
-  );
-
-  const filtered = useMemo(
-    () => sortProducts(filterProducts(products, activeFilter), sort),
-    [products, activeFilter, sort]
-  );
-
-  const pagination = useMemo(
-    () => paginateProducts(filtered, page, PRODUCTS_PAGE_SIZE),
-    [filtered, page]
-  );
-
-  const pageNumbers = useMemo(
-    () => getPaginationRange(pagination.page, pagination.totalPages),
-    [pagination.page, pagination.totalPages]
-  );
+  const [searchInput, setSearchInput] = useState(searchQuery);
 
   const updateQuery = useCallback(
     (updates: Record<string, string | null>) => {
@@ -73,6 +57,43 @@ export default function ProductsCatalog({ products, filterTags }: ProductsCatalo
       router.push(query ? `/products?${query}` : "/products", { scroll: false });
     },
     [router, searchParams]
+  );
+
+  useEffect(() => {
+    setSearchInput(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      if (searchInput === searchQuery) return;
+      updateQuery({
+        q: searchInput.trim() || null,
+        page: null,
+      });
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchInput, searchQuery, updateQuery]);
+
+  const catalogFilters = useMemo(
+    () => getCatalogFilterOptions(products, filterTags),
+    [products, filterTags]
+  );
+
+  const filtered = useMemo(() => {
+    const categoryFiltered = filterProducts(products, activeFilter);
+    const searchFiltered = searchProducts(categoryFiltered, searchQuery);
+    return sortProducts(searchFiltered, sort);
+  }, [products, activeFilter, searchQuery, sort]);
+
+  const pagination = useMemo(
+    () => paginateProducts(filtered, page, PRODUCTS_PAGE_SIZE),
+    [filtered, page]
+  );
+
+  const pageNumbers = useMemo(
+    () => getPaginationRange(pagination.page, pagination.totalPages),
+    [pagination.page, pagination.totalPages]
   );
 
   function handleFilterChange(nextFilter: string) {
@@ -101,42 +122,86 @@ export default function ProductsCatalog({ products, filterTags }: ProductsCatalo
     });
   }
 
+  function handleClearSearch() {
+    setSearchInput("");
+    updateQuery({
+      q: null,
+      page: null,
+    });
+  }
+
+  function handleClearFilters() {
+    setSearchInput("");
+    updateQuery({
+      category: null,
+      q: null,
+      page: null,
+    });
+  }
+
+  const hasActiveSearch = searchQuery.length > 0;
+  const hasActiveFilter = activeFilter !== ALL_PRODUCTS_FILTER;
+
   const showingFrom =
     pagination.totalItems === 0 ? 0 : (pagination.page - 1) * pagination.pageSize + 1;
   const showingTo = Math.min(pagination.page * pagination.pageSize, pagination.totalItems);
 
   return (
     <>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-          <button
-            type="button"
-            onClick={() => handleFilterChange(ALL_PRODUCTS_FILTER)}
-            className={`px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all flex-shrink-0 ${
-              activeFilter === ALL_PRODUCTS_FILTER
-                ? "bg-primary-100 text-primary-700 ring-1 ring-primary-200"
-                : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
-            }`}
-          >
-            All Products
-          </button>
-          {catalogFilters.map((filter) => (
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1 min-w-0">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
             <button
-              key={filter.slug}
               type="button"
-              onClick={() => handleFilterChange(filter.slug)}
+              onClick={() => handleFilterChange(ALL_PRODUCTS_FILTER)}
               className={`px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all flex-shrink-0 ${
-                activeFilter === filter.slug
+                activeFilter === ALL_PRODUCTS_FILTER
                   ? "bg-primary-100 text-primary-700 ring-1 ring-primary-200"
                   : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
               }`}
             >
-              {filter.label}
+              All Products
             </button>
-          ))}
+            {catalogFilters.map((filter) => (
+              <button
+                key={filter.slug}
+                type="button"
+                onClick={() => handleFilterChange(filter.slug)}
+                className={`px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all flex-shrink-0 ${
+                  activeFilter === filter.slug
+                    ? "bg-primary-100 text-primary-700 ring-1 ring-primary-200"
+                    : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative w-full sm:w-auto sm:min-w-[14rem] sm:max-w-xs lg:max-w-sm flex-shrink-0">
+            <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="search"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder="Search products..."
+              aria-label="Search products"
+              className="w-full pl-9 pr-9 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-300"
+            />
+            {searchInput ? (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                aria-label="Clear search"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-shrink-0">
           <div className="flex items-center gap-2">
             <label htmlFor="product-sort" className="text-sm text-slate-500">
               Sort by:
@@ -185,7 +250,9 @@ export default function ProductsCatalog({ products, filterTags }: ProductsCatalo
 
       <p className="text-sm text-slate-500 mb-6">
         {pagination.totalItems === 0 ? (
-          "No products match this filter."
+          hasActiveSearch
+            ? `No products match "${searchQuery}".`
+            : "No products match this filter."
         ) : (
           <>
             Showing{" "}
@@ -211,14 +278,20 @@ export default function ProductsCatalog({ products, filterTags }: ProductsCatalo
         </div>
       ) : (
         <div className="card-elevated p-10 text-center">
-          <p className="text-slate-600 mb-4">Try another category or clear your filters.</p>
-          <button
-            type="button"
-            onClick={() => handleFilterChange(ALL_PRODUCTS_FILTER)}
-            className="btn-primary text-sm py-2.5 px-5"
-          >
-            View all products
-          </button>
+          <p className="text-slate-600 mb-4">
+            {hasActiveSearch || hasActiveFilter
+              ? "Try another search term, category, or clear your filters."
+              : "No products are available right now."}
+          </p>
+          {hasActiveSearch || hasActiveFilter ? (
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className="btn-primary text-sm py-2.5 px-5"
+            >
+              View all products
+            </button>
+          ) : null}
         </div>
       )}
 

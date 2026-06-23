@@ -3,6 +3,10 @@ import { slugForProductId, slugifyProductName } from "@/lib/product-slug";
 import { fetchColorsByProductIds, fetchColorsForProduct } from "@/lib/db/colors-repository";
 import { fetchPricingConfig } from "@/lib/db/pricing-config-repository";
 import { priceFromYuan } from "@/lib/pricing";
+import {
+  BATTERY_HEALTH_FEATURE,
+  BATTERY_HEALTH_SPEC,
+} from "@/lib/device-quality-copy";
 import type { Product, StorageOption } from "@/lib/product-utils";
 
 interface ProductRow {
@@ -340,12 +344,16 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
 
   const price = priceFromYuan(input.yuanCost, config);
   const storage = input.storage?.trim() || undefined;
+  const isIphone = input.filterSlug === "iphone";
   const features =
-    input.features?.map((feature) => feature.trim()).filter(Boolean) ?? [
-      "Clean condition with accessories included",
-      "Inspected, tested, and certified",
-    ];
-  const specifications: Record<string, string> = storage ? { Storage: storage } : {};
+    input.features?.map((feature) => feature.trim()).filter(Boolean) ??
+    (isIphone
+      ? [BATTERY_HEALTH_FEATURE, "Clean condition with accessories included", "Inspected, tested, and certified"]
+      : ["Clean condition with accessories included", "Inspected, tested, and certified"]);
+  const specifications: Record<string, string> = {
+    ...(storage ? { Storage: storage } : {}),
+    ...(isIphone ? { "Battery health": BATTERY_HEALTH_SPEC } : {}),
+  };
 
   await sql.query(
     `INSERT INTO products (

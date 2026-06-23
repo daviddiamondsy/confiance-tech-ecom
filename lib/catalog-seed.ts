@@ -1,4 +1,5 @@
 import { priceFromYuan } from "@/lib/pricing";
+import { BATTERY_HEALTH_FEATURE, BATTERY_HEALTH_SPEC, IPHONE_QUALITY_TAIL } from "@/lib/device-quality-copy";
 import type { Product } from "@/lib/product-utils";
 
 type CatalogProductSeed = Omit<Product, "slug">;
@@ -23,8 +24,10 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
       image: PRODUCT_IMAGES.iphone13,
       badge: "Popular",
       description:
-        "The iPhone 13 features a brighter Super Retina XDR display, A15 Bionic chip, and advanced dual-camera system with Cinematic mode. Clean condition with accessories included. Inspected, tested, and certified.",
+        "The iPhone 13 features a brighter Super Retina XDR display, A15 Bionic chip, and advanced dual-camera system with Cinematic mode. " +
+        IPHONE_QUALITY_TAIL,
       features: [
+        BATTERY_HEALTH_FEATURE,
         "6.1-inch Super Retina XDR Display",
         "A15 Bionic Chip",
         "5G Capable",
@@ -38,6 +41,7 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Storage: "256GB",
         Camera: "Dual 12MP Wide + Ultra Wide",
         Battery: "Up to 19 hours video",
+        "Battery health": BATTERY_HEALTH_SPEC,
         Connectivity: "5G, Wi-Fi 6, Bluetooth 5.0",
       },
     },
@@ -47,8 +51,10 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
       price: priceFromYuan(3000),
       image: PRODUCT_IMAGES.iphone14Pro,
       description:
-        "The iPhone 14 Pro introduces Dynamic Island, Always-On display, A16 Bionic chip, and a 48MP Pro camera system. Clean condition with accessories included. Inspected, tested, and certified.",
+        "The iPhone 14 Pro introduces Dynamic Island, Always-On display, A16 Bionic chip, and a 48MP Pro camera system. " +
+        IPHONE_QUALITY_TAIL,
       features: [
+        BATTERY_HEALTH_FEATURE,
         "6.1-inch Super Retina XDR with Dynamic Island",
         "A16 Bionic Chip",
         "Always-On Display",
@@ -62,6 +68,7 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Storage: "256GB",
         Camera: "48MP Main + 12MP Ultra Wide + 12MP Telephoto",
         Battery: "Up to 23 hours video",
+        "Battery health": BATTERY_HEALTH_SPEC,
         Connectivity: "5G, Wi-Fi 6, Bluetooth 5.3",
       },
     },
@@ -72,8 +79,10 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
       image: PRODUCT_IMAGES.iphone15ProMax,
       badge: "New",
       description:
-        "The iPhone 15 Pro Max features a titanium design, A17 Pro chip, Action button, and the most advanced camera system on iPhone. Clean condition with accessories included. Inspected, tested, and certified.",
+        "The iPhone 15 Pro Max features a titanium design, A17 Pro chip, Action button, and the most advanced camera system on iPhone. " +
+        IPHONE_QUALITY_TAIL,
       features: [
+        BATTERY_HEALTH_FEATURE,
         "6.7-inch Super Retina XDR Display",
         "A17 Pro Chip",
         "Titanium Design",
@@ -87,6 +96,7 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Storage: "256GB",
         Camera: "48MP Main + 12MP Ultra Wide + 12MP 5x Telephoto",
         Battery: "Up to 29 hours video",
+        "Battery health": BATTERY_HEALTH_SPEC,
         Connectivity: "5G, Wi-Fi 6E, Bluetooth 5.3",
       },
       storageOptions: [
@@ -100,8 +110,10 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
       price: priceFromYuan(2000),
       image: PRODUCT_IMAGES.iphone12ProMax,
       description:
-        "The iPhone 12 Pro Max features a 6.7-inch Super Retina XDR display, A14 Bionic chip, and a pro camera system with LiDAR. Clean condition with accessories included. Inspected, tested, and certified.",
+        "The iPhone 12 Pro Max features a 6.7-inch Super Retina XDR display, A14 Bionic chip, and a pro camera system with LiDAR. " +
+        IPHONE_QUALITY_TAIL,
       features: [
+        BATTERY_HEALTH_FEATURE,
         "6.7-inch Super Retina XDR Display",
         "A14 Bionic Chip",
         "5G Capable",
@@ -115,6 +127,7 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Storage: "256GB",
         Camera: "12MP Wide + 12MP Ultra Wide + 12MP Telephoto",
         Battery: "Up to 20 hours video",
+        "Battery health": BATTERY_HEALTH_SPEC,
         Connectivity: "5G, Wi-Fi 6, Bluetooth 5.0",
       },
       storageOptions: [
@@ -129,8 +142,10 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
       image: PRODUCT_IMAGES.iphone14ProMax,
       badge: "Popular",
       description:
-        "The iPhone 14 Pro Max features Dynamic Island, Always-On display, A16 Bionic chip, and a 48MP Pro camera system on a 6.7-inch display. Clean condition with accessories included. Inspected, tested, and certified.",
+        "The iPhone 14 Pro Max features Dynamic Island, Always-On display, A16 Bionic chip, and a 48MP Pro camera system on a 6.7-inch display. " +
+        IPHONE_QUALITY_TAIL,
       features: [
+        BATTERY_HEALTH_FEATURE,
         "6.7-inch Super Retina XDR with Dynamic Island",
         "A16 Bionic Chip",
         "Always-On Display",
@@ -144,6 +159,7 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Storage: "256GB",
         Camera: "48MP Main + 12MP Ultra Wide + 12MP Telephoto",
         Battery: "Up to 29 hours video",
+        "Battery health": BATTERY_HEALTH_SPEC,
         Connectivity: "5G, Wi-Fi 6, Bluetooth 5.3",
       },
       storageOptions: [
@@ -158,8 +174,10 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
       image: PRODUCT_IMAGES.iphone13ProMax,
       badge: "Popular",
       description:
-        "The iPhone 13 Pro Max features a 6.7-inch Super Retina XDR display with ProMotion, A15 Bionic chip, and a pro camera system with 3x telephoto. Clean condition with accessories included. Inspected, tested, and certified.",
+        "The iPhone 13 Pro Max features a 6.7-inch Super Retina XDR display with ProMotion, A15 Bionic chip, and a pro camera system with 3x telephoto. " +
+        IPHONE_QUALITY_TAIL,
       features: [
+        BATTERY_HEALTH_FEATURE,
         "6.7-inch Super Retina XDR with ProMotion",
         "A15 Bionic Chip",
         "Pro 12MP Camera System",
@@ -173,6 +191,7 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Storage: "256GB",
         Camera: "12MP Wide + 12MP Ultra Wide + 12MP Telephoto",
         Battery: "Up to 28 hours video",
+        "Battery health": BATTERY_HEALTH_SPEC,
         Connectivity: "5G, Wi-Fi 6, Bluetooth 5.0",
       },
       storageOptions: [
