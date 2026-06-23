@@ -1,14 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Star, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 interface Product {
   id: string;
   name: string;
   price: number;
   originalPrice?: number;
-  rating: number;
-  reviews: number;
   image: string;
   badge?: string;
 }
@@ -47,20 +45,6 @@ export default function ProductCard({ product }: ProductCardProps) {
       </Link>
 
       <div className="p-5">
-        <div className="flex items-center gap-1 mb-2.5">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`h-3.5 w-3.5 ${
-                i < Math.floor(product.rating)
-                  ? "fill-amber-400 text-amber-400"
-                  : "text-slate-200"
-              }`}
-            />
-          ))}
-          <span className="text-xs text-slate-500 ml-1">({product.reviews})</span>
-        </div>
-
         <Link href={`/products/${product.id}`}>
           <h3 className="font-display font-semibold text-slate-900 mb-3 line-clamp-2 group-hover:text-primary-600 transition-colors leading-snug">
             {product.name}
