@@ -6,6 +6,7 @@ import TrustFeaturesGrid from "@/components/TrustFeaturesGrid";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { getProducts } from "@/lib/products";
+import { STOREFRONT_HERO_COPY, STOREFRONT_FEATURED_COPY } from "@/lib/device-quality-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,7 @@ export default async function Home() {
               </span>
             </h1>
             <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-xl leading-relaxed">
-              We source clean Grade A devices so you get reliable tech without the guesswork. Every unit is inspected before it ships.
+              {STOREFRONT_HERO_COPY}
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/products" className="btn-primary px-8 py-4 text-base">
@@ -63,7 +64,7 @@ export default async function Home() {
               Featured Products
             </h2>
             <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              Hand-picked Grade A devices. Each one is inspected, tested, and backed by our guarantee.
+              {STOREFRONT_FEATURED_COPY}
             </p>
           </div>
 

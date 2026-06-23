@@ -4,6 +4,7 @@ import ProductsCatalog from "@/components/ProductsCatalog";
 import { Package } from "lucide-react";
 import { getProductFilterTags } from "@/lib/product-filters";
 import { getProducts } from "@/lib/products";
+import { STOREFRONT_CATALOG_COPY } from "@/lib/device-quality-copy";
 import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ export default async function ProductsPage() {
             All Products
           </h1>
           <p className="text-slate-400 mt-3 max-w-lg">
-            Explore our range of clean Grade A computing devices with accessories included
+            {STOREFRONT_CATALOG_COPY}
           </p>
         </div>
       </div>

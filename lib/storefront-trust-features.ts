@@ -26,6 +26,6 @@ export const STOREFRONT_TRUST_FEATURES: StorefrontTrustFeature[] = [
   {
     icon: Shield,
     title: "Clean Devices",
-    description: "Inspected before every shipment",
+    description: "Grade A condition. Inspected before every shipment",
   },
 ];

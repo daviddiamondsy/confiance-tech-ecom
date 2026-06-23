@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Facebook, Instagram, Phone } from "lucide-react";
+import { STOREFRONT_FOOTER_COPY } from "@/lib/device-quality-copy";
 
 export default function Footer() {
   return (
@@ -14,7 +15,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed mb-6">
-              Confiance Tech is your trusted place for clean Grade A computing devices with accessories included. Every unit is inspected before it ships.
+              {STOREFRONT_FOOTER_COPY}
             </p>
             <div className="flex gap-3">
               <Link

@@ -59,9 +59,32 @@ export function parsePage(value: string | null): number {
   return Math.floor(page);
 }
 
+export function parseCatalogSearch(value: string | null): string {
+  if (!value) return "";
+  return value.trim();
+}
+
 export function filterProducts(products: Product[], filterSlug: string): Product[] {
   if (filterSlug === ALL_PRODUCTS_FILTER) return products;
   return products.filter((product) => getProductFilterSlug(product) === filterSlug);
+}
+
+export function searchProducts(products: Product[], query: string): Product[] {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return products;
+
+  return products.filter((product) => {
+    const haystack = [
+      product.name,
+      product.description,
+      ...(product.features ?? []),
+      product.badge ?? "",
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return haystack.includes(normalizedQuery);
+  });
 }
 
 export function sortProducts(products: Product[], sort: ProductSort): Product[] {

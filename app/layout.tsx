@@ -6,13 +6,14 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
 import "./globals.css";
+import { STOREFRONT_META_DESCRIPTION } from "@/lib/device-quality-copy";
 
 // Replace with your actual Meta Pixel ID
 const META_PIXEL_ID = "YOUR_PIXEL_ID_HERE";
 
 export const metadata: Metadata = {
   title: "Confiance Tech - Grade A Computing Devices",
-  description: "Clean Grade A computing devices with accessories. Inspected, tested, and delivered with care nationwide.",
+  description: STOREFRONT_META_DESCRIPTION,
 };
 
 export default function RootLayout({
