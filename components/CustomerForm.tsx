@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Send, CheckCircle } from "lucide-react";
+import StateSelect from "@/components/StateSelect";
 
 function checkoutStorageKey(productId?: string) {
   return productId ? `holdam_checkout_${productId}` : "holdam_checkout";
@@ -21,47 +22,6 @@ const trackLead = () => {
   }
 };
 
-// Nigerian states
-const nigerianStates = [
-  "Abia",
-  "Adamawa",
-  "Akwa Ibom",
-  "Anambra",
-  "Bauchi",
-  "Bayelsa",
-  "Benue",
-  "Borno",
-  "Cross River",
-  "Delta",
-  "Ebonyi",
-  "Edo",
-  "Ekiti",
-  "Enugu",
-  "FCT (Abuja)",
-  "Gombe",
-  "Imo",
-  "Jigawa",
-  "Kaduna",
-  "Kano",
-  "Katsina",
-  "Kebbi",
-  "Kogi",
-  "Kwara",
-  "Lagos",
-  "Nasarawa",
-  "Niger",
-  "Ogun",
-  "Ondo",
-  "Osun",
-  "Oyo",
-  "Plateau",
-  "Rivers (Port Harcourt)",
-  "Sokoto",
-  "Taraba",
-  "Yobe",
-  "Zamfara",
-];
-
 interface CustomerFormProps {
   variant?: "default" | "compact" | "inline";
   title?: string;
@@ -75,8 +35,7 @@ interface CustomerFormProps {
   deliveryDays?: number;
 }
 
-
-export default function CustomerForm({ 
+export default function CustomerForm({
   variant = "default",
   title = "Get Exclusive Updates",
   subtitle = "Subscribe to receive product updates and special offers.",
@@ -133,12 +92,8 @@ export default function CustomerForm({
     goToCheckout(pendingCheckoutUrl);
   };
 
-  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedState = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      state: selectedState,
-    }));
+  const handleStateChange = (state: string) => {
+    setFormData((prev) => ({ ...prev, state }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -255,20 +210,14 @@ export default function CustomerForm({
           required
           className="input-field flex-1 min-w-[150px]"
         />
-        <select
+        <StateSelect
           name="state"
           value={formData.state}
           onChange={handleStateChange}
           required
-          className="input-field flex-1 bg-white min-w-[150px]"
-        >
-          <option value="">Select state</option>
-          {nigerianStates.map((state) => (
-            <option key={state} value={state}>
-              {state}
-            </option>
-          ))}
-        </select>
+          placeholder="Select state"
+          className="flex-1 min-w-[180px]"
+        />
         <button
           type="submit"
           disabled={isSubmitting || isRedirecting}
@@ -319,20 +268,14 @@ export default function CustomerForm({
             required
             className="input-field text-sm py-2.5"
           />
-          <select
+          <StateSelect
             name="state"
             value={formData.state}
             onChange={handleStateChange}
             required
-            className="input-field text-sm py-2.5 bg-white"
-          >
-            <option value="">Select state</option>
-            {nigerianStates.map((state) => (
-              <option key={state} value={state}>
-                {state}
-              </option>
-            ))}
-          </select>
+            placeholder="Select state"
+            inputClassName="text-sm py-2.5"
+          />
           <button
             type="submit"
             disabled={isSubmitting || isRedirecting}
@@ -390,7 +333,7 @@ export default function CustomerForm({
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            placeholder="+1 (555) 123-4567"
+            placeholder="08012345678"
             required
             className="input-field"
           />
@@ -414,22 +357,15 @@ export default function CustomerForm({
           <label htmlFor="state" className="block text-sm font-medium text-slate-700 mb-1.5">
             State *
           </label>
-          <select
+          <StateSelect
             id="state"
             name="state"
             value={formData.state}
             onChange={handleStateChange}
             required
-            className="input-field bg-white"
-          >
-            <option value="">Select a state</option>
-            {nigerianStates.map((state) => (
-              <option key={state} value={state}>
-                {state}
-              </option>
-            ))}
-          </select>
-                  </div>
+            placeholder="Select your state"
+          />
+        </div>
         <button
           type="submit"
           disabled={isSubmitting || isRedirecting}
