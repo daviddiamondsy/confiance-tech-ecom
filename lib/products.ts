@@ -1,16 +1,20 @@
 import type { Product } from "@/lib/product-utils";
 export type { Product, StorageOption } from "@/lib/product-utils";
 export { getSelectedVariant, getDisplaySpecs } from "@/lib/product-utils";
-export { priceFromYuan, toCharmPrice } from "@/lib/pricing";
+export { priceFromYuan, sellingMarkupForYuan, toCharmPrice } from "@/lib/pricing";
 
 import { buildCatalogProducts } from "@/lib/catalog-seed";
+import { DEFAULT_PRODUCT_COLORS } from "@/lib/catalog-yuan";
 import { isPostgresConfigured } from "@/lib/db/client";
 import {
   fetchProductByIdFromDb,
   fetchProductsFromDb,
 } from "@/lib/db/products-repository";
 
-const staticProducts = buildCatalogProducts();
+const staticProducts = buildCatalogProducts().map((product) => ({
+  ...product,
+  colorOptions: DEFAULT_PRODUCT_COLORS[product.id],
+}));
 
 /** @deprecated Use getProducts() for server components. */
 export const products: Product[] = staticProducts;

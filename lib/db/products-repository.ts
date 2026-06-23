@@ -1,10 +1,14 @@
 import { sql } from "@vercel/postgres";
+import { fetchColorsByProductIds, fetchColorsForProduct } from "@/lib/db/colors-repository";
+import { fetchPricingConfig } from "@/lib/db/pricing-config-repository";
+import { priceFromYuan } from "@/lib/pricing";
 import type { Product, StorageOption } from "@/lib/product-utils";
 
 interface ProductRow {
   id: string;
   name: string;
   price: number;
+  yuan_cost: string | null;
   original_price: number | null;
   image: string;
   badge: string | null;
@@ -18,22 +22,39 @@ interface StorageRow {
   product_id: string;
   storage: string;
   price: number;
+  yuan_cost: string | null;
   sort_order: number;
 }
 
-function mapRowToProduct(row: ProductRow, storageRows: StorageRow[]): Product {
+function resolvePrice(yuanCost: number | null, storedPrice: number, config: Awaited<ReturnType<typeof fetchPricingConfig>>): number {
+  if (yuanCost != null && !Number.isNaN(yuanCost)) {
+    return priceFromYuan(yuanCost, config);
+  }
+  return storedPrice;
+}
+
+function mapRowToProduct(
+  row: ProductRow,
+  storageRows: StorageRow[],
+  colors: string[],
+  config: Awaited<ReturnType<typeof fetchPricingConfig>>
+): Product {
+  const baseYuan = row.yuan_cost != null ? Number(row.yuan_cost) : null;
   const storageOptions: StorageOption[] | undefined =
     storageRows.length > 0
-      ? storageRows.map((option) => ({
-          storage: option.storage,
-          price: option.price,
-        }))
+      ? storageRows.map((option) => {
+          const yuan = option.yuan_cost != null ? Number(option.yuan_cost) : baseYuan;
+          return {
+            storage: option.storage,
+            price: resolvePrice(yuan, option.price, config),
+          };
+        })
       : undefined;
 
   return {
     id: row.id,
     name: row.name,
-    price: row.price,
+    price: resolvePrice(baseYuan, row.price, config),
     originalPrice: row.original_price ?? undefined,
     image: row.image,
     badge: row.badge ?? undefined,
@@ -41,35 +62,32 @@ function mapRowToProduct(row: ProductRow, storageRows: StorageRow[]): Product {
     features: row.features,
     specifications: row.specifications,
     storageOptions,
+    colorOptions: colors.length > 0 ? colors : undefined,
   };
 }
 
 export async function fetchProductsFromDb(): Promise<Product[]> {
+  const config = await fetchPricingConfig();
+
   const { rows: productRows } = await sql<ProductRow>`
     SELECT
-      id,
-      name,
-      price,
-      original_price,
-      image,
-      badge,
-      description,
-      features,
-      specifications,
-      sort_order
+      id, name, price, yuan_cost, original_price, image, badge,
+      description, features, specifications, sort_order
     FROM products
     ORDER BY sort_order ASC, id ASC
   `;
 
-  if (productRows.length === 0) {
-    return [];
-  }
+  if (productRows.length === 0) return [];
+
+  const productIds = productRows.map((row) => row.id);
 
   const { rows: storageRows } = await sql<StorageRow>`
-    SELECT product_id, storage, price, sort_order
+    SELECT product_id, storage, price, yuan_cost, sort_order
     FROM product_storage_options
     ORDER BY product_id ASC, sort_order ASC
   `;
+
+  const colorsByProduct = await fetchColorsByProductIds(productIds);
 
   const storageByProduct = new Map<string, StorageRow[]>();
   for (const option of storageRows) {
@@ -79,23 +97,22 @@ export async function fetchProductsFromDb(): Promise<Product[]> {
   }
 
   return productRows.map((row) =>
-    mapRowToProduct(row, storageByProduct.get(row.id) ?? [])
+    mapRowToProduct(
+      row,
+      storageByProduct.get(row.id) ?? [],
+      colorsByProduct.get(row.id) ?? [],
+      config
+    )
   );
 }
 
 export async function fetchProductByIdFromDb(id: string): Promise<Product | undefined> {
+  const config = await fetchPricingConfig();
+
   const { rows } = await sql<ProductRow>`
     SELECT
-      id,
-      name,
-      price,
-      original_price,
-      image,
-      badge,
-      description,
-      features,
-      specifications,
-      sort_order
+      id, name, price, yuan_cost, original_price, image, badge,
+      description, features, specifications, sort_order
     FROM products
     WHERE id = ${id}
     LIMIT 1
@@ -105,26 +122,34 @@ export async function fetchProductByIdFromDb(id: string): Promise<Product | unde
   if (!row) return undefined;
 
   const { rows: storageRows } = await sql<StorageRow>`
-    SELECT product_id, storage, price, sort_order
+    SELECT product_id, storage, price, yuan_cost, sort_order
     FROM product_storage_options
     WHERE product_id = ${id}
     ORDER BY sort_order ASC
   `;
 
-  return mapRowToProduct(row, storageRows);
+  const colors = await fetchColorsForProduct(id);
+
+  return mapRowToProduct(row, storageRows, colors, config);
 }
 
-export async function upsertCatalogProducts(products: Product[]): Promise<void> {
+export interface SeedProductInput extends Product {
+  yuanCost?: number;
+  storageYuan?: Record<string, number>;
+}
+
+export async function upsertCatalogProducts(products: SeedProductInput[]): Promise<void> {
   for (let index = 0; index < products.length; index += 1) {
     const product = products[index];
     await sql.query(
       `INSERT INTO products (
-        id, name, price, original_price, image, badge, description,
+        id, name, price, yuan_cost, original_price, image, badge, description,
         features, specifications, sort_order, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9::jsonb, $10, NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11, NOW())
       ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
         price = EXCLUDED.price,
+        yuan_cost = EXCLUDED.yuan_cost,
         original_price = EXCLUDED.original_price,
         image = EXCLUDED.image,
         badge = EXCLUDED.badge,
@@ -137,6 +162,7 @@ export async function upsertCatalogProducts(products: Product[]): Promise<void> 
         product.id,
         product.name,
         product.price,
+        product.yuanCost ?? null,
         product.originalPrice ?? null,
         product.image,
         product.badge ?? null,
@@ -152,11 +178,130 @@ export async function upsertCatalogProducts(products: Product[]): Promise<void> 
     if (product.storageOptions?.length) {
       for (let optionIndex = 0; optionIndex < product.storageOptions.length; optionIndex += 1) {
         const option = product.storageOptions[optionIndex];
-        await sql`
-          INSERT INTO product_storage_options (product_id, storage, price, sort_order)
-          VALUES (${product.id}, ${option.storage}, ${option.price}, ${optionIndex})
-        `;
+        const yuanCost = product.storageYuan?.[option.storage] ?? product.yuanCost ?? null;
+        await sql.query(
+          `INSERT INTO product_storage_options (product_id, storage, price, yuan_cost, sort_order)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [product.id, option.storage, option.price, yuanCost, optionIndex]
+        );
       }
     }
   }
+}
+
+export async function fetchAdminProductSummaries(): Promise<
+  Array<{ id: string; name: string; yuanCost: number | null; price: number; colors: string[] }>
+> {
+  const config = await fetchPricingConfig();
+
+  const { rows } = await sql<{ id: string; name: string; price: number; yuan_cost: string | null }>`
+    SELECT id, name, price, yuan_cost FROM products ORDER BY sort_order ASC, id ASC
+  `;
+
+  const colorsByProduct = await fetchColorsByProductIds(rows.map((row) => row.id));
+
+  return rows.map((row) => {
+    const yuanCost = row.yuan_cost != null ? Number(row.yuan_cost) : null;
+    return {
+      id: row.id,
+      name: row.name,
+      yuanCost,
+      price: resolvePrice(yuanCost, row.price, config),
+      colors: colorsByProduct.get(row.id) ?? [],
+    };
+  });
+}
+
+export interface CreateProductInput {
+  name: string;
+  yuanCost: number;
+  image: string;
+  description: string;
+  badge?: string;
+  storage?: string;
+  colors?: string[];
+  features?: string[];
+  storageVariants?: Array<{ storage: string; yuan: number }>;
+}
+
+function normalizeProductName(name: string): string {
+  const trimmed = name.trim();
+  if (trimmed.endsWith("(Clean)")) return trimmed;
+  return `${trimmed} (Clean)`;
+}
+
+async function nextProductId(): Promise<string> {
+  const { rows } = await sql<{ next_id: number }>`
+    SELECT COALESCE(MAX(CAST(id AS INTEGER)), 0) + 1 AS next_id
+    FROM products
+    WHERE id ~ '^[0-9]+$'
+  `;
+  return String(rows[0]?.next_id ?? 1);
+}
+
+async function nextSortOrder(): Promise<number> {
+  const { rows } = await sql<{ next_order: number }>`
+    SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM products
+  `;
+  return rows[0]?.next_order ?? 0;
+}
+
+export async function createAdminProduct(input: CreateProductInput): Promise<{
+  id: string;
+  name: string;
+  yuanCost: number;
+  price: number;
+  colors: string[];
+}> {
+  const config = await fetchPricingConfig();
+  const id = await nextProductId();
+  const sortOrder = await nextSortOrder();
+  const name = normalizeProductName(input.name);
+  const price = priceFromYuan(input.yuanCost, config);
+  const storage = input.storage?.trim() || undefined;
+  const features =
+    input.features?.map((feature) => feature.trim()).filter(Boolean) ?? [
+      "Clean condition with accessories included",
+      "Inspected, tested, and certified",
+    ];
+  const specifications: Record<string, string> = storage ? { Storage: storage } : {};
+
+  await sql.query(
+    `INSERT INTO products (
+      id, name, price, yuan_cost, original_price, image, badge, description,
+      features, specifications, sort_order, updated_at
+    ) VALUES ($1, $2, $3, $4, NULL, $5, $6, $7, $8::jsonb, $9::jsonb, $10, NOW())`,
+    [
+      id,
+      name,
+      price,
+      input.yuanCost,
+      input.image.trim(),
+      input.badge?.trim() || null,
+      input.description.trim(),
+      JSON.stringify(features),
+      JSON.stringify(specifications),
+      sortOrder,
+    ]
+  );
+
+  if (input.storageVariants?.length) {
+    for (let index = 0; index < input.storageVariants.length; index += 1) {
+      const variant = input.storageVariants[index];
+      const variantPrice = priceFromYuan(variant.yuan, config);
+      await sql.query(
+        `INSERT INTO product_storage_options (product_id, storage, price, yuan_cost, sort_order)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [id, variant.storage.trim(), variantPrice, variant.yuan, index]
+      );
+    }
+  }
+
+  const colors = input.colors ?? [];
+  if (colors.length > 0) {
+    const { replaceProductColors } = await import("@/lib/db/colors-repository");
+    await replaceProductColors(id, colors);
+  }
+
+  return { id, name, yuanCost: input.yuanCost, price, colors };
 }

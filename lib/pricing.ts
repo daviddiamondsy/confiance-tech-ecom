@@ -1,11 +1,47 @@
-const YUAN_TO_NAIRA = 207;
-const SHIPPING_NGN = 30_000;
-const SELLING_MARKUP = 1.2;
+export interface PricingConfig {
+  yuanToNaira: number;
+  shippingNgn: number;
+  sellingMarkup: number;
+  /** When yuan cost is at or above this, use expensiveSellingMarkup instead. */
+  expensiveYuanThreshold?: number | null;
+  /** Markup multiplier for expensive items (default 1.15 = 15% markup). */
+  expensiveSellingMarkup?: number | null;
+}
 
-/** Selling price in NGN: 1.2 × (yuan × 207 + ₦30,000 shipping). */
-export function priceFromYuan(yuan: number): number {
-  const costPrice = yuan * YUAN_TO_NAIRA + SHIPPING_NGN;
-  const sellingPrice = Math.round(costPrice * SELLING_MARKUP);
+export const DEFAULT_PRICING_CONFIG: PricingConfig = {
+  yuanToNaira: 207,
+  shippingNgn: 30_000,
+  sellingMarkup: 1.2,
+  expensiveYuanThreshold: 3500,
+  expensiveSellingMarkup: 1.15,
+};
+
+/** Pick markup multiplier based on yuan cost tier. */
+export function sellingMarkupForYuan(
+  yuan: number,
+  config: PricingConfig = DEFAULT_PRICING_CONFIG
+): number {
+  const threshold = config.expensiveYuanThreshold;
+  const expensiveMarkup = config.expensiveSellingMarkup;
+
+  if (
+    threshold != null &&
+    threshold > 0 &&
+    expensiveMarkup != null &&
+    expensiveMarkup > 0 &&
+    yuan >= threshold
+  ) {
+    return expensiveMarkup;
+  }
+
+  return config.sellingMarkup;
+}
+
+/** Selling price in NGN: markup × (yuan × rate + shipping), then charm pricing. */
+export function priceFromYuan(yuan: number, config: PricingConfig = DEFAULT_PRICING_CONFIG): number {
+  const costPrice = yuan * config.yuanToNaira + config.shippingNgn;
+  const markup = sellingMarkupForYuan(yuan, config);
+  const sellingPrice = Math.round(costPrice * markup);
   return toCharmPrice(sellingPrice);
 }
 

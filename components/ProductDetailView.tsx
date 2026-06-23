@@ -16,10 +16,11 @@ interface ProductDetailViewProps {
 
 export default function ProductDetailView({ product, deliveryDays }: ProductDetailViewProps) {
   const [selectedStorageIndex, setSelectedStorageIndex] = useState(0);
+  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
 
   const variant = useMemo(
-    () => getSelectedVariant(product, selectedStorageIndex),
-    [product, selectedStorageIndex]
+    () => getSelectedVariant(product, selectedStorageIndex, selectedColorIndex),
+    [product, selectedStorageIndex, selectedColorIndex]
   );
 
   const displaySpecs = useMemo(
@@ -68,6 +69,28 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                       }`}
                     >
                       {option.storage}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {product.colorOptions && product.colorOptions.length > 0 && (
+              <div className="mb-6">
+                <p className="text-sm font-medium text-slate-700 mb-3">Color</p>
+                <div className="flex flex-wrap gap-3">
+                  {product.colorOptions.map((color, index) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setSelectedColorIndex(index)}
+                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                        selectedColorIndex === index
+                          ? "border-primary-600 bg-primary-50 text-primary-700 shadow-soft"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                      }`}
+                    >
+                      {color}
                     </button>
                   ))}
                 </div>
