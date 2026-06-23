@@ -76,11 +76,10 @@ SET slug = CASE id
   WHEN '9' THEN 'iphone-12-pro-max'
   WHEN '10' THEN 'iphone-14-pro-max'
   WHEN '11' THEN 'macbook-pro-m4'
-  WHEN '12' THEN 'iphone-13-pro-max-512gb'
-  WHEN '13' THEN 'iphone-13-pro-max-256gb'
+  WHEN '12' THEN 'iphone-13-pro-max'
   ELSE slug
 END
-WHERE slug IS NULL AND id IN ('6', '7', '8', '9', '10', '11', '12', '13');
+WHERE slug IS NULL AND id IN ('6', '7', '8', '9', '10', '11', '12');
 
 INSERT INTO product_filters (slug, label, sort_order) VALUES
   ('iphone', 'iPhone', 0),
@@ -91,7 +90,7 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS filter_slug TEXT;
 ALTER TABLE product_filters ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
 
 UPDATE products SET filter_slug = 'iphone'
-WHERE id IN ('6', '7', '8', '9', '10', '12', '13') AND filter_slug IS NULL;
+WHERE id IN ('6', '7', '8', '9', '10', '12') AND filter_slug IS NULL;
 UPDATE products SET filter_slug = 'macbook'
 WHERE id = '11' AND filter_slug IS NULL;
 ALTER TABLE pricing_config ADD COLUMN IF NOT EXISTS expensive_yuan_threshold NUMERIC(12, 2);
@@ -102,3 +101,9 @@ SET
   expensive_yuan_threshold = COALESCE(expensive_yuan_threshold, 3500),
   expensive_selling_markup = COALESCE(expensive_selling_markup, 1.15)
 WHERE id = 'default';
+
+DELETE FROM products WHERE id = '13';
+
+UPDATE products
+SET slug = 'iphone-13-pro-max'
+WHERE id = '12';
