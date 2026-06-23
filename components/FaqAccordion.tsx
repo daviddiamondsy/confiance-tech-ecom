@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DELIVERY_ESTIMATE_COPY } from "@/lib/delivery-deadline";
 
 const faqs = [
   {
@@ -23,7 +24,7 @@ const faqs = [
   {
     question: "How long does delivery take?",
     answer:
-      "Delivery typically takes 1-3 business days depending on your location. We will provide an estimated delivery date when confirming your order.",
+      `Delivery typically takes ${DELIVERY_ESTIMATE_COPY} depending on your location. We will provide an estimated delivery date when confirming your order.`,
   },
   {
     question: "Can I return a product?",

@@ -5,6 +5,7 @@ import FaqAccordion from "@/components/FaqAccordion";
 import { ArrowRight, Truck, Headphones, Zap, Shield, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { getProducts } from "@/lib/products";
+import { DELIVERY_ESTIMATE_COPY } from "@/lib/delivery-deadline";
 
 const features = [
   {
@@ -25,7 +26,7 @@ const features = [
   {
     icon: Zap,
     title: "Fast Delivery",
-    description: "2-3 business days",
+    description: DELIVERY_ESTIMATE_COPY,
   },
 ];
 
