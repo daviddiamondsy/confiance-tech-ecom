@@ -70,10 +70,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                           : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
                       }`}
                     >
-                      <span className="block">{option.storage}</span>
-                      <span className="block text-xs font-medium mt-0.5 opacity-80">
-                        ₦{option.price.toLocaleString()}
-                      </span>
+                      {option.storage}
                     </button>
                   ))}
                 </div>
