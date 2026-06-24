@@ -7,6 +7,8 @@ import ProductFormFields from "@/components/admin/ProductFormFields";
 import {
   adminProductToForm,
   emptyProductForm,
+  primaryYuanFromForm,
+  productFormPayloadForSave,
   type ProductFormState,
 } from "@/lib/admin-product-form";
 import { priceFromYuan, sellingMarkupForYuan } from "@/lib/pricing";
@@ -31,8 +33,8 @@ const emptyFilterForm = {
 };
 
 function previewFromForm(form: ProductFormState, pricing: PricingConfig) {
-  const yuan = Number(form.yuanCost);
-  if (!Number.isFinite(yuan) || yuan <= 0) {
+  const yuan = primaryYuanFromForm(form);
+  if (yuan == null) {
     return { previewPrice: null, previewMarkup: null };
   }
   return {
@@ -173,7 +175,7 @@ export default function AdminDashboard() {
       const response = await fetch("/api/admin/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(productForm),
+        body: JSON.stringify(productFormPayloadForSave(productForm)),
       });
 
       const data = await response.json();
@@ -374,7 +376,7 @@ export default function AdminDashboard() {
       const response = await fetch("/api/admin/products", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, ...form }),
+        body: JSON.stringify({ productId, ...productFormPayloadForSave(form) }),
       });
       const data = await response.json();
 

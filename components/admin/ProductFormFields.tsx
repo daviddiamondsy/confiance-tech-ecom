@@ -1,4 +1,5 @@
 import type { ProductFormState } from "@/lib/admin-product-form";
+import { usesStorageVariantsField } from "@/lib/admin-product-form";
 
 interface ProductFilterTag {
   slug: string;
@@ -22,6 +23,8 @@ export default function ProductFormFields({
   previewMarkup,
   onChange,
 }: ProductFormFieldsProps) {
+  const usesStorageVariants = usesStorageVariantsField(form);
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div className="sm:col-span-2">
@@ -42,7 +45,7 @@ export default function ProductFormFields({
 
       <div>
         <label htmlFor={`${idPrefix}-yuan`} className="block text-sm font-medium text-slate-700 mb-2">
-          Yuan cost
+          Yuan cost{usesStorageVariants ? " (optional)" : ""}
         </label>
         <input
           id={`${idPrefix}-yuan`}
@@ -52,8 +55,14 @@ export default function ProductFormFields({
           className="input-field"
           value={form.yuanCost}
           onChange={(event) => onChange({ yuanCost: event.target.value })}
-          required
+          required={!usesStorageVariants}
+          disabled={usesStorageVariants}
         />
+        {usesStorageVariants ? (
+          <p className="text-xs text-slate-500 mt-1">
+            Pricing comes from storage variants below. The first line sets the listing price.
+          </p>
+        ) : null}
         {previewPrice != null && (
           <p className="text-xs text-primary-700 mt-1">
             Estimated price: ₦{previewPrice.toLocaleString()}
@@ -101,7 +110,13 @@ export default function ProductFormFields({
           placeholder="256GB"
           value={form.storage}
           onChange={(event) => onChange({ storage: event.target.value })}
+          disabled={usesStorageVariants}
         />
+        {usesStorageVariants ? (
+          <p className="text-xs text-slate-500 mt-1">
+            Ignored when storage variants are set below.
+          </p>
+        ) : null}
       </div>
 
       <div className="sm:col-span-2">
@@ -175,7 +190,15 @@ export default function ProductFormFields({
                   className="input-field min-h-[80px]"
                   placeholder={"256GB:4200\n512GB:4600\n1TB:5200"}
                   value={form.storageVariants}
-                  onChange={(event) => onChange({ storageVariants: event.target.value })}
+                  onChange={(event) => {
+                    const storageVariants = event.target.value;
+                    const nextUsesVariants = storageVariants.trim().length > 0;
+                    onChange(
+                      nextUsesVariants
+                        ? { storageVariants, yuanCost: "", storage: "" }
+                        : { storageVariants }
+                    );
+                  }}
                 />
                 <p className="text-xs text-slate-500 mt-1">
                   One per line or comma-separated. Each line needs storage:yuan (e.g. 512GB:4600).

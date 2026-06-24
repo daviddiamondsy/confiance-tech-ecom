@@ -4,6 +4,8 @@ import {
   parseColorsInput,
   parseFeaturesInput,
   parseStorageVariants,
+  parseStorageVariantsField,
+  primaryYuanFromForm,
 } from "@/lib/admin-product-form";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
@@ -47,21 +49,45 @@ export async function POST(req: NextRequest) {
   const image = String(body.image ?? "").trim();
   const description = String(body.description ?? "").trim();
   const filterSlug = String(body.filterSlug ?? "").trim();
-  const yuanCost = Number(body.yuanCost);
+  const yuanRaw = body.yuanCost != null ? String(body.yuanCost).trim() : "";
+  const yuanCost = yuanRaw ? Number(yuanRaw) : undefined;
   const badge = body.badge ? String(body.badge).trim() : undefined;
   const storage = body.storage ? String(body.storage).trim() : undefined;
   const colors = parseColorsInput(body.colors);
   const features = parseFeaturesInput(body.features);
-  const storageVariants = parseStorageVariants(body.storageVariants);
+
+  let storageVariants: Array<{ storage: string; yuan: number }> | undefined;
+  try {
+    storageVariants = parseStorageVariantsField(body.storageVariants);
+  } catch (error) {
+    if (error instanceof Error && error.message === "INVALID_STORAGE_VARIANTS") {
+      return NextResponse.json(
+        {
+          error:
+            "Storage variants must use storage:yuan on each line (e.g. 512GB:4600)",
+        },
+        { status: 400 }
+      );
+    }
+    throw error;
+  }
 
   if (!name || !image || !description || !filterSlug) {
     return NextResponse.json(
-      { error: "name, image, description, filterSlug, and yuanCost are required" },
+      { error: "name, image, description, and filterSlug are required" },
       { status: 400 }
     );
   }
 
-  if (!Number.isFinite(yuanCost) || yuanCost <= 0) {
+  const hasVariants = (storageVariants?.length ?? 0) > 0;
+  if (!hasVariants) {
+    if (yuanCost == null || !Number.isFinite(yuanCost) || yuanCost <= 0) {
+      return NextResponse.json(
+        { error: "yuanCost is required when storage variants are not set" },
+        { status: 400 }
+      );
+    }
+  } else if (yuanCost != null && (!Number.isFinite(yuanCost) || yuanCost <= 0)) {
     return NextResponse.json({ error: "yuanCost must be a positive number" }, { status: 400 });
   }
 
@@ -74,7 +100,7 @@ export async function POST(req: NextRequest) {
       description,
       filterSlug,
       badge,
-      storage,
+      storage: hasVariants ? undefined : storage,
       colors,
       features,
       storageVariants,
@@ -83,8 +109,16 @@ export async function POST(req: NextRequest) {
     const product = products.find((item) => item.id === created.id);
     return NextResponse.json({ product: product ?? created }, { status: 201 });
   } catch (error) {
-    if (error instanceof Error && error.message === "INVALID_FILTER") {
-      return NextResponse.json({ error: "Invalid filter tag" }, { status: 400 });
+    if (error instanceof Error) {
+      if (error.message === "INVALID_FILTER") {
+        return NextResponse.json({ error: "Invalid filter tag" }, { status: 400 });
+      }
+      if (error.message === "INVALID_YUAN") {
+        return NextResponse.json(
+          { error: "Set yuan cost or at least one storage:yuan variant" },
+          { status: 400 }
+        );
+      }
     }
     const detail = getPostgresErrorMessage(error);
     console.error("[admin/products] create failed", error);
@@ -118,11 +152,14 @@ function buildUpdateInput(body: Record<string, unknown>): UpdateProductInput {
       body.storage === "" || body.storage == null ? undefined : String(body.storage).trim();
   }
   if (body.yuanCost !== undefined) {
-    const yuanCost = Number(body.yuanCost);
-    if (!Number.isFinite(yuanCost) || yuanCost <= 0) {
-      throw new Error("INVALID_YUAN");
+    const raw = String(body.yuanCost).trim();
+    if (raw !== "") {
+      const yuanCost = Number(raw);
+      if (!Number.isFinite(yuanCost) || yuanCost <= 0) {
+        throw new Error("INVALID_YUAN");
+      }
+      input.yuanCost = yuanCost;
     }
-    input.yuanCost = yuanCost;
   }
   if (body.colors !== undefined) {
     input.colors = parseColorsInput(body.colors) ?? [];
@@ -131,7 +168,7 @@ function buildUpdateInput(body: Record<string, unknown>): UpdateProductInput {
     input.features = parseFeaturesInput(body.features) ?? [];
   }
   if (body.storageVariants !== undefined) {
-    input.storageVariants = parseStorageVariants(body.storageVariants) ?? [];
+    input.storageVariants = parseStorageVariantsField(body.storageVariants);
   }
 
   return input;
@@ -156,8 +193,19 @@ export async function PUT(req: NextRequest) {
   try {
     input = buildUpdateInput(body);
   } catch (error) {
-    if (error instanceof Error && error.message === "INVALID_YUAN") {
-      return NextResponse.json({ error: "yuanCost must be a positive number" }, { status: 400 });
+    if (error instanceof Error) {
+      if (error.message === "INVALID_YUAN") {
+        return NextResponse.json({ error: "yuanCost must be a positive number" }, { status: 400 });
+      }
+      if (error.message === "INVALID_STORAGE_VARIANTS") {
+        return NextResponse.json(
+          {
+            error:
+              "Storage variants must use storage:yuan on each line (e.g. 512GB:4600)",
+          },
+          { status: 400 }
+        );
+      }
     }
     throw error;
   }
