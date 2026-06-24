@@ -33,6 +33,37 @@ export function parseStorageVariants(raw: unknown): Array<{ storage: string; yua
   return variants.length > 0 ? variants : undefined;
 }
 
+/** Parse storage variants from admin form; rejects non-empty invalid input. */
+export function parseStorageVariantsField(raw: unknown): Array<{ storage: string; yuan: number }> | undefined {
+  if (raw === undefined) return undefined;
+  if (typeof raw !== "string") {
+    throw new Error("INVALID_STORAGE_VARIANTS");
+  }
+  if (!raw.trim()) return [];
+  const variants = parseStorageVariants(raw);
+  if (!variants?.length) {
+    throw new Error("INVALID_STORAGE_VARIANTS");
+  }
+  return variants;
+}
+
+export function usesStorageVariantsField(form: Pick<ProductFormState, "storageVariants">): boolean {
+  return form.storageVariants.trim().length > 0;
+}
+
+export function primaryYuanFromForm(form: Pick<ProductFormState, "yuanCost" | "storageVariants">): number | null {
+  const variants = parseStorageVariants(form.storageVariants);
+  if (variants?.[0]?.yuan) return variants[0].yuan;
+  const yuan = Number(form.yuanCost);
+  return Number.isFinite(yuan) && yuan > 0 ? yuan : null;
+}
+
+/** Strip single-price fields when storage variants drive pricing. */
+export function productFormPayloadForSave(form: ProductFormState): ProductFormState {
+  if (!usesStorageVariantsField(form)) return form;
+  return { ...form, yuanCost: "", storage: "" };
+}
+
 export function formatStorageVariants(
   variants: Array<{ storage: string; yuan: number }> | undefined
 ): string {
@@ -74,15 +105,19 @@ export function adminProductToForm(product: {
   colors: string[];
   features: string[];
 }): ProductFormState {
+  const hasVariants = product.storageVariants.length > 0;
+
   return {
     name: product.name.replace(/\s*\(Clean\)\s*$/i, ""),
-    yuanCost: product.yuanCost?.toString() ?? "",
+    yuanCost: hasVariants ? "" : String(product.yuanCost ?? ""),
     image: product.image,
     description: product.description,
     filterSlug: product.filterSlug ?? "",
     badge: product.badge ?? "",
-    storage: product.storage ?? "",
-    storageVariants: formatStorageVariants(product.storageVariants),
+    storage: hasVariants ? "" : product.storage ?? "",
+    storageVariants: formatStorageVariants(
+      hasVariants ? product.storageVariants : undefined
+    ),
     colors: product.colors.join(", "),
     features: product.features.join("\n"),
   };

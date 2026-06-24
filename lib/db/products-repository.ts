@@ -309,7 +309,7 @@ export async function fetchAdminProductSummaries(): Promise<
 
 export interface CreateProductInput {
   name: string;
-  yuanCost: number;
+  yuanCost?: number;
   image: string;
   description: string;
   filterSlug: string;
@@ -391,20 +391,57 @@ function buildProductSpecs(input: {
 }
 
 function resolveStorageVariants(input: {
-  yuanCost: number;
+  yuanCost?: number;
   storage?: string;
   storageVariants?: Array<{ storage: string; yuan: number }>;
 }): Array<{ storage: string; yuan: number }> {
-  if (input.storageVariants?.length) {
-    return input.storageVariants;
+  if (input.storageVariants !== undefined) {
+    if (input.storageVariants.length > 0) {
+      return input.storageVariants;
+    }
+    const storage = input.storage?.trim();
+    if (storage && input.yuanCost != null && input.yuanCost > 0) {
+      return [{ storage, yuan: input.yuanCost }];
+    }
+    return [];
   }
 
   const storage = input.storage?.trim();
-  if (storage) {
+  if (storage && input.yuanCost != null && input.yuanCost > 0) {
     return [{ storage, yuan: input.yuanCost }];
   }
 
   return [];
+}
+
+function resolvePricingFromInput(input: {
+  yuanCost?: number;
+  storage?: string;
+  storageVariants?: Array<{ storage: string; yuan: number }>;
+}): {
+  storageVariants: Array<{ storage: string; yuan: number }>;
+  baseYuan: number;
+  storageLabel?: string;
+} {
+  const useVariantsOnly =
+    input.storageVariants !== undefined && input.storageVariants.length > 0;
+
+  const storageVariants = resolveStorageVariants({
+    yuanCost: input.yuanCost,
+    storage: useVariantsOnly ? undefined : input.storage,
+    storageVariants: input.storageVariants,
+  });
+
+  const baseYuan = storageVariants[0]?.yuan ?? input.yuanCost;
+  if (baseYuan == null || !Number.isFinite(baseYuan) || baseYuan <= 0) {
+    throw new Error("INVALID_YUAN");
+  }
+
+  return {
+    storageVariants,
+    baseYuan,
+    storageLabel: storageVariants[0]?.storage ?? (input.storage?.trim() || undefined),
+  };
 }
 
 async function replaceProductStorageOptions(
@@ -448,14 +485,12 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
     throw new Error("INVALID_FILTER");
   }
 
-  const storageVariants = resolveStorageVariants({
+  const pricing = resolvePricingFromInput({
     yuanCost: input.yuanCost,
     storage: input.storage,
     storageVariants: input.storageVariants,
   });
-  const primaryVariant = storageVariants[0];
-  const baseYuan = primaryVariant?.yuan ?? input.yuanCost;
-  const storage = primaryVariant?.storage ?? (input.storage?.trim() || undefined);
+  const { storageVariants, baseYuan, storageLabel: storage } = pricing;
   const price = priceFromYuan(baseYuan, config);
   const isIphone = input.filterSlug === "iphone";
   const features =
@@ -538,23 +573,12 @@ export async function updateAdminProduct(
   }
 
   const name = input.name !== undefined ? normalizeProductName(input.name) : existing.name;
-  let yuanCost =
-    input.yuanCost ??
-    (existing.yuan_cost != null ? Number(existing.yuan_cost) : null);
-
-  if (yuanCost == null || !Number.isFinite(yuanCost) || yuanCost <= 0) {
-    throw new Error("INVALID_YUAN");
-  }
 
   const image = input.image !== undefined ? input.image.trim() : existing.image;
   const description =
     input.description !== undefined ? input.description.trim() : existing.description;
   const badge =
     input.badge !== undefined ? input.badge?.trim() || null : existing.badge;
-  const storageInput =
-    input.storage !== undefined
-      ? input.storage?.trim() || undefined
-      : existing.specifications?.Storage;
   const features = input.features ?? existing.features ?? [];
 
   const shouldSyncStorage =
@@ -563,18 +587,33 @@ export async function updateAdminProduct(
     input.yuanCost !== undefined;
 
   let storageVariantsForSave: Array<{ storage: string; yuan: number }> | undefined;
+  let yuanCost =
+    input.yuanCost ??
+    (existing.yuan_cost != null ? Number(existing.yuan_cost) : undefined);
+  let storageInput =
+    input.storage !== undefined
+      ? input.storage?.trim() || undefined
+      : existing.specifications?.Storage;
+
   if (shouldSyncStorage) {
-    storageVariantsForSave = resolveStorageVariants({
-      yuanCost,
-      storage: storageInput,
+    const useVariantsOnly =
+      input.storageVariants !== undefined && input.storageVariants.length > 0;
+
+    const pricing = resolvePricingFromInput({
+      yuanCost: useVariantsOnly ? input.yuanCost : yuanCost,
+      storage: useVariantsOnly ? undefined : storageInput,
       storageVariants: input.storageVariants,
     });
-    if (storageVariantsForSave.length > 0) {
-      yuanCost = storageVariantsForSave[0].yuan;
-    }
+    storageVariantsForSave = pricing.storageVariants;
+    yuanCost = pricing.baseYuan;
+    storageInput = pricing.storageLabel;
   }
 
-  const storage = storageVariantsForSave?.[0]?.storage ?? storageInput;
+  if (yuanCost == null || !Number.isFinite(yuanCost) || yuanCost <= 0) {
+    throw new Error("INVALID_YUAN");
+  }
+
+  const storage = storageInput;
   const price = priceFromYuan(yuanCost, config);
   const specifications = buildProductSpecs({
     storage,
