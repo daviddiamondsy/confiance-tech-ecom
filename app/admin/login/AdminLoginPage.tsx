@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 
@@ -73,6 +74,12 @@ export default function AdminLoginPage() {
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
+
+        <p className="mt-6 text-center">
+          <Link href="/" className="text-sm text-primary-700 hover:text-primary-800 font-medium">
+            Return to store
+          </Link>
+        </p>
       </div>
     </div>
   );

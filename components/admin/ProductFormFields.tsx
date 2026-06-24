@@ -163,22 +163,25 @@ export default function ProductFormFields({
         />
       </div>
 
-      <div className="sm:col-span-2">
-        <label
-          htmlFor={`${idPrefix}-storageVariants`}
-          className="block text-sm font-medium text-slate-700 mb-2"
-        >
-          Storage variants with yuan (optional)
-        </label>
-        <input
-          id={`${idPrefix}-storageVariants`}
-          type="text"
-          className="input-field"
-          placeholder="256GB:3500, 512GB:3900"
-          value={form.storageVariants}
-          onChange={(event) => onChange({ storageVariants: event.target.value })}
-        />
-      </div>
+              <div className="sm:col-span-2">
+                <label
+                  htmlFor={`${idPrefix}-storageVariants`}
+                  className="block text-sm font-medium text-slate-700 mb-2"
+                >
+                  Storage variants with yuan (optional)
+                </label>
+                <textarea
+                  id={`${idPrefix}-storageVariants`}
+                  className="input-field min-h-[80px]"
+                  placeholder={"256GB:4200\n512GB:4600\n1TB:5200"}
+                  value={form.storageVariants}
+                  onChange={(event) => onChange({ storageVariants: event.target.value })}
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  One per line or comma-separated. Each line needs storage:yuan (e.g. 512GB:4600).
+                  This powers the storage picker and prices on the product page.
+                </p>
+              </div>
 
       <div className="sm:col-span-2">
         <label

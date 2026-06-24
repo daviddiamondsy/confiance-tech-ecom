@@ -6,7 +6,8 @@ export { priceFromYuan, sellingMarkupForYuan, toCharmPrice } from "@/lib/pricing
 
 import { buildCatalogProducts } from "@/lib/catalog-seed";
 import { CATALOG_FILTERS, DEFAULT_PRODUCT_COLORS } from "@/lib/catalog-yuan";
-import { slugForProductId } from "@/lib/product-slug";import { isPostgresConfigured } from "@/lib/db/client";
+import { slugForProductId } from "@/lib/product-slug";
+import { isPostgresConfigured } from "@/lib/db/client";
 import {
   fetchProductByIdFromDb,
   fetchProductBySlugFromDb,
@@ -23,6 +24,18 @@ const staticProducts = buildCatalogProducts().map((product) => ({
 /** @deprecated Use getProducts() for server components. */
 export const products: Product[] = staticProducts;
 
+function mergeCatalogWithStatic(dbProducts: Product[]): Product[] {
+  if (dbProducts.length === 0) return staticProducts;
+
+  const dbIds = new Set(dbProducts.map((product) => product.id));
+  const dbSlugs = new Set(dbProducts.map((product) => product.slug));
+  const staticOnly = staticProducts.filter(
+    (product) => !dbIds.has(product.id) && !dbSlugs.has(product.slug)
+  );
+
+  return [...dbProducts, ...staticOnly];
+}
+
 export async function getProducts(): Promise<Product[]> {
   if (!isPostgresConfigured()) {
     return staticProducts;
@@ -30,7 +43,7 @@ export async function getProducts(): Promise<Product[]> {
 
   try {
     const rows = await fetchProductsFromDb();
-    return rows.length > 0 ? rows : staticProducts;
+    return mergeCatalogWithStatic(rows);
   } catch (error) {
     console.error("[products] Postgres fetch failed, using static catalog", error);
     return staticProducts;

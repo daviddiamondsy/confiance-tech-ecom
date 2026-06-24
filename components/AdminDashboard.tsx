@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import ProductFormFields from "@/components/admin/ProductFormFields";
@@ -66,6 +67,7 @@ export default function AdminDashboard() {
   const [savingEditId, setSavingEditId] = useState<string | null>(null);
   const [creatingFilter, setCreatingFilter] = useState(false);
   const [applyingSchema, setApplyingSchema] = useState(false);
+  const [importingCatalog, setImportingCatalog] = useState(false);
   const [deletingFilterSlug, setDeletingFilterSlug] = useState<string | null>(null);
   const [productForm, setProductForm] = useState<ProductFormState>(emptyProductForm);
   const [creatingProduct, setCreatingProduct] = useState(false);
@@ -202,6 +204,33 @@ export default function AdminDashboard() {
       setCreateError("Could not reach the server. Try again.");
     } finally {
       setCreatingProduct(false);
+    }
+  }
+
+  async function handleImportCatalog() {
+    setFilterFormMessage("");
+    setFilterFormError("");
+    setImportingCatalog(true);
+
+    try {
+      const response = await fetch("/api/admin/seed", { method: "POST" });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFilterFormError(
+          data.detail
+            ? `${data.error ?? "Could not import catalog"}: ${data.detail}`
+            : (data.error ?? "Could not import catalog")
+        );
+        return;
+      }
+
+      setFilterFormMessage(data.message ?? "Default catalog imported.");
+      await loadData();
+    } catch {
+      setFilterFormError("Could not reach the server. Try again.");
+    } finally {
+      setImportingCatalog(false);
     }
   }
 
@@ -406,9 +435,14 @@ export default function AdminDashboard() {
             <h1 className="font-display text-xl font-bold text-slate-900">Catalog admin</h1>
             <p className="text-sm text-slate-600">Pricing, filters, products, and colors</p>
           </div>
-          <button type="button" onClick={handleLogout} className="btn-outline text-sm py-2 px-4">
-            Sign out
-          </button>
+          <div className="flex items-center gap-2">
+            <Link href="/" className="btn-outline text-sm py-2 px-4">
+              Return to store
+            </Link>
+            <button type="button" onClick={handleLogout} className="btn-outline text-sm py-2 px-4">
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
 
@@ -558,7 +592,7 @@ export default function AdminDashboard() {
             editing a product.
           </p>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 mb-6">
             <button
               type="button"
               className="btn-outline text-sm py-2 px-4"
@@ -567,8 +601,16 @@ export default function AdminDashboard() {
             >
               {applyingSchema ? "Applying schema..." : "Apply database schema"}
             </button>
+            <button
+              type="button"
+              className="btn-outline text-sm py-2 px-4"
+              disabled={importingCatalog}
+              onClick={handleImportCatalog}
+            >
+              {importingCatalog ? "Importing..." : "Import default catalog"}
+            </button>
             <p className="text-xs text-slate-500">
-              Run once if filter tags fail to save on production.
+              Import loads all iPhones and MacBook from the built-in catalog into Postgres.
             </p>
           </div>
 
