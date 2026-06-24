@@ -2,7 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import ProductFormFields from "@/components/admin/ProductFormFields";
+import {
+  adminProductToForm,
+  emptyProductForm,
+  type ProductFormState,
+} from "@/lib/admin-product-form";
 import { priceFromYuan, sellingMarkupForYuan } from "@/lib/pricing";
+import type { AdminProductRecord } from "@/lib/db/products-repository";
 
 interface PricingConfig {
   yuanToNaira: number;
@@ -12,37 +19,26 @@ interface PricingConfig {
   expensiveSellingMarkup?: number | null;
 }
 
-interface AdminProduct {
-  id: string;
-  name: string;
-  yuanCost: number | null;
-  price: number;
-  filterSlug: string | null;
-  colors: string[];
-}
-
 interface ProductFilterTag {
   slug: string;
   label: string;
 }
 
-const emptyProductForm = {
-  name: "",
-  yuanCost: "",
-  image: "/product-images/",
-  description: "",
-  filterSlug: "",
-  badge: "",
-  storage: "",
-  storageVariants: "",
-  colors: "",
-  features: "",
-};
-
 const emptyFilterForm = {
   label: "",
   slug: "",
 };
+
+function previewFromForm(form: ProductFormState, pricing: PricingConfig) {
+  const yuan = Number(form.yuanCost);
+  if (!Number.isFinite(yuan) || yuan <= 0) {
+    return { previewPrice: null, previewMarkup: null };
+  }
+  return {
+    previewPrice: priceFromYuan(yuan, pricing),
+    previewMarkup: sellingMarkupForYuan(yuan, pricing),
+  };
+}
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -54,39 +50,32 @@ export default function AdminDashboard() {
     expensiveYuanThreshold: 3500,
     expensiveSellingMarkup: 1.15,
   });
-  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [products, setProducts] = useState<AdminProductRecord[]>([]);
   const [filterTags, setFilterTags] = useState<ProductFilterTag[]>([]);
   const [filterForm, setFilterForm] = useState(emptyFilterForm);
   const [draftFilterLabels, setDraftFilterLabels] = useState<Record<string, string>>({});
-  const [draftProductFilters, setDraftProductFilters] = useState<Record<string, string>>({});
-  const [draftColors, setDraftColors] = useState<Record<string, string>>({});
+  const [editForms, setEditForms] = useState<Record<string, ProductFormState>>({});
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [pricingMessage, setPricingMessage] = useState("");
-  const [colorMessages, setColorMessages] = useState<Record<string, string>>({});
   const [filterMessages, setFilterMessages] = useState<Record<string, string>>({});
+  const [editMessages, setEditMessages] = useState<Record<string, string>>({});
   const [filterFormMessage, setFilterFormMessage] = useState("");
   const [filterFormError, setFilterFormError] = useState("");
   const [loading, setLoading] = useState(true);
   const [savingPricing, setSavingPricing] = useState(false);
-  const [savingProductId, setSavingProductId] = useState<string | null>(null);
-  const [savingFilterSlug, setSavingFilterSlug] = useState<string | null>(null);
+  const [savingEditId, setSavingEditId] = useState<string | null>(null);
   const [creatingFilter, setCreatingFilter] = useState(false);
+  const [applyingSchema, setApplyingSchema] = useState(false);
   const [deletingFilterSlug, setDeletingFilterSlug] = useState<string | null>(null);
-  const [productForm, setProductForm] = useState(emptyProductForm);
+  const [productForm, setProductForm] = useState<ProductFormState>(emptyProductForm);
   const [creatingProduct, setCreatingProduct] = useState(false);
   const [createMessage, setCreateMessage] = useState("");
   const [createError, setCreateError] = useState("");
 
-  const previewPrice = useMemo(() => {
-    const yuan = Number(productForm.yuanCost);
-    if (!Number.isFinite(yuan) || yuan <= 0) return null;
-    return priceFromYuan(yuan, pricing);
-  }, [productForm.yuanCost, pricing]);
-
-  const previewMarkup = useMemo(() => {
-    const yuan = Number(productForm.yuanCost);
-    if (!Number.isFinite(yuan) || yuan <= 0) return null;
-    return sellingMarkupForYuan(yuan, pricing);
-  }, [productForm.yuanCost, pricing]);
+  const createPreview = useMemo(
+    () => previewFromForm(productForm, pricing),
+    [productForm, pricing]
+  );
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -124,16 +113,13 @@ export default function AdminDashboard() {
 
       if (productsRes.ok) {
         const data = await productsRes.json();
-        const list: AdminProduct[] = data.products ?? [];
+        const list: AdminProductRecord[] = data.products ?? [];
         setProducts(list);
-        const colorDrafts: Record<string, string> = {};
-        const productFilterDrafts: Record<string, string> = {};
+        const nextEditForms: Record<string, ProductFormState> = {};
         for (const product of list) {
-          colorDrafts[product.id] = product.colors.join(", ");
-          productFilterDrafts[product.id] = product.filterSlug ?? loadedFilters[0]?.slug ?? "";
+          nextEditForms[product.id] = adminProductToForm(product);
         }
-        setDraftColors(colorDrafts);
-        setDraftProductFilters(productFilterDrafts);
+        setEditForms(nextEditForms);
         setProductForm((prev) => ({
           ...prev,
           filterSlug: prev.filterSlug || loadedFilters[0]?.slug || "",
@@ -195,15 +181,11 @@ export default function AdminDashboard() {
         return;
       }
 
-      const created = data.product as AdminProduct;
+      const created = data.product as AdminProductRecord;
       setProducts((prev) => [...prev, created]);
-      setDraftColors((prev) => ({
+      setEditForms((prev) => ({
         ...prev,
-        [created.id]: created.colors.join(", "),
-      }));
-      setDraftProductFilters((prev) => ({
-        ...prev,
-        [created.id]: created.filterSlug ?? productForm.filterSlug,
+        [created.id]: adminProductToForm(created),
       }));
       setProductForm({
         ...emptyProductForm,
@@ -216,6 +198,33 @@ export default function AdminDashboard() {
       setCreateError("Could not reach the server. Try again.");
     } finally {
       setCreatingProduct(false);
+    }
+  }
+
+  async function handleApplySchema() {
+    setFilterFormMessage("");
+    setFilterFormError("");
+    setApplyingSchema(true);
+
+    try {
+      const response = await fetch("/api/admin/setup", { method: "POST" });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFilterFormError(
+          data.detail
+            ? `${data.error ?? "Could not apply schema"}: ${data.detail}`
+            : (data.error ?? "Could not apply schema")
+        );
+        return;
+      }
+
+      setFilterFormMessage(data.message ?? "Database schema applied.");
+      await loadData();
+    } catch {
+      setFilterFormError("Could not reach the server. Try again.");
+    } finally {
+      setApplyingSchema(false);
     }
   }
 
@@ -234,7 +243,11 @@ export default function AdminDashboard() {
       const data = await response.json();
 
       if (!response.ok) {
-        setFilterFormError(data.error ?? "Could not create filter tag");
+        setFilterFormError(
+          data.detail
+            ? `${data.error ?? "Could not create filter tag"}: ${data.detail}`
+            : (data.error ?? "Could not create filter tag")
+        );
         return;
       }
 
@@ -316,97 +329,55 @@ export default function AdminDashboard() {
     }
   }
 
-  async function handleProductFilterSave(productId: string) {
-    setFilterMessages((prev) => ({ ...prev, [`product-${productId}`]: "" }));
-    setSavingFilterSlug(productId);
+  async function handleProductUpdate(event: FormEvent, productId: string) {
+    event.preventDefault();
+    setEditMessages((prev) => ({ ...prev, [productId]: "" }));
+    setSavingEditId(productId);
+
+    const form = editForms[productId];
+    if (!form) return;
 
     try {
       const response = await fetch("/api/admin/products", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId,
-          filterSlug: draftProductFilters[productId] ?? null,
-        }),
+        body: JSON.stringify({ productId, ...form }),
       });
       const data = await response.json();
 
       if (!response.ok) {
-        setFilterMessages((prev) => ({
+        setEditMessages((prev) => ({
           ...prev,
-          [`product-${productId}`]: data.error ?? "Could not save filter tag",
+          [productId]: data.error ?? "Could not update product",
         }));
         return;
       }
 
+      const updated = data.product as AdminProductRecord;
       setProducts((prev) =>
-        prev.map((product) =>
-          product.id === productId
-            ? { ...product, filterSlug: data.filterSlug ?? null }
-            : product
-        )
+        prev.map((product) => (product.id === productId ? updated : product))
       );
-      setFilterMessages((prev) => ({
+      setEditForms((prev) => ({
         ...prev,
-        [`product-${productId}`]: "Filter tag saved.",
+        [productId]: adminProductToForm(updated),
+      }));
+      setEditMessages((prev) => ({
+        ...prev,
+        [productId]: `Saved ${updated.name} at ₦${updated.price.toLocaleString()}.`,
       }));
     } catch {
-      setFilterMessages((prev) => ({
-        ...prev,
-        [`product-${productId}`]: "Could not reach the server. Try again.",
-      }));
-    } finally {
-      setSavingFilterSlug(null);
-    }
-  }
-
-  async function handleColorsSave(productId: string) {
-    setColorMessages((prev) => ({ ...prev, [productId]: "" }));
-    setSavingProductId(productId);
-
-    const colors = (draftColors[productId] ?? "")
-      .split(",")
-      .map((color) => color.trim())
-      .filter(Boolean);
-
-    try {
-      const response = await fetch("/api/admin/products", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, colors }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        setColorMessages((prev) => ({
-          ...prev,
-          [productId]: data.error ?? "Could not save colors",
-        }));
-        return;
-      }
-
-      const data = await response.json();
-      setProducts((prev) =>
-        prev.map((product) =>
-          product.id === productId ? { ...product, colors: data.colors } : product
-        )
-      );
-      setDraftColors((prev) => ({
-        ...prev,
-        [productId]: data.colors.join(", "),
-      }));
-      setColorMessages((prev) => ({
-        ...prev,
-        [productId]: "Colors saved. This does not change price.",
-      }));
-    } catch {
-      setColorMessages((prev) => ({
+      setEditMessages((prev) => ({
         ...prev,
         [productId]: "Could not reach the server. Try again.",
       }));
     } finally {
-      setSavingProductId(null);
+      setSavingEditId(null);
     }
+  }
+
+  function filterLabel(slug: string | null): string {
+    if (!slug) return "None";
+    return filterTags.find((filter) => filter.slug === slug)?.label ?? slug;
   }
 
   async function handleLogout() {
@@ -583,6 +554,20 @@ export default function AdminDashboard() {
             editing a product.
           </p>
 
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+            <button
+              type="button"
+              className="btn-outline text-sm py-2 px-4"
+              disabled={applyingSchema}
+              onClick={handleApplySchema}
+            >
+              {applyingSchema ? "Applying schema..." : "Apply database schema"}
+            </button>
+            <p className="text-xs text-slate-500">
+              Run once if filter tags fail to save on production.
+            </p>
+          </div>
+
           <form onSubmit={handleCreateFilter} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div>
               <label htmlFor="filterLabel" className="block text-sm font-medium text-slate-700 mb-2">
@@ -684,6 +669,144 @@ export default function AdminDashboard() {
         </section>
 
         <section className="card-elevated p-6">
+          <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Products</h2>
+          <p className="text-sm text-slate-600 mb-6">
+            View and edit catalog products. Price is recalculated from yuan when you save.
+          </p>
+
+          {products.length === 0 ? (
+            <p className="text-sm text-slate-600">
+              No products in the database. Run <code className="text-xs">npm run db:seed</code> after
+              migrating, or add one below.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              <div className="overflow-x-auto rounded-xl border border-slate-100">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-slate-50 text-left text-slate-600">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Product</th>
+                      <th className="px-4 py-3 font-medium">Filter</th>
+                      <th className="px-4 py-3 font-medium">Yuan</th>
+                      <th className="px-4 py-3 font-medium">Price</th>
+                      <th className="px-4 py-3 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {products.map((product) => (
+                      <tr key={product.id} className="bg-white">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={product.image}
+                              alt=""
+                              className="h-10 w-10 rounded-lg object-contain bg-slate-50 border border-slate-100"
+                            />
+                            <div>
+                              <p className="font-medium text-slate-900">{product.name}</p>
+                              <p className="text-xs text-slate-500">{product.slug}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">{filterLabel(product.filterSlug)}</td>
+                        <td className="px-4 py-3 text-slate-700">
+                          {product.yuanCost != null ? product.yuanCost : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">
+                          ₦{product.price.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            className="btn-outline text-sm py-2 px-3"
+                            onClick={() =>
+                              setEditingProductId((current) =>
+                                current === product.id ? null : product.id
+                              )
+                            }
+                          >
+                            {editingProductId === product.id ? "Close" : "Edit"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {products.map((product) => {
+                if (editingProductId !== product.id) return null;
+                const form = editForms[product.id];
+                if (!form) return null;
+                const editPreview = previewFromForm(form, pricing);
+
+                return (
+                  <form
+                    key={`edit-${product.id}`}
+                    onSubmit={(event) => handleProductUpdate(event, product.id)}
+                    className="border border-primary-100 rounded-xl p-5 bg-primary-50/30 space-y-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="font-medium text-slate-900">Edit {product.name}</h3>
+                      <p className="text-xs text-slate-500">ID {product.id}</p>
+                    </div>
+
+                    <ProductFormFields
+                      idPrefix={`edit-${product.id}`}
+                      form={form}
+                      filterTags={filterTags}
+                      previewPrice={editPreview.previewPrice}
+                      previewMarkup={editPreview.previewMarkup}
+                      onChange={(updates) =>
+                        setEditForms((prev) => ({
+                          ...prev,
+                          [product.id]: { ...prev[product.id], ...updates },
+                        }))
+                      }
+                    />
+
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                      <button
+                        type="submit"
+                        className="btn-primary"
+                        disabled={savingEditId === product.id}
+                      >
+                        {savingEditId === product.id ? "Saving..." : "Save changes"}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-outline"
+                        onClick={() => {
+                          setEditForms((prev) => ({
+                            ...prev,
+                            [product.id]: adminProductToForm(product),
+                          }));
+                          setEditMessages((prev) => ({ ...prev, [product.id]: "" }));
+                        }}
+                      >
+                        Reset
+                      </button>
+                      {editMessages[product.id] && (
+                        <p
+                          className={`text-sm ${
+                            editMessages[product.id].startsWith("Could not")
+                              ? "text-red-600"
+                              : "text-emerald-700"
+                          }`}
+                          role="status"
+                        >
+                          {editMessages[product.id]}
+                        </p>
+                      )}
+                    </div>
+                  </form>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="card-elevated p-6">
           <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Add product</h2>
           <p className="text-sm text-slate-600 mb-6">
             Enter the yuan cost and product details. Selling price is calculated from the pricing
@@ -691,190 +814,14 @@ export default function AdminDashboard() {
           </p>
 
           <form onSubmit={handleCreateProduct} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <label htmlFor="productName" className="block text-sm font-medium text-slate-700 mb-2">
-                  Product name
-                </label>
-                <input
-                  id="productName"
-                  type="text"
-                  className="input-field"
-                  placeholder="Apple iPhone 16 Pro Max 256GB"
-                  value={productForm.name}
-                  onChange={(event) =>
-                    setProductForm((prev) => ({ ...prev, name: event.target.value }))
-                  }
-                  required
-                />
-                <p className="text-xs text-slate-500 mt-1">“(Clean)” is added automatically if missing.</p>
-              </div>
-
-              <div>
-                <label htmlFor="productYuan" className="block text-sm font-medium text-slate-700 mb-2">
-                  Yuan cost
-                </label>
-                <input
-                  id="productYuan"
-                  type="number"
-                  step="1"
-                  min="1"
-                  className="input-field"
-                  value={productForm.yuanCost}
-                  onChange={(event) =>
-                    setProductForm((prev) => ({ ...prev, yuanCost: event.target.value }))
-                  }
-                  required
-                />
-                {previewPrice != null && (
-                  <p className="text-xs text-primary-700 mt-1">
-                    Estimated price: ₦{previewPrice.toLocaleString()}
-                    {previewMarkup != null && ` (markup x${previewMarkup})`}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="productFilter" className="block text-sm font-medium text-slate-700 mb-2">
-                  Filter tag
-                </label>
-                <select
-                  id="productFilter"
-                  className="input-field"
-                  value={productForm.filterSlug}
-                  onChange={(event) =>
-                    setProductForm((prev) => ({ ...prev, filterSlug: event.target.value }))
-                  }
-                  required
-                >
-                  <option value="" disabled>
-                    Select a filter tag
-                  </option>
-                  {filterTags.map((filter) => (
-                    <option key={filter.slug} value={filter.slug}>
-                      {filter.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="productStorage" className="block text-sm font-medium text-slate-700 mb-2">
-                  Storage label (optional)
-                </label>
-                <input
-                  id="productStorage"
-                  type="text"
-                  className="input-field"
-                  placeholder="256GB"
-                  value={productForm.storage}
-                  onChange={(event) =>
-                    setProductForm((prev) => ({ ...prev, storage: event.target.value }))
-                  }
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label htmlFor="productImage" className="block text-sm font-medium text-slate-700 mb-2">
-                  Image path or URL
-                </label>
-                <input
-                  id="productImage"
-                  type="text"
-                  className="input-field"
-                  placeholder="/product-images/iphone-16.png"
-                  value={productForm.image}
-                  onChange={(event) =>
-                    setProductForm((prev) => ({ ...prev, image: event.target.value }))
-                  }
-                  required
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label
-                  htmlFor="productDescription"
-                  className="block text-sm font-medium text-slate-700 mb-2"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="productDescription"
-                  className="input-field min-h-[120px]"
-                  value={productForm.description}
-                  onChange={(event) =>
-                    setProductForm((prev) => ({ ...prev, description: event.target.value }))
-                  }
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="productBadge" className="block text-sm font-medium text-slate-700 mb-2">
-                  Badge (optional)
-                </label>
-                <input
-                  id="productBadge"
-                  type="text"
-                  className="input-field"
-                  placeholder="New"
-                  value={productForm.badge}
-                  onChange={(event) =>
-                    setProductForm((prev) => ({ ...prev, badge: event.target.value }))
-                  }
-                />
-              </div>
-
-              <div>
-                <label htmlFor="productColors" className="block text-sm font-medium text-slate-700 mb-2">
-                  Colors (optional)
-                </label>
-                <input
-                  id="productColors"
-                  type="text"
-                  className="input-field"
-                  placeholder="Midnight, Starlight, Blue"
-                  value={productForm.colors}
-                  onChange={(event) =>
-                    setProductForm((prev) => ({ ...prev, colors: event.target.value }))
-                  }
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label
-                  htmlFor="productStorageVariants"
-                  className="block text-sm font-medium text-slate-700 mb-2"
-                >
-                  Storage variants with yuan (optional)
-                </label>
-                <input
-                  id="productStorageVariants"
-                  type="text"
-                  className="input-field"
-                  placeholder="256GB:3500, 512GB:3900"
-                  value={productForm.storageVariants}
-                  onChange={(event) =>
-                    setProductForm((prev) => ({ ...prev, storageVariants: event.target.value }))
-                  }
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label htmlFor="productFeatures" className="block text-sm font-medium text-slate-700 mb-2">
-                  Features (optional, one per line)
-                </label>
-                <textarea
-                  id="productFeatures"
-                  className="input-field min-h-[100px]"
-                  placeholder={"6.7-inch display\nA18 Pro chip"}
-                  value={productForm.features}
-                  onChange={(event) =>
-                    setProductForm((prev) => ({ ...prev, features: event.target.value }))
-                  }
-                />
-              </div>
-            </div>
+            <ProductFormFields
+              idPrefix="create"
+              form={productForm}
+              filterTags={filterTags}
+              previewPrice={createPreview.previewPrice}
+              previewMarkup={createPreview.previewMarkup}
+              onChange={(updates) => setProductForm((prev) => ({ ...prev, ...updates }))}
+            />
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <button type="submit" className="btn-primary" disabled={creatingProduct}>
@@ -892,99 +839,6 @@ export default function AdminDashboard() {
               )}
             </div>
           </form>
-        </section>
-
-        <section className="card-elevated p-6">
-          <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Manage products</h2>
-          <p className="text-sm text-slate-600 mb-6">
-            Update each product filter tag and color list. Colors are display-only and do not affect
-            price.
-          </p>
-
-          <div className="space-y-6">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="border border-slate-100 rounded-xl p-4 bg-slate-50/50 space-y-4"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-medium text-slate-900">{product.name}</p>
-                  <p className="text-sm text-slate-600">
-                    {product.yuanCost != null ? `Yuan ${product.yuanCost}` : "No yuan cost"} · ₦
-                    {product.price.toLocaleString()}
-                  </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <select
-                    className="input-field sm:max-w-xs"
-                    value={draftProductFilters[product.id] ?? ""}
-                    onChange={(event) =>
-                      setDraftProductFilters((prev) => ({
-                        ...prev,
-                        [product.id]: event.target.value,
-                      }))
-                    }
-                  >
-                    <option value="">No filter tag</option>
-                    {filterTags.map((filter) => (
-                      <option key={filter.slug} value={filter.slug}>
-                        {filter.label}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    className="btn-outline sm:w-auto w-full text-sm py-2.5"
-                    disabled={savingFilterSlug === product.id}
-                    onClick={() => handleProductFilterSave(product.id)}
-                  >
-                    {savingFilterSlug === product.id ? "Saving..." : "Save filter tag"}
-                  </button>
-                </div>
-                {filterMessages[`product-${product.id}`] && (
-                  <p className="text-sm text-emerald-700" role="status">
-                    {filterMessages[`product-${product.id}`]}
-                  </p>
-                )}
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input
-                    type="text"
-                    className="input-field flex-1"
-                    value={draftColors[product.id] ?? ""}
-                    onChange={(event) =>
-                      setDraftColors((prev) => ({
-                        ...prev,
-                        [product.id]: event.target.value,
-                      }))
-                    }
-                    placeholder="Midnight, Starlight, Blue"
-                  />
-                  <button
-                    type="button"
-                    className="btn-primary sm:w-auto w-full"
-                    disabled={savingProductId === product.id}
-                    onClick={() => handleColorsSave(product.id)}
-                  >
-                    {savingProductId === product.id ? "Saving..." : "Save colors"}
-                  </button>
-                </div>
-                {colorMessages[product.id] && (
-                  <p className="text-sm text-emerald-700" role="status">
-                    {colorMessages[product.id]}
-                  </p>
-                )}
-              </div>
-            ))}
-
-            {products.length === 0 && (
-              <p className="text-sm text-slate-600">
-                No products in the database. Run <code className="text-xs">npm run db:seed</code>{" "}
-                after migrating.
-              </p>
-            )}
-          </div>
         </section>
       </main>
     </div>

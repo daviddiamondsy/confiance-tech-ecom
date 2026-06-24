@@ -1,11 +1,11 @@
-import { sql } from "@/lib/db/client";
+import { sql, sqlDdl } from "@/lib/db/client";
 import { isPostgresErrorCode } from "@/lib/db/postgres-errors";
 import { slugifyProductName } from "@/lib/product-slug";
 import type { ProductFilterTag } from "@/lib/product-filters";
 
 /** Idempotent DDL for filter tags on databases that predate product_filters. */
 export async function ensureProductFiltersSchema(): Promise<void> {
-  await sql`
+  await sqlDdl`
     CREATE TABLE IF NOT EXISTS product_filters (
       slug TEXT PRIMARY KEY,
       label TEXT NOT NULL,
@@ -13,13 +13,9 @@ export async function ensureProductFiltersSchema(): Promise<void> {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
-  await sql`
+  await sqlDdl`
     ALTER TABLE product_filters
     ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0
-  `;
-  await sql`
-    ALTER TABLE products
-    ADD COLUMN IF NOT EXISTS filter_slug TEXT
   `;
   await sql`
     INSERT INTO product_filters (slug, label, sort_order) VALUES
@@ -27,6 +23,26 @@ export async function ensureProductFiltersSchema(): Promise<void> {
       ('macbook', 'MacBook', 1)
     ON CONFLICT (slug) DO NOTHING
   `;
+}
+
+/** Adds products.filter_slug when the products table already exists. */
+export async function ensureProductsFilterColumn(): Promise<void> {
+  try {
+    await sqlDdl`
+      ALTER TABLE products
+      ADD COLUMN IF NOT EXISTS filter_slug TEXT
+    `;
+  } catch (error) {
+    if (isPostgresErrorCode(error, "42P01")) {
+      return;
+    }
+    throw error;
+  }
+}
+
+export async function ensureProductAdminSchema(): Promise<void> {
+  await ensureProductFiltersSchema();
+  await ensureProductsFilterColumn();
 }
 
 interface FilterRow {
@@ -55,7 +71,7 @@ export async function createProductFilter(input: {
   const slug = input.slug.trim().toLowerCase();
   const label = input.label.trim();
 
-  const { rows } = await sql<{ max_order: number }>`
+  const { rows } = await sql<{ max_order: number | null }>`
     SELECT COALESCE(MAX(sort_order), -1) + 1 AS max_order FROM product_filters
   `;
   const sortOrder = rows[0]?.max_order ?? 0;
@@ -68,6 +84,9 @@ export async function createProductFilter(input: {
   } catch (error) {
     if (isPostgresErrorCode(error, "23505")) {
       throw new Error("FILTER_EXISTS");
+    }
+    if (isPostgresErrorCode(error, "42P01")) {
+      throw new Error("FILTERS_TABLE_MISSING");
     }
     throw error;
   }
@@ -108,6 +127,8 @@ export async function deleteProductFilter(slug: string): Promise<void> {
 export async function seedDefaultProductFilters(
   filters: ProductFilterTag[]
 ): Promise<void> {
+  await ensureProductFiltersSchema();
+
   for (let index = 0; index < filters.length; index += 1) {
     const filter = filters[index];
     await sql`
@@ -126,6 +147,8 @@ export async function updateProductFilterSlug(
   productId: string,
   filterSlug: string | null
 ): Promise<void> {
+  await ensureProductsFilterColumn();
+
   if (filterSlug) {
     const { rows } = await sql`
       SELECT slug FROM product_filters WHERE slug = ${filterSlug} LIMIT 1

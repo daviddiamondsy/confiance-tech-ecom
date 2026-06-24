@@ -9,6 +9,7 @@ import {
   normalizeFilterSlug,
   updateProductFilter,
 } from "@/lib/db/filters-repository";
+import { getPostgresErrorMessage } from "@/lib/db/postgres-errors";
 
 function postgresRequired() {
   return NextResponse.json(
@@ -31,6 +32,15 @@ function filterErrorResponse(error: unknown, action: "fetch" | "create" | "updat
         { status: 409 }
       );
     }
+    if (error.message === "FILTERS_TABLE_MISSING") {
+      return NextResponse.json(
+        {
+          error: "Product filters table is missing",
+          detail: "Database schema was not applied. Redeploy, then try again.",
+        },
+        { status: 503 }
+      );
+    }
   }
 
   const messages: Record<typeof action, string> = {
@@ -40,8 +50,16 @@ function filterErrorResponse(error: unknown, action: "fetch" | "create" | "updat
     delete: "Could not delete filter tag",
   };
 
+  const detail = getPostgresErrorMessage(error);
   console.error(`[admin/filters] ${action} failed`, error);
-  return NextResponse.json({ error: messages[action] }, { status: 500 });
+
+  return NextResponse.json(
+    {
+      error: messages[action],
+      ...(detail ? { detail } : {}),
+    },
+    { status: 500 }
+  );
 }
 
 async function withFiltersSchema<T>(action: () => Promise<T>): Promise<T> {
