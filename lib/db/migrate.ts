@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { queryDdl } from "@/lib/db/client";
-import { ensureProductAdminSchema } from "@/lib/db/filters-repository";
+import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
 
 export async function runMigrations(): Promise<void> {
   const schemaPath = path.join(process.cwd(), "lib/db/schema.sql");
@@ -15,5 +15,5 @@ export async function runMigrations(): Promise<void> {
     await queryDdl(statement);
   }
 
-  await ensureProductAdminSchema();
+  await ensureCatalogSchema();
 }

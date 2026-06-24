@@ -40,11 +40,6 @@ export async function ensureProductsFilterColumn(): Promise<void> {
   }
 }
 
-export async function ensureProductAdminSchema(): Promise<void> {
-  await ensureProductFiltersSchema();
-  await ensureProductsFilterColumn();
-}
-
 interface FilterRow {
   slug: string;
   label: string;
