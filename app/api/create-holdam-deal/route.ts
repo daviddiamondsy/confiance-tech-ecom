@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Holdam from "@holdam/ts";
 import { sendOrderEmail } from "@/lib/order-email";
 import { deliveryDueAtFromDays, resolveDeliveryDays } from "@/lib/delivery-deadline";
+import { mapHoldamDealCreateError } from "@/lib/checkout-errors";
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
@@ -175,29 +176,11 @@ export async function POST(req: NextRequest) {
     console.error("[API][create-holdam-deal] ===== ERROR =====");
     console.error("[API][create-holdam-deal] Error occurred after:", `${errorDuration}ms`);
     console.error("[API][create-holdam-deal] Raw error:", error);
-    console.error("[API][create-holdam-deal] Error keys:", Object.keys(error || {}));
-    console.error("[API][create-holdam-deal] Error constructor:", error?.constructor?.name);
-    console.error("[API][create-holdam-deal] Error stack:", error instanceof Error ? error.stack : 'no stack');
 
-    const axiosError = error as { response?: { status?: number; data?: unknown }; message?: string };
-    const details = axiosError?.response?.data
-      ? JSON.stringify(axiosError.response.data)
-      : error instanceof Error
-      ? error.message
-      : "Unknown error";
-    const status = axiosError?.response?.status;
-
-    console.error("[API][create-holdam-deal] Error details", {
-      message: axiosError?.message,
-      holdam_status: status,
-      holdam_response: axiosError?.response?.data,
-      details,
-    });
+    const mapped = mapHoldamDealCreateError(error);
+    console.error("[API][create-holdam-deal] Mapped error", mapped);
     console.error("[API][create-holdam-deal] ===== END ERROR =====");
 
-    return NextResponse.json(
-      { error: "Failed to create checkout", details },
-      { status: 500 }
-    );
+    return NextResponse.json(mapped.body, { status: mapped.status });
   }
 }
