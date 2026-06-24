@@ -177,7 +177,11 @@ export default function AdminDashboard() {
       const data = await response.json();
 
       if (!response.ok) {
-        setCreateError(data.error ?? "Could not create product");
+        setCreateError(
+          data.detail
+            ? `${data.error ?? "Could not create product"}: ${data.detail}`
+            : (data.error ?? "Could not create product")
+        );
         return;
       }
 

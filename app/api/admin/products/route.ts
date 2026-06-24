@@ -6,7 +6,8 @@ import {
   parseStorageVariants,
 } from "@/lib/admin-product-form";
 import { isPostgresConfigured } from "@/lib/db/client";
-import { ensureProductAdminSchema } from "@/lib/db/filters-repository";
+import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
+import { getPostgresErrorMessage } from "@/lib/db/postgres-errors";
 import {
   createAdminProduct,
   fetchAdminProducts,
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await ensureProductAdminSchema();
+    await ensureCatalogSchema();
     const created = await createAdminProduct({
       name,
       yuanCost,
@@ -85,8 +86,15 @@ export async function POST(req: NextRequest) {
     if (error instanceof Error && error.message === "INVALID_FILTER") {
       return NextResponse.json({ error: "Invalid filter tag" }, { status: 400 });
     }
+    const detail = getPostgresErrorMessage(error);
     console.error("[admin/products] create failed", error);
-    return NextResponse.json({ error: "Could not create product" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Could not create product",
+        ...(detail ? { detail } : {}),
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -159,7 +167,7 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
-    await ensureProductAdminSchema();
+    await ensureCatalogSchema();
     const product = await updateAdminProduct(productId, input);
     return NextResponse.json({ product });
   } catch (error) {
@@ -174,7 +182,14 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ error: "yuanCost must be a positive number" }, { status: 400 });
       }
     }
+    const detail = getPostgresErrorMessage(error);
     console.error("[admin/products] update failed", error);
-    return NextResponse.json({ error: "Could not update product" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Could not update product",
+        ...(detail ? { detail } : {}),
+      },
+      { status: 500 }
+    );
   }
 }
