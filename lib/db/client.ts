@@ -1,4 +1,4 @@
-import { createPool, sql as vercelSql } from "@vercel/postgres";
+import { createClient, sql as vercelSql } from "@vercel/postgres";
 import type { QueryResultRow } from "@neondatabase/serverless";
 
 type SqlPrimitive = string | number | boolean | undefined | null;
@@ -51,13 +51,34 @@ export async function sqlDdl<O extends QueryResultRow>(
 ) {
   const connectionString = getDirectPostgresConnectionUrl();
   if (!connectionString) {
-    throw new Error("Missing direct Postgres connection URL");
+    throw new Error(
+      "Missing direct Postgres connection URL. Set POSTGRES_URL (pooled) or POSTGRES_URL_NON_POOLING on Vercel."
+    );
   }
 
-  const pool = createPool({ connectionString });
+  const client = createClient({ connectionString });
+  await client.connect();
   try {
-    return await pool.sql<O>(strings, ...values);
+    return await client.sql<O>(strings, ...values);
   } finally {
-    await pool.end();
+    await client.end();
+  }
+}
+
+/** Run raw SQL over a direct connection (migrations). */
+export async function queryDdl(statement: string): Promise<void> {
+  const connectionString = getDirectPostgresConnectionUrl();
+  if (!connectionString) {
+    throw new Error(
+      "Missing direct Postgres connection URL. Set POSTGRES_URL (pooled) or POSTGRES_URL_NON_POOLING on Vercel."
+    );
+  }
+
+  const client = createClient({ connectionString });
+  await client.connect();
+  try {
+    await client.query(statement);
+  } finally {
+    await client.end();
   }
 }
