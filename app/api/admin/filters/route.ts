@@ -4,6 +4,7 @@ import { isPostgresConfigured } from "@/lib/db/client";
 import {
   createProductFilter,
   deleteProductFilter,
+  ensureProductFiltersSchema,
   fetchProductFiltersFromDb,
   normalizeFilterSlug,
   updateProductFilter,
@@ -16,6 +17,38 @@ function postgresRequired() {
   );
 }
 
+function filterErrorResponse(error: unknown, action: "fetch" | "create" | "update" | "delete") {
+  if (error instanceof Error) {
+    if (error.message === "FILTER_EXISTS") {
+      return NextResponse.json(
+        { error: "A filter tag with this slug already exists" },
+        { status: 409 }
+      );
+    }
+    if (error.message === "FILTER_IN_USE") {
+      return NextResponse.json(
+        { error: "Cannot delete a filter tag that still has products assigned" },
+        { status: 409 }
+      );
+    }
+  }
+
+  const messages: Record<typeof action, string> = {
+    fetch: "Could not load filter tags",
+    create: "Could not create filter tag",
+    update: "Could not update filter tag",
+    delete: "Could not delete filter tag",
+  };
+
+  console.error(`[admin/filters] ${action} failed`, error);
+  return NextResponse.json({ error: messages[action] }, { status: 500 });
+}
+
+async function withFiltersSchema<T>(action: () => Promise<T>): Promise<T> {
+  await ensureProductFiltersSchema();
+  return action();
+}
+
 export async function GET() {
   if (!isAdminAuthenticated()) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -24,8 +57,12 @@ export async function GET() {
     return postgresRequired();
   }
 
-  const filters = await fetchProductFiltersFromDb();
-  return NextResponse.json({ filters });
+  try {
+    const filters = await withFiltersSchema(() => fetchProductFiltersFromDb());
+    return NextResponse.json({ filters });
+  } catch (error) {
+    return filterErrorResponse(error, "fetch");
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -46,11 +83,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const filter = await createProductFilter({ slug, label });
+    const filter = await withFiltersSchema(() => createProductFilter({ slug, label }));
     return NextResponse.json({ filter }, { status: 201 });
   } catch (error) {
-    console.error("[admin/filters] create failed", error);
-    return NextResponse.json({ error: "Could not create filter tag" }, { status: 500 });
+    return filterErrorResponse(error, "create");
   }
 }
 
@@ -68,11 +104,12 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
-    const filter = await updateProductFilter(String(slug), String(label));
+    const filter = await withFiltersSchema(() =>
+      updateProductFilter(String(slug), String(label))
+    );
     return NextResponse.json({ filter });
   } catch (error) {
-    console.error("[admin/filters] update failed", error);
-    return NextResponse.json({ error: "Could not update filter tag" }, { status: 500 });
+    return filterErrorResponse(error, "update");
   }
 }
 
@@ -90,16 +127,9 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    await deleteProductFilter(slug);
+    await withFiltersSchema(() => deleteProductFilter(slug));
     return NextResponse.json({ ok: true });
   } catch (error) {
-    if (error instanceof Error && error.message === "FILTER_IN_USE") {
-      return NextResponse.json(
-        { error: "Cannot delete a filter tag that still has products assigned" },
-        { status: 409 }
-      );
-    }
-    console.error("[admin/filters] delete failed", error);
-    return NextResponse.json({ error: "Could not delete filter tag" }, { status: 500 });
+    return filterErrorResponse(error, "delete");
   }
 }
