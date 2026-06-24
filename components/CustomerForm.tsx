@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Send, CheckCircle } from "lucide-react";
 import StateSelect from "@/components/StateSelect";
+import { resolveStorefrontCheckoutError } from "@/lib/checkout-errors";
 
 function checkoutStorageKey(productId?: string) {
   return productId ? `holdam_checkout_${productId}` : "holdam_checkout";
@@ -131,9 +132,10 @@ export default function CustomerForm({
           errorPayload,
         });
 
-        throw new Error(
-          errorPayload?.details || errorPayload?.error || "Failed to create checkout"
-        );
+        setErrorMessage(resolveStorefrontCheckoutError(errorPayload));
+        setIsSubmitting(false);
+        setIsRedirecting(false);
+        return;
       }
 
       const responseData = await response.json();
@@ -153,7 +155,7 @@ export default function CustomerForm({
       router.push("/thank-you");
     } catch (error) {
       console.error("[Order] Order submission error:", error);
-      setErrorMessage("We could not submit your order. Please try again.");
+      setErrorMessage("We could not submit your order. Please check your connection and try again.");
       setIsSubmitting(false);
       setIsRedirecting(false);
     }
