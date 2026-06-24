@@ -390,6 +390,41 @@ function buildProductSpecs(input: {
   };
 }
 
+function resolveStorageVariants(input: {
+  yuanCost: number;
+  storage?: string;
+  storageVariants?: Array<{ storage: string; yuan: number }>;
+}): Array<{ storage: string; yuan: number }> {
+  if (input.storageVariants?.length) {
+    return input.storageVariants;
+  }
+
+  const storage = input.storage?.trim();
+  if (storage) {
+    return [{ storage, yuan: input.yuanCost }];
+  }
+
+  return [];
+}
+
+async function replaceProductStorageOptions(
+  productId: string,
+  variants: Array<{ storage: string; yuan: number }>,
+  config: Awaited<ReturnType<typeof fetchPricingConfig>>
+): Promise<void> {
+  await sql`DELETE FROM product_storage_options WHERE product_id = ${productId}`;
+
+  for (let index = 0; index < variants.length; index += 1) {
+    const variant = variants[index];
+    const variantPrice = priceFromYuan(variant.yuan, config);
+    await sql.query(
+      `INSERT INTO product_storage_options (product_id, storage, price, yuan_cost, sort_order)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [productId, variant.storage.trim(), variantPrice, variant.yuan, index]
+    );
+  }
+}
+
 export async function createAdminProduct(input: CreateProductInput): Promise<{
   id: string;
   slug: string;
@@ -413,8 +448,15 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
     throw new Error("INVALID_FILTER");
   }
 
-  const price = priceFromYuan(input.yuanCost, config);
-  const storage = input.storage?.trim() || undefined;
+  const storageVariants = resolveStorageVariants({
+    yuanCost: input.yuanCost,
+    storage: input.storage,
+    storageVariants: input.storageVariants,
+  });
+  const primaryVariant = storageVariants[0];
+  const baseYuan = primaryVariant?.yuan ?? input.yuanCost;
+  const storage = primaryVariant?.storage ?? (input.storage?.trim() || undefined);
+  const price = priceFromYuan(baseYuan, config);
   const isIphone = input.filterSlug === "iphone";
   const features =
     input.features?.map((feature) => feature.trim()).filter(Boolean) ??
@@ -434,7 +476,7 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
       input.filterSlug,
       name,
       price,
-      input.yuanCost,
+      baseYuan,
       input.image.trim(),
       input.badge?.trim() || null,
       input.description.trim(),
@@ -444,16 +486,8 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
     ]
   );
 
-  if (input.storageVariants?.length) {
-    for (let index = 0; index < input.storageVariants.length; index += 1) {
-      const variant = input.storageVariants[index];
-      const variantPrice = priceFromYuan(variant.yuan, config);
-      await sql.query(
-        `INSERT INTO product_storage_options (product_id, storage, price, yuan_cost, sort_order)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [id, variant.storage.trim(), variantPrice, variant.yuan, index]
-      );
-    }
+  if (storageVariants.length > 0) {
+    await replaceProductStorageOptions(id, storageVariants, config);
   }
 
   const colors = input.colors ?? [];
@@ -466,7 +500,7 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
     id,
     slug,
     name,
-    yuanCost: input.yuanCost,
+    yuanCost: baseYuan,
     price,
     filterSlug: input.filterSlug,
     colors,
@@ -504,7 +538,7 @@ export async function updateAdminProduct(
   }
 
   const name = input.name !== undefined ? normalizeProductName(input.name) : existing.name;
-  const yuanCost =
+  let yuanCost =
     input.yuanCost ??
     (existing.yuan_cost != null ? Number(existing.yuan_cost) : null);
 
@@ -517,11 +551,30 @@ export async function updateAdminProduct(
     input.description !== undefined ? input.description.trim() : existing.description;
   const badge =
     input.badge !== undefined ? input.badge?.trim() || null : existing.badge;
-  const storage =
+  const storageInput =
     input.storage !== undefined
       ? input.storage?.trim() || undefined
       : existing.specifications?.Storage;
   const features = input.features ?? existing.features ?? [];
+
+  const shouldSyncStorage =
+    input.storageVariants !== undefined ||
+    input.storage !== undefined ||
+    input.yuanCost !== undefined;
+
+  let storageVariantsForSave: Array<{ storage: string; yuan: number }> | undefined;
+  if (shouldSyncStorage) {
+    storageVariantsForSave = resolveStorageVariants({
+      yuanCost,
+      storage: storageInput,
+      storageVariants: input.storageVariants,
+    });
+    if (storageVariantsForSave.length > 0) {
+      yuanCost = storageVariantsForSave[0].yuan;
+    }
+  }
+
+  const storage = storageVariantsForSave?.[0]?.storage ?? storageInput;
   const price = priceFromYuan(yuanCost, config);
   const specifications = buildProductSpecs({
     storage,
@@ -562,37 +615,8 @@ export async function updateAdminProduct(
     ]
   );
 
-  if (input.storageVariants !== undefined) {
-    await sql`DELETE FROM product_storage_options WHERE product_id = ${productId}`;
-
-    for (let index = 0; index < input.storageVariants.length; index += 1) {
-      const variant = input.storageVariants[index];
-      const variantPrice = priceFromYuan(variant.yuan, config);
-      await sql.query(
-        `INSERT INTO product_storage_options (product_id, storage, price, yuan_cost, sort_order)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [productId, variant.storage.trim(), variantPrice, variant.yuan, index]
-      );
-    }
-  } else if (input.yuanCost !== undefined) {
-    const { rows: storageRows } = await sql<StorageRow>`
-      SELECT product_id, storage, price, yuan_cost, sort_order
-      FROM product_storage_options
-      WHERE product_id = ${productId}
-      ORDER BY sort_order ASC
-    `;
-
-    for (const option of storageRows) {
-      const optionYuan =
-        option.yuan_cost != null ? Number(option.yuan_cost) : yuanCost;
-      const variantPrice = priceFromYuan(optionYuan, config);
-      await sql.query(
-        `UPDATE product_storage_options
-         SET price = $2, yuan_cost = $3
-         WHERE product_id = $1 AND storage = $4`,
-        [productId, variantPrice, optionYuan, option.storage]
-      );
-    }
+  if (shouldSyncStorage) {
+    await replaceProductStorageOptions(productId, storageVariantsForSave ?? [], config);
   }
 
   if (input.colors !== undefined) {

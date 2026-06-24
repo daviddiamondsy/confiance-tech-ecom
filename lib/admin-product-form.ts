@@ -14,13 +14,17 @@ export interface ProductFormState {
 export function parseStorageVariants(raw: unknown): Array<{ storage: string; yuan: number }> | undefined {
   if (typeof raw !== "string" || !raw.trim()) return undefined;
 
-  const variants = raw
-    .split(",")
+  const parts = raw
+    .split(/[\n,]+/)
     .map((part) => part.trim())
-    .filter(Boolean)
+    .filter(Boolean);
+
+  const variants = parts
     .map((part) => {
-      const [storage, yuanText] = part.split(":").map((value) => value.trim());
-      const yuan = Number(yuanText);
+      const colonIndex = part.indexOf(":");
+      if (colonIndex === -1) return null;
+      const storage = part.slice(0, colonIndex).trim();
+      const yuan = Number(part.slice(colonIndex + 1).trim());
       if (!storage || !Number.isFinite(yuan) || yuan <= 0) return null;
       return { storage, yuan };
     })
@@ -33,7 +37,7 @@ export function formatStorageVariants(
   variants: Array<{ storage: string; yuan: number }> | undefined
 ): string {
   if (!variants?.length) return "";
-  return variants.map((variant) => `${variant.storage}:${variant.yuan}`).join(", ");
+  return variants.map((variant) => `${variant.storage}:${variant.yuan}`).join("\n");
 }
 
 export function parseColorsInput(raw: unknown): string[] | undefined {
