@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { replaceProductColors } from "@/lib/db/colors-repository";
-import { updateProductFilterSlug } from "@/lib/db/filters-repository";
+import { ensureProductFiltersSchema, updateProductFilterSlug } from "@/lib/db/filters-repository";
 import {
   createAdminProduct,
   fetchAdminProductSummaries,
@@ -90,6 +90,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    await ensureProductFiltersSchema();
     const product = await createAdminProduct({
       name,
       yuanCost,
@@ -139,6 +140,7 @@ export async function PUT(req: NextRequest) {
     const filterSlug =
       body.filterSlug === "" || body.filterSlug == null ? null : String(body.filterSlug).trim();
     try {
+      await ensureProductFiltersSchema();
       await updateProductFilterSlug(productId, filterSlug);
       return NextResponse.json({ productId, filterSlug });
     } catch (error) {

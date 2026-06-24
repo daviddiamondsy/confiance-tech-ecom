@@ -1,6 +1,33 @@
 import { sql } from "@/lib/db/client";
+import { isPostgresErrorCode } from "@/lib/db/postgres-errors";
 import { slugifyProductName } from "@/lib/product-slug";
 import type { ProductFilterTag } from "@/lib/product-filters";
+
+/** Idempotent DDL for filter tags on databases that predate product_filters. */
+export async function ensureProductFiltersSchema(): Promise<void> {
+  await sql`
+    CREATE TABLE IF NOT EXISTS product_filters (
+      slug TEXT PRIMARY KEY,
+      label TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`
+    ALTER TABLE product_filters
+    ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0
+  `;
+  await sql`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS filter_slug TEXT
+  `;
+  await sql`
+    INSERT INTO product_filters (slug, label, sort_order) VALUES
+      ('iphone', 'iPhone', 0),
+      ('macbook', 'MacBook', 1)
+    ON CONFLICT (slug) DO NOTHING
+  `;
+}
 
 interface FilterRow {
   slug: string;
@@ -33,10 +60,17 @@ export async function createProductFilter(input: {
   `;
   const sortOrder = rows[0]?.max_order ?? 0;
 
-  await sql`
-    INSERT INTO product_filters (slug, label, sort_order)
-    VALUES (${slug}, ${label}, ${sortOrder})
-  `;
+  try {
+    await sql`
+      INSERT INTO product_filters (slug, label, sort_order)
+      VALUES (${slug}, ${label}, ${sortOrder})
+    `;
+  } catch (error) {
+    if (isPostgresErrorCode(error, "23505")) {
+      throw new Error("FILTER_EXISTS");
+    }
+    throw error;
+  }
 
   return { slug, label };
 }
