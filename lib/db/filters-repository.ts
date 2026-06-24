@@ -20,7 +20,8 @@ export async function ensureProductFiltersSchema(): Promise<void> {
   await sql`
     INSERT INTO product_filters (slug, label, sort_order) VALUES
       ('iphone', 'iPhone', 0),
-      ('macbook', 'MacBook', 1)
+      ('macbook', 'MacBook', 1),
+      ('samsung', 'Samsung', 2)
     ON CONFLICT (slug) DO NOTHING
   `;
 }

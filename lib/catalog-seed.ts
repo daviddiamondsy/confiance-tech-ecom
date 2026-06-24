@@ -12,6 +12,7 @@ const PRODUCT_IMAGES = {
   iphone12ProMax: "/product-images/iphone-12-pro-max.png",
   iphone14ProMax: "/product-images/iphone-14-pro-max.png",
   macbookPro: "/product-images/macbook-pro-m4.png",
+  galaxyS24Ultra: "/product-images/galaxy-s24.png",
 } as const;
 
 /** Canonical catalog used for static fallback and Postgres seeding. */
@@ -223,6 +224,38 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Battery: "Up to 22 hours",
         Connectivity: "Wi-Fi 6E, Bluetooth 5.3, Thunderbolt 4",
       },
+    },
+    {
+      id: "13",
+      name: "Samsung Galaxy S24 Ultra (Clean)",
+      price: priceFromYuan(4200),
+      image: PRODUCT_IMAGES.galaxyS24Ultra,
+      badge: "Popular",
+      description:
+        "Samsung Galaxy S24 Ultra with a 6.8-inch QHD+ Dynamic AMOLED 2X display, Snapdragon 8 Gen 3 for Galaxy, " +
+        "200MP adaptive camera, and built-in S Pen. Clean condition. Inspected, tested, and certified.",
+      features: [
+        "6.8-inch QHD+ Dynamic AMOLED 2X Display",
+        "Snapdragon 8 Gen 3 for Galaxy",
+        "200MP Adaptive Camera with AI zoom",
+        "Built-in S Pen",
+        "Titanium frame",
+        "Galaxy AI features",
+        "Clean condition with accessories included",
+        "Inspected, tested, and certified",
+      ],
+      specifications: {
+        Display: "6.8-inch QHD+ Dynamic AMOLED 2X",
+        Processor: "Snapdragon 8 Gen 3 for Galaxy",
+        Storage: "256GB",
+        Camera: "200MP Wide + 12MP Ultra Wide + 10MP Telephoto",
+        Battery: "5000mAh",
+        Connectivity: "5G, Wi-Fi 7, Bluetooth 5.3",
+      },
+      storageOptions: [
+        { storage: "256GB", price: priceFromYuan(4200) },
+        { storage: "512GB", price: priceFromYuan(4400) },
+      ],
     },
   ];
 }

@@ -9,6 +9,7 @@ export interface ProductFilterTag {
 export const DEFAULT_PRODUCT_FILTER_TAGS: ProductFilterTag[] = [
   { slug: "iphone", label: "iPhone" },
   { slug: "macbook", label: "MacBook" },
+  { slug: "samsung", label: "Samsung" },
 ];
 
 export async function getProductFilterTags(): Promise<ProductFilterTag[]> {
