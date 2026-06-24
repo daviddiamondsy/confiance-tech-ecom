@@ -21,7 +21,7 @@ export async function POST() {
     const count = await seedCatalog();
     return NextResponse.json({
       ok: true,
-      message: `Imported ${count} default catalog products (iPhones and MacBook). Existing rows were updated, not duplicated.`,
+      message: `Imported ${count} default catalog products. Existing rows were updated, not duplicated.`,
       count,
     });
   } catch (error) {
