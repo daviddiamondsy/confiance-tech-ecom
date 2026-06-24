@@ -232,6 +232,60 @@ export async function upsertCatalogProducts(products: SeedProductInput[]): Promi
   }
 }
 
+export async function fetchAdminProducts(): Promise<AdminProductRecord[]> {
+  const config = await fetchPricingConfig();
+
+  const { rows } = await sql<ProductRow>`
+    SELECT
+      id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
+      description, features, specifications, sort_order
+    FROM products
+    ORDER BY sort_order ASC, id ASC
+  `;
+
+  if (rows.length === 0) return [];
+
+  const productIds = rows.map((row) => row.id);
+  const { rows: storageRows } = await sql<StorageRow>`
+    SELECT product_id, storage, price, yuan_cost, sort_order
+    FROM product_storage_options
+    ORDER BY product_id ASC, sort_order ASC
+  `;
+
+  const storageByProduct = new Map<string, StorageRow[]>();
+  for (const option of storageRows) {
+    const list = storageByProduct.get(option.product_id) ?? [];
+    list.push(option);
+    storageByProduct.set(option.product_id, list);
+  }
+
+  const colorsByProduct = await fetchColorsByProductIds(productIds);
+
+  return rows.map((row) => {
+    const yuanCost = row.yuan_cost != null ? Number(row.yuan_cost) : null;
+    const options = storageByProduct.get(row.id) ?? [];
+    return {
+      id: row.id,
+      slug: row.slug ?? slugForProductId(row.id, row.name),
+      name: row.name,
+      yuanCost,
+      price: resolvePrice(yuanCost, row.price, config),
+      filterSlug: row.filter_slug,
+      image: row.image,
+      description: row.description,
+      badge: row.badge,
+      storage: row.specifications?.Storage ?? null,
+      features: row.features ?? [],
+      storageVariants: options.map((option) => ({
+        storage: option.storage,
+        yuan: option.yuan_cost != null ? Number(option.yuan_cost) : yuanCost ?? 0,
+      })),
+      colors: colorsByProduct.get(row.id) ?? [],
+    };
+  });
+}
+
+/** @deprecated Use fetchAdminProducts instead. */
 export async function fetchAdminProductSummaries(): Promise<
   Array<{
     id: string;
@@ -242,31 +296,15 @@ export async function fetchAdminProductSummaries(): Promise<
     colors: string[];
   }>
 > {
-  const config = await fetchPricingConfig();
-
-  const { rows } = await sql<{
-    id: string;
-    name: string;
-    price: number;
-    yuan_cost: string | null;
-    filter_slug: string | null;
-  }>`
-    SELECT id, name, price, yuan_cost, filter_slug FROM products ORDER BY sort_order ASC, id ASC
-  `;
-
-  const colorsByProduct = await fetchColorsByProductIds(rows.map((row) => row.id));
-
-  return rows.map((row) => {
-    const yuanCost = row.yuan_cost != null ? Number(row.yuan_cost) : null;
-    return {
-      id: row.id,
-      name: row.name,
-      yuanCost,
-      price: resolvePrice(yuanCost, row.price, config),
-      filterSlug: row.filter_slug,
-      colors: colorsByProduct.get(row.id) ?? [],
-    };
-  });
+  const products = await fetchAdminProducts();
+  return products.map(({ id, name, yuanCost, price, filterSlug, colors }) => ({
+    id,
+    name,
+    yuanCost,
+    price,
+    filterSlug,
+    colors,
+  }));
 }
 
 export interface CreateProductInput {
@@ -282,6 +320,24 @@ export interface CreateProductInput {
   features?: string[];
   storageVariants?: Array<{ storage: string; yuan: number }>;
 }
+
+export interface AdminProductRecord {
+  id: string;
+  slug: string;
+  name: string;
+  yuanCost: number | null;
+  price: number;
+  filterSlug: string | null;
+  image: string;
+  description: string;
+  badge: string | null;
+  storage: string | null;
+  features: string[];
+  storageVariants: Array<{ storage: string; yuan: number }>;
+  colors: string[];
+}
+
+export type UpdateProductInput = Partial<Omit<CreateProductInput, "slug">>;
 
 function normalizeProductName(name: string): string {
   const trimmed = name.trim();
@@ -305,18 +361,33 @@ async function nextSortOrder(): Promise<number> {
   return rows[0]?.next_order ?? 0;
 }
 
-async function uniqueSlug(baseSlug: string): Promise<string> {
+async function uniqueSlug(baseSlug: string, excludeProductId?: string): Promise<string> {
   let slug = baseSlug;
   let suffix = 2;
 
   while (true) {
-    const { rows } = await sql<{ id: string }>`
-      SELECT id FROM products WHERE slug = ${slug} LIMIT 1
-    `;
+    const { rows } = excludeProductId
+      ? await sql<{ id: string }>`
+          SELECT id FROM products WHERE slug = ${slug} AND id != ${excludeProductId} LIMIT 1
+        `
+      : await sql<{ id: string }>`
+          SELECT id FROM products WHERE slug = ${slug} LIMIT 1
+        `;
     if (rows.length === 0) return slug;
     slug = `${baseSlug}-${suffix}`;
     suffix += 1;
   }
+}
+
+function buildProductSpecs(input: {
+  storage?: string;
+  filterSlug: string;
+}): Record<string, string> {
+  const isIphone = input.filterSlug === "iphone";
+  return {
+    ...(input.storage ? { Storage: input.storage } : {}),
+    ...(isIphone ? { "Battery health": BATTERY_HEALTH_SPEC } : {}),
+  };
 }
 
 export async function createAdminProduct(input: CreateProductInput): Promise<{
@@ -350,10 +421,7 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
     (isIphone
       ? [BATTERY_HEALTH_FEATURE, "Clean condition with accessories included", "Inspected, tested, and certified"]
       : ["Clean condition with accessories included", "Inspected, tested, and certified"]);
-  const specifications: Record<string, string> = {
-    ...(storage ? { Storage: storage } : {}),
-    ...(isIphone ? { "Battery health": BATTERY_HEALTH_SPEC } : {}),
-  };
+  const specifications = buildProductSpecs({ storage, filterSlug: input.filterSlug });
 
   await sql.query(
     `INSERT INTO products (
@@ -403,4 +471,140 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
     filterSlug: input.filterSlug,
     colors,
   };
+}
+
+export async function updateAdminProduct(
+  productId: string,
+  input: UpdateProductInput
+): Promise<AdminProductRecord> {
+  const config = await fetchPricingConfig();
+
+  const { rows } = await sql<ProductRow>`
+    SELECT
+      id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
+      description, features, specifications, sort_order
+    FROM products
+    WHERE id = ${productId}
+    LIMIT 1
+  `;
+
+  const existing = rows[0];
+  if (!existing) {
+    throw new Error("NOT_FOUND");
+  }
+
+  const nextFilterSlug = input.filterSlug ?? existing.filter_slug ?? "";
+  if (input.filterSlug) {
+    const { rows: filterRows } = await sql`
+      SELECT slug FROM product_filters WHERE slug = ${input.filterSlug} LIMIT 1
+    `;
+    if (filterRows.length === 0) {
+      throw new Error("INVALID_FILTER");
+    }
+  }
+
+  const name = input.name !== undefined ? normalizeProductName(input.name) : existing.name;
+  const yuanCost =
+    input.yuanCost ??
+    (existing.yuan_cost != null ? Number(existing.yuan_cost) : null);
+
+  if (yuanCost == null || !Number.isFinite(yuanCost) || yuanCost <= 0) {
+    throw new Error("INVALID_YUAN");
+  }
+
+  const image = input.image !== undefined ? input.image.trim() : existing.image;
+  const description =
+    input.description !== undefined ? input.description.trim() : existing.description;
+  const badge =
+    input.badge !== undefined ? input.badge?.trim() || null : existing.badge;
+  const storage =
+    input.storage !== undefined
+      ? input.storage?.trim() || undefined
+      : existing.specifications?.Storage;
+  const features = input.features ?? existing.features ?? [];
+  const price = priceFromYuan(yuanCost, config);
+  const specifications = buildProductSpecs({
+    storage,
+    filterSlug: nextFilterSlug,
+  });
+
+  const slug =
+    input.name !== undefined
+      ? await uniqueSlug(slugifyProductName(name), productId)
+      : existing.slug ?? (await uniqueSlug(slugifyProductName(name), productId));
+
+  await sql.query(
+    `UPDATE products SET
+      slug = $2,
+      filter_slug = $3,
+      name = $4,
+      price = $5,
+      yuan_cost = $6,
+      image = $7,
+      badge = $8,
+      description = $9,
+      features = $10::jsonb,
+      specifications = $11::jsonb,
+      updated_at = NOW()
+    WHERE id = $1`,
+    [
+      productId,
+      slug,
+      nextFilterSlug || null,
+      name,
+      price,
+      yuanCost,
+      image,
+      badge,
+      description,
+      JSON.stringify(features),
+      JSON.stringify(specifications),
+    ]
+  );
+
+  if (input.storageVariants !== undefined) {
+    await sql`DELETE FROM product_storage_options WHERE product_id = ${productId}`;
+
+    for (let index = 0; index < input.storageVariants.length; index += 1) {
+      const variant = input.storageVariants[index];
+      const variantPrice = priceFromYuan(variant.yuan, config);
+      await sql.query(
+        `INSERT INTO product_storage_options (product_id, storage, price, yuan_cost, sort_order)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [productId, variant.storage.trim(), variantPrice, variant.yuan, index]
+      );
+    }
+  } else if (input.yuanCost !== undefined) {
+    const { rows: storageRows } = await sql<StorageRow>`
+      SELECT product_id, storage, price, yuan_cost, sort_order
+      FROM product_storage_options
+      WHERE product_id = ${productId}
+      ORDER BY sort_order ASC
+    `;
+
+    for (const option of storageRows) {
+      const optionYuan =
+        option.yuan_cost != null ? Number(option.yuan_cost) : yuanCost;
+      const variantPrice = priceFromYuan(optionYuan, config);
+      await sql.query(
+        `UPDATE product_storage_options
+         SET price = $2, yuan_cost = $3
+         WHERE product_id = $1 AND storage = $4`,
+        [productId, variantPrice, optionYuan, option.storage]
+      );
+    }
+  }
+
+  if (input.colors !== undefined) {
+    const { replaceProductColors } = await import("@/lib/db/colors-repository");
+    await replaceProductColors(productId, input.colors);
+  }
+
+  const products = await fetchAdminProducts();
+  const updated = products.find((product) => product.id === productId);
+  if (!updated) {
+    throw new Error("NOT_FOUND");
+  }
+
+  return updated;
 }

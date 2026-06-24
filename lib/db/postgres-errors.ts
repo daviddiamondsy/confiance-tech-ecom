@@ -9,6 +9,19 @@ export function getPostgresErrorCode(error: unknown): string | undefined {
   return typeof code === "string" ? code : undefined;
 }
 
+export function getPostgresErrorMessage(error: unknown): string | undefined {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim();
+  }
+  if (typeof error === "object" && error !== null) {
+    const message = (error as PostgresErrorLike).message;
+    if (typeof message === "string" && message.trim()) {
+      return message.trim();
+    }
+  }
+  return undefined;
+}
+
 export function isPostgresErrorCode(error: unknown, code: string): boolean {
   return getPostgresErrorCode(error) === code;
 }

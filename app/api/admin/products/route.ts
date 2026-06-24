@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import {
+  parseColorsInput,
+  parseFeaturesInput,
+  parseStorageVariants,
+} from "@/lib/admin-product-form";
 import { isPostgresConfigured } from "@/lib/db/client";
-import { replaceProductColors } from "@/lib/db/colors-repository";
-import { ensureProductFiltersSchema, updateProductFilterSlug } from "@/lib/db/filters-repository";
+import { ensureProductAdminSchema } from "@/lib/db/filters-repository";
 import {
   createAdminProduct,
-  fetchAdminProductSummaries,
+  fetchAdminProducts,
+  updateAdminProduct,
+  type UpdateProductInput,
 } from "@/lib/db/products-repository";
 
 function postgresRequired() {
@@ -13,24 +19,6 @@ function postgresRequired() {
     { error: "DATABASE_URL or POSTGRES_URL is required to manage products" },
     { status: 503 }
   );
-}
-
-function parseStorageVariants(raw: unknown): Array<{ storage: string; yuan: number }> | undefined {
-  if (typeof raw !== "string" || !raw.trim()) return undefined;
-
-  const variants = raw
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .map((part) => {
-      const [storage, yuanText] = part.split(":").map((value) => value.trim());
-      const yuan = Number(yuanText);
-      if (!storage || !Number.isFinite(yuan) || yuan <= 0) return null;
-      return { storage, yuan };
-    })
-    .filter((variant): variant is { storage: string; yuan: number } => variant != null);
-
-  return variants.length > 0 ? variants : undefined;
 }
 
 export async function GET() {
@@ -41,7 +29,7 @@ export async function GET() {
     return postgresRequired();
   }
 
-  const products = await fetchAdminProductSummaries();
+  const products = await fetchAdminProducts();
   return NextResponse.json({ products });
 }
 
@@ -61,21 +49,8 @@ export async function POST(req: NextRequest) {
   const yuanCost = Number(body.yuanCost);
   const badge = body.badge ? String(body.badge).trim() : undefined;
   const storage = body.storage ? String(body.storage).trim() : undefined;
-  const colors = Array.isArray(body.colors)
-    ? body.colors.map((color: unknown) => String(color).trim()).filter(Boolean)
-    : typeof body.colors === "string"
-      ? body.colors
-          .split(",")
-          .map((color: string) => color.trim())
-          .filter(Boolean)
-      : undefined;
-  const features =
-    typeof body.features === "string"
-      ? body.features
-          .split("\n")
-          .map((feature: string) => feature.trim())
-          .filter(Boolean)
-      : undefined;
+  const colors = parseColorsInput(body.colors);
+  const features = parseFeaturesInput(body.features);
   const storageVariants = parseStorageVariants(body.storageVariants);
 
   if (!name || !image || !description || !filterSlug) {
@@ -90,8 +65,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await ensureProductFiltersSchema();
-    const product = await createAdminProduct({
+    await ensureProductAdminSchema();
+    const created = await createAdminProduct({
       name,
       yuanCost,
       image,
@@ -103,7 +78,9 @@ export async function POST(req: NextRequest) {
       features,
       storageVariants,
     });
-    return NextResponse.json({ product }, { status: 201 });
+    const products = await fetchAdminProducts();
+    const product = products.find((item) => item.id === created.id);
+    return NextResponse.json({ product: product ?? created }, { status: 201 });
   } catch (error) {
     if (error instanceof Error && error.message === "INVALID_FILTER") {
       return NextResponse.json({ error: "Invalid filter tag" }, { status: 400 });
@@ -111,6 +88,45 @@ export async function POST(req: NextRequest) {
     console.error("[admin/products] create failed", error);
     return NextResponse.json({ error: "Could not create product" }, { status: 500 });
   }
+}
+
+function buildUpdateInput(body: Record<string, unknown>): UpdateProductInput {
+  const input: UpdateProductInput = {};
+
+  if (body.name !== undefined) input.name = String(body.name).trim();
+  if (body.image !== undefined) input.image = String(body.image).trim();
+  if (body.description !== undefined) input.description = String(body.description).trim();
+  if (body.filterSlug !== undefined) {
+    input.filterSlug =
+      body.filterSlug === "" || body.filterSlug == null
+        ? ""
+        : String(body.filterSlug).trim();
+  }
+  if (body.badge !== undefined) {
+    input.badge = body.badge === "" || body.badge == null ? undefined : String(body.badge).trim();
+  }
+  if (body.storage !== undefined) {
+    input.storage =
+      body.storage === "" || body.storage == null ? undefined : String(body.storage).trim();
+  }
+  if (body.yuanCost !== undefined) {
+    const yuanCost = Number(body.yuanCost);
+    if (!Number.isFinite(yuanCost) || yuanCost <= 0) {
+      throw new Error("INVALID_YUAN");
+    }
+    input.yuanCost = yuanCost;
+  }
+  if (body.colors !== undefined) {
+    input.colors = parseColorsInput(body.colors) ?? [];
+  }
+  if (body.features !== undefined) {
+    input.features = parseFeaturesInput(body.features) ?? [];
+  }
+  if (body.storageVariants !== undefined) {
+    input.storageVariants = parseStorageVariants(body.storageVariants) ?? [];
+  }
+
+  return input;
 }
 
 export async function PUT(req: NextRequest) {
@@ -128,31 +144,37 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "productId is required" }, { status: 400 });
   }
 
-  if (body.colors !== undefined) {
-    if (!Array.isArray(body.colors)) {
-      return NextResponse.json({ error: "colors must be an array" }, { status: 400 });
+  let input: UpdateProductInput;
+  try {
+    input = buildUpdateInput(body);
+  } catch (error) {
+    if (error instanceof Error && error.message === "INVALID_YUAN") {
+      return NextResponse.json({ error: "yuanCost must be a positive number" }, { status: 400 });
     }
-    const updated = await replaceProductColors(productId, body.colors);
-    return NextResponse.json({ productId, colors: updated });
+    throw error;
   }
 
-  if (body.filterSlug !== undefined) {
-    const filterSlug =
-      body.filterSlug === "" || body.filterSlug == null ? null : String(body.filterSlug).trim();
-    try {
-      await ensureProductFiltersSchema();
-      await updateProductFilterSlug(productId, filterSlug);
-      return NextResponse.json({ productId, filterSlug });
-    } catch (error) {
-      if (error instanceof Error && error.message === "INVALID_FILTER") {
+  if (Object.keys(input).length === 0) {
+    return NextResponse.json({ error: "No product fields to update" }, { status: 400 });
+  }
+
+  try {
+    await ensureProductAdminSchema();
+    const product = await updateAdminProduct(productId, input);
+    return NextResponse.json({ product });
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "INVALID_FILTER") {
         return NextResponse.json({ error: "Invalid filter tag" }, { status: 400 });
       }
-      throw error;
+      if (error.message === "NOT_FOUND") {
+        return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      }
+      if (error.message === "INVALID_YUAN") {
+        return NextResponse.json({ error: "yuanCost must be a positive number" }, { status: 400 });
+      }
     }
+    console.error("[admin/products] update failed", error);
+    return NextResponse.json({ error: "Could not update product" }, { status: 500 });
   }
-
-  return NextResponse.json(
-    { error: "Provide colors[] or filterSlug to update a product" },
-    { status: 400 }
-  );
 }
