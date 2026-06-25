@@ -14,7 +14,7 @@ export interface ProductFormState {
   yuanCost: string;
   image: string;
   description: string;
-  filterSlug: string;
+  filterSlugs: string[];
   badge: string;
   storage: string;
   storageVariants: string;
@@ -22,6 +22,29 @@ export interface ProductFormState {
   features: string;
   chinaShippingYuan: string;
   internationalShippingNgn: string;
+}
+
+export function parseFilterSlugsInput(raw: unknown, legacyFilterSlug?: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return Array.from(new Set(raw.map((slug) => String(slug).trim()).filter(Boolean)));
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    return Array.from(new Set(raw.split(",").map((slug) => slug.trim()).filter(Boolean)));
+  }
+  if (typeof legacyFilterSlug === "string" && legacyFilterSlug.trim()) {
+    return [legacyFilterSlug.trim()];
+  }
+  return [];
+}
+
+export function toggleProductFilterSlug(filterSlugs: string[], slug: string): string[] {
+  return filterSlugs.includes(slug)
+    ? filterSlugs.filter((value) => value !== slug)
+    : [...filterSlugs, slug];
+}
+
+export function hasProductFilterSlugs(form: Pick<ProductFormState, "filterSlugs">): boolean {
+  return form.filterSlugs.length > 0;
 }
 
 export function normalizeStorageLabel(storage: string): string {
@@ -196,6 +219,7 @@ export function adminProductToForm(product: {
   image: string;
   description: string;
   filterSlug: string | null;
+  filterSlugs: string[];
   badge: string | null;
   storage: string | null;
   storageVariants: Array<{ storage: string; yuan: number }>;
@@ -211,7 +235,11 @@ export function adminProductToForm(product: {
     yuanCost: hasVariants ? "" : String(product.yuanCost ?? ""),
     image: product.image,
     description: product.description,
-    filterSlug: product.filterSlug ?? "",
+    filterSlugs: product.filterSlugs?.length
+      ? product.filterSlugs
+      : product.filterSlug
+        ? [product.filterSlug]
+        : [],
     badge: product.badge ?? "",
     storage: hasVariants ? "" : product.storage ?? "",
     storageVariants: formatStorageVariants(
@@ -231,7 +259,7 @@ export const emptyProductForm: ProductFormState = {
   yuanCost: "",
   image: "/product-images/",
   description: "",
-  filterSlug: "",
+  filterSlugs: [],
   badge: "",
   storage: "",
   storageVariants: "",

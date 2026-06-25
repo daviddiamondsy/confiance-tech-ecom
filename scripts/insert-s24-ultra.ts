@@ -12,7 +12,7 @@ const S24_ULTRA = {
   description:
     "Samsung Galaxy S24 Ultra with a 6.8-inch QHD+ Dynamic AMOLED 2X display, Snapdragon 8 Gen 3 for Galaxy, " +
     "200MP adaptive camera, and built-in S Pen. Clean condition. Inspected, tested, and certified.",
-  filterSlug: "clean",
+  filterSlugs: ["clean"],
   badge: "Popular",
   storageVariants: [
     { storage: "256GB", yuan: 4200 },

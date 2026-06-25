@@ -113,6 +113,22 @@ WHERE id = '12';
 ALTER TABLE products ADD COLUMN IF NOT EXISTS china_shipping_yuan INTEGER NOT NULL DEFAULT 10;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS international_shipping_ngn INTEGER NOT NULL DEFAULT 30000;
 
+CREATE TABLE IF NOT EXISTS product_filter_assignments (
+  product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  filter_slug TEXT NOT NULL REFERENCES product_filters(slug) ON DELETE CASCADE,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (product_id, filter_slug)
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_filter_assignments_filter_slug
+  ON product_filter_assignments (filter_slug);
+
+INSERT INTO product_filter_assignments (product_id, filter_slug, sort_order)
+SELECT id, filter_slug, 0
+FROM products
+WHERE filter_slug IS NOT NULL
+ON CONFLICT (product_id, filter_slug) DO NOTHING;
+
 UPDATE products
 SET
   china_shipping_yuan = CASE

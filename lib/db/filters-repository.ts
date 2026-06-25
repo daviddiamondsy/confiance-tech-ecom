@@ -1,3 +1,4 @@
+import { ensureProductFilterAssignmentsSchema, countProductsUsingFilter } from "@/lib/db/product-filter-assignments";
 import { sql, sqlDdl } from "@/lib/db/client";
 import { isPostgresErrorCode } from "@/lib/db/postgres-errors";
 import { slugifyProductName } from "@/lib/product-slug";
@@ -35,6 +36,7 @@ export async function ensureProductFiltersSchema(): Promise<void> {
     WHERE filter_slug IN ('iphone', 'samsung') OR (filter_slug IS NULL AND id != '11')
   `;
   await syncProductNamesWithFilterSlugs();
+  await ensureProductFilterAssignmentsSchema();
 }
 
 /** Fix product names when filter_slug was migrated without updating (Clean)/(New) suffix. */
@@ -135,6 +137,11 @@ export async function updateProductFilter(
 
 export async function deleteProductFilter(slug: string): Promise<void> {
   const normalizedSlug = slug.trim().toLowerCase();
+
+  const assignmentCount = await countProductsUsingFilter(normalizedSlug);
+  if (assignmentCount > 0) {
+    throw new Error("FILTER_IN_USE");
+  }
 
   const { rows } = await sql<{ count: number }>`
     SELECT COUNT(*)::int AS count FROM products WHERE filter_slug = ${normalizedSlug}

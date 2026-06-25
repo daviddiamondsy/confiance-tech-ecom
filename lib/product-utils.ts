@@ -21,6 +21,7 @@ export interface Product {
   storageOptions?: StorageOption[];
   colorOptions?: string[];
   filterSlug?: string;
+  filterSlugs?: string[];
   images?: string[];
   video?: string;
 }
@@ -38,6 +39,7 @@ export function getSelectedVariant(
   const displayName = buildVariantDisplayName({
     name: product.name,
     filterSlug: product.filterSlug,
+    filterSlugs: product.filterSlugs,
     storage: product.storageOptions?.length ? storage : undefined,
     color,
   });
