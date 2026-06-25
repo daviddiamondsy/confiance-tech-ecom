@@ -119,6 +119,12 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
+      if (error.message === "DUPLICATE_STORAGE_VARIANT") {
+        return NextResponse.json(
+          { error: "Each storage size must be unique (e.g. 128GB and 256GB, not 128GB twice)." },
+          { status: 400 }
+        );
+      }
     }
     const detail = getPostgresErrorMessage(error);
     console.error("[admin/products] create failed", error);
@@ -222,6 +228,12 @@ export async function PUT(req: NextRequest) {
     if (error instanceof Error) {
       if (error.message === "INVALID_FILTER") {
         return NextResponse.json({ error: "Invalid filter tag" }, { status: 400 });
+      }
+      if (error.message === "DUPLICATE_STORAGE_VARIANT") {
+        return NextResponse.json(
+          { error: "Each storage size must be unique (e.g. 128GB and 256GB, not 128GB twice)." },
+          { status: 400 }
+        );
       }
       if (error.message === "NOT_FOUND") {
         return NextResponse.json({ error: "Product not found" }, { status: 404 });

@@ -55,3 +55,28 @@ export function replaceConditionSuffix(
   if (!suffix) return name;
   return name.replace(suffix, replacement);
 }
+
+/** Storefront title: base name, optional storage, optional color, then (Clean)/(New). */
+export function buildVariantDisplayName(input: {
+  name: string;
+  filterSlug?: string | null;
+  storage?: string;
+  color?: string;
+}): string {
+  const normalized = input.filterSlug
+    ? normalizeProductName(input.name, input.filterSlug)
+    : input.name;
+  const base = stripConditionSuffix(normalized);
+  const suffix = input.filterSlug
+    ? conditionSuffixForFilter(input.filterSlug)
+    : (conditionSuffixInName(normalized) ?? PRODUCT_CONDITION_SUFFIX.clean);
+
+  let label = base;
+  if (input.storage) {
+    label = `${base} ${input.storage}`;
+  }
+  if (input.color) {
+    label = input.storage ? `${label} - ${input.color}` : `${base} - ${input.color}`;
+  }
+  return `${label} ${suffix}`;
+}

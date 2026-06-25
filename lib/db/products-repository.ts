@@ -1,3 +1,6 @@
+import {
+  finalizeStorageVariantsForSave,
+} from "@/lib/admin-product-form";
 import { sql } from "@/lib/db/client";
 import { slugForProductId, slugifyProductName, catalogProductIdForSlug } from "@/lib/product-slug";
 import { fetchColorsByProductIds, fetchColorsForProduct } from "@/lib/db/colors-repository";
@@ -454,15 +457,17 @@ async function replaceProductStorageOptions(
   variants: Array<{ storage: string; yuan: number }>,
   config: Awaited<ReturnType<typeof fetchPricingConfig>>
 ): Promise<void> {
+  const normalized = finalizeStorageVariantsForSave(variants);
+
   await sql`DELETE FROM product_storage_options WHERE product_id = ${productId}`;
 
-  for (let index = 0; index < variants.length; index += 1) {
-    const variant = variants[index];
+  for (let index = 0; index < normalized.length; index += 1) {
+    const variant = normalized[index];
     const variantPrice = priceFromYuan(variant.yuan, config);
     await sql.query(
       `INSERT INTO product_storage_options (product_id, storage, price, yuan_cost, sort_order)
        VALUES ($1, $2, $3, $4, $5)`,
-      [productId, variant.storage.trim(), variantPrice, variant.yuan, index]
+      [productId, variant.storage, variantPrice, variant.yuan, index]
     );
   }
 }
@@ -609,17 +614,20 @@ export async function updateAdminProduct(
       : existing.specifications?.Storage;
 
   if (shouldSyncStorage) {
-    const useVariantsOnly =
-      input.storageVariants !== undefined && input.storageVariants.length > 0;
-
-    const pricing = resolvePricingFromInput({
-      yuanCost: useVariantsOnly ? input.yuanCost : yuanCost,
-      storage: useVariantsOnly ? undefined : storageInput,
-      storageVariants: input.storageVariants,
-    });
-    storageVariantsForSave = pricing.storageVariants;
-    yuanCost = pricing.baseYuan;
-    storageInput = pricing.storageLabel;
+    if (input.storageVariants !== undefined && input.storageVariants.length > 0) {
+      storageVariantsForSave = finalizeStorageVariantsForSave(input.storageVariants);
+      yuanCost = storageVariantsForSave[0]?.yuan;
+      storageInput = storageVariantsForSave[0]?.storage;
+    } else {
+      const pricing = resolvePricingFromInput({
+        yuanCost,
+        storage: storageInput,
+        storageVariants: input.storageVariants,
+      });
+      storageVariantsForSave = pricing.storageVariants;
+      yuanCost = pricing.baseYuan;
+      storageInput = pricing.storageLabel;
+    }
   }
 
   if (yuanCost == null || !Number.isFinite(yuanCost) || yuanCost <= 0) {
@@ -639,6 +647,10 @@ export async function updateAdminProduct(
     nextBaseName !== previousBaseName
       ? await uniqueSlug(slugifyProductName(name), productId)
       : existing.slug ?? (await uniqueSlug(slugifyProductName(name), productId));
+
+  if (shouldSyncStorage) {
+    await replaceProductStorageOptions(productId, storageVariantsForSave ?? [], config);
+  }
 
   await sql.query(
     `UPDATE products SET
@@ -668,10 +680,6 @@ export async function updateAdminProduct(
       JSON.stringify(specifications),
     ]
   );
-
-  if (shouldSyncStorage) {
-    await replaceProductStorageOptions(productId, storageVariantsForSave ?? [], config);
-  }
 
   if (input.colors !== undefined) {
     const { replaceProductColors } = await import("@/lib/db/colors-repository");
