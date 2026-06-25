@@ -13,8 +13,23 @@ export function conditionSuffixForFilter(filterSlug: string | null | undefined):
   return PRODUCT_CONDITION_SUFFIX.clean;
 }
 
+/** Pick (Clean) vs (New) suffix when a product has multiple filter tags. */
+export function primaryConditionFilterSlug(
+  filterSlugs: readonly string[]
+): string | null {
+  if (filterSlugs.length === 0) return null;
+  if (filterSlugs.some((slug) => slug === "new" || slug === "macbook")) {
+    return "new";
+  }
+  return "clean";
+}
+
 export function isNewProductFilter(filterSlug: string | null | undefined): boolean {
   return filterSlug === "new" || filterSlug === "macbook";
+}
+
+export function isNewProductFromFilterSlugs(filterSlugs: readonly string[]): boolean {
+  return filterSlugs.some((slug) => isNewProductFilter(slug));
 }
 
 export function stripConditionSuffix(name: string): string {
@@ -30,13 +45,15 @@ export function normalizeProductName(
   return `${base} ${suffix}`;
 }
 
-/** Storefront name: filter tag wins over a stale (Clean)/(New) suffix in the DB. */
+/** Storefront name: filter tags win over a stale (Clean)/(New) suffix in the DB. */
 export function resolveProductDisplayName(
   name: string,
-  filterSlug?: string | null
+  filterSlug?: string | null,
+  filterSlugs?: readonly string[] | null
 ): string {
-  if (!filterSlug) return name;
-  return normalizeProductName(name, filterSlug);
+  const slug = filterSlug ?? primaryConditionFilterSlug(filterSlugs ?? []);
+  if (!slug) return name;
+  return normalizeProductName(name, slug);
 }
 
 /** Suffix at end of a product display name, if present. */
@@ -60,15 +77,18 @@ export function replaceConditionSuffix(
 export function buildVariantDisplayName(input: {
   name: string;
   filterSlug?: string | null;
+  filterSlugs?: readonly string[] | null;
   storage?: string;
   color?: string;
 }): string {
-  const normalized = input.filterSlug
-    ? normalizeProductName(input.name, input.filterSlug)
+  const conditionSlug =
+    input.filterSlug ?? primaryConditionFilterSlug(input.filterSlugs ?? []);
+  const normalized = conditionSlug
+    ? normalizeProductName(input.name, conditionSlug)
     : input.name;
   const base = stripConditionSuffix(normalized);
-  const suffix = input.filterSlug
-    ? conditionSuffixForFilter(input.filterSlug)
+  const suffix = conditionSlug
+    ? conditionSuffixForFilter(conditionSlug)
     : (conditionSuffixInName(normalized) ?? PRODUCT_CONDITION_SUFFIX.clean);
 
   let label = base;

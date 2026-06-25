@@ -124,29 +124,40 @@ export default function ProductFormFields({
         </select>
       </div>
 
-      <div>
-        <label
-          htmlFor={`${idPrefix}-filter`}
-          className="block text-sm font-medium text-slate-700 mb-2"
-        >
-          Filter tag
-        </label>
-        <select
-          id={`${idPrefix}-filter`}
-          className="input-field"
-          value={form.filterSlug}
-          onChange={(event) => onChange({ filterSlug: event.target.value })}
-          required
-        >
-          <option value="" disabled>
-            Select a filter tag
-          </option>
-          {filterTags.map((filter) => (
-            <option key={filter.slug} value={filter.slug}>
-              {filter.label}
-            </option>
-          ))}
-        </select>
+      <div className="sm:col-span-2">
+        <fieldset>
+          <legend className="block text-sm font-medium text-slate-700 mb-2">
+            Filter tags
+          </legend>
+          <div className="flex flex-wrap gap-3">
+            {filterTags.map((filter) => {
+              const checked = form.filterSlugs.includes(filter.slug);
+              return (
+                <label
+                  key={filter.slug}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 cursor-pointer hover:border-primary-300"
+                >
+                  <input
+                    type="checkbox"
+                    className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                    checked={checked}
+                    onChange={() =>
+                      onChange({
+                        filterSlugs: checked
+                          ? form.filterSlugs.filter((slug) => slug !== filter.slug)
+                          : [...form.filterSlugs, filter.slug],
+                      })
+                    }
+                  />
+                  {filter.label}
+                </label>
+              );
+            })}
+          </div>
+          <p className="text-xs text-slate-500 mt-2">
+            Select one or more. “(Clean)” or “(New)” in the product name comes from New vs Clean tags.
+          </p>
+        </fieldset>
       </div>
 
       <div>

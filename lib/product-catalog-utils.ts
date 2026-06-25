@@ -22,13 +22,15 @@ export const SORT_LABELS: Record<ProductSort, string> = {
   "name-asc": "Name: A to Z",
 };
 
-export function getProductFilterSlug(product: Product): string | null {
+function normalizeCatalogFilterSlug(slug: string): string {
+  if (slug === "macbook") return NEW_PRODUCT_FILTER_SLUG;
+  if (slug === "iphone" || slug === "samsung") return CLEAN_PRODUCT_FILTER_SLUG;
+  return slug;
+}
+
+function getLegacyProductFilterSlug(product: Product): string | null {
   if (product.filterSlug) {
-    if (product.filterSlug === "macbook") return NEW_PRODUCT_FILTER_SLUG;
-    if (product.filterSlug === "iphone" || product.filterSlug === "samsung") {
-      return CLEAN_PRODUCT_FILTER_SLUG;
-    }
-    return product.filterSlug;
+    return normalizeCatalogFilterSlug(product.filterSlug);
   }
 
   const suffix = conditionSuffixInName(product.name);
@@ -44,11 +46,25 @@ export function getProductFilterSlug(product: Product): string | null {
   return null;
 }
 
+export function getProductFilterSlugs(product: Product): string[] {
+  if (product.filterSlugs?.length) {
+    return Array.from(new Set(product.filterSlugs.map(normalizeCatalogFilterSlug)));
+  }
+
+  const legacy = getLegacyProductFilterSlug(product);
+  return legacy ? [legacy] : [];
+}
+
+export function getProductFilterSlug(product: Product): string | null {
+  return getProductFilterSlugs(product)[0] ?? null;
+}
+
 export function getAvailableFilterSlugs(products: Product[]): string[] {
   const slugs = new Set<string>();
   for (const product of products) {
-    const slug = getProductFilterSlug(product);
-    if (slug) slugs.add(slug);
+    for (const slug of getProductFilterSlugs(product)) {
+      slugs.add(slug);
+    }
   }
   return Array.from(slugs);
 }
@@ -90,7 +106,7 @@ export function parseCatalogSearch(value: string | null): string {
 
 export function filterProducts(products: Product[], filterSlug: string): Product[] {
   if (filterSlug === ALL_PRODUCTS_FILTER) return products;
-  return products.filter((product) => getProductFilterSlug(product) === filterSlug);
+  return products.filter((product) => getProductFilterSlugs(product).includes(filterSlug));
 }
 
 export const HOME_COLLECTION_SIZE = 4;

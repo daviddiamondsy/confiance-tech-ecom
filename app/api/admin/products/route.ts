@@ -3,6 +3,7 @@ import { isAdminAuthenticated } from "@/lib/admin-auth";
 import {
   parseColorsInput,
   parseFeaturesInput,
+  parseFilterSlugsInput,
   parseStorageVariantsField,
 } from "@/lib/admin-product-form";
 import { isPostgresConfigured } from "@/lib/db/client";
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
   const name = String(body.name ?? "").trim();
   const image = String(body.image ?? "").trim();
   const description = String(body.description ?? "").trim();
-  const filterSlug = String(body.filterSlug ?? "").trim();
+  const filterSlugs = parseFilterSlugsInput(body.filterSlugs, body.filterSlug);
   const yuanRaw = body.yuanCost != null ? String(body.yuanCost).trim() : "";
   const yuanCost = yuanRaw ? Number(yuanRaw) : undefined;
   const badge = body.badge ? String(body.badge).trim() : undefined;
@@ -92,9 +93,9 @@ export async function POST(req: NextRequest) {
     throw error;
   }
 
-  if (!name || !image || !description || !filterSlug) {
+  if (!name || !image || !description || filterSlugs.length === 0) {
     return NextResponse.json(
-      { error: "name, image, description, and filterSlug are required" },
+      { error: "name, image, description, and at least one filter tag are required" },
       { status: 400 }
     );
   }
@@ -136,7 +137,7 @@ export async function POST(req: NextRequest) {
       yuanCost,
       image,
       description,
-      filterSlug,
+      filterSlugs,
       badge,
       storage: hasVariants ? undefined : storage,
       colors,
@@ -198,11 +199,8 @@ function buildUpdateInput(body: Record<string, unknown>): UpdateProductInput {
   if (body.name !== undefined) input.name = String(body.name).trim();
   if (body.image !== undefined) input.image = String(body.image).trim();
   if (body.description !== undefined) input.description = String(body.description).trim();
-  if (body.filterSlug !== undefined) {
-    input.filterSlug =
-      body.filterSlug === "" || body.filterSlug == null
-        ? ""
-        : String(body.filterSlug).trim();
+  if (body.filterSlugs !== undefined || body.filterSlug !== undefined) {
+    input.filterSlugs = parseFilterSlugsInput(body.filterSlugs, body.filterSlug);
   }
   if (body.badge !== undefined) {
     input.badge = body.badge === "" || body.badge == null ? undefined : String(body.badge).trim();

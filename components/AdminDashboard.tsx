@@ -105,12 +105,13 @@ export default function AdminDashboard() {
     if (!query) return products;
 
     return products.filter((product) => {
-      const filterLabel =
-        filterTags.find((filter) => filter.slug === product.filterSlug)?.label ?? "";
+      const filterLabels = (product.filterSlugs ?? []).map(
+        (slug) => filterTags.find((filter) => filter.slug === slug)?.label ?? slug
+      );
       return (
         product.name.toLowerCase().includes(query) ||
         product.slug.toLowerCase().includes(query) ||
-        filterLabel.toLowerCase().includes(query)
+        filterLabels.some((label) => label.toLowerCase().includes(query))
       );
     });
   }, [products, productSearch, filterTags]);
@@ -171,7 +172,12 @@ export default function AdminDashboard() {
         setEditForms(nextEditForms);
         setProductForm((prev) => ({
           ...prev,
-          filterSlug: prev.filterSlug || loadedFilters[0]?.slug || "",
+          filterSlugs:
+            prev.filterSlugs.length > 0
+              ? prev.filterSlugs
+              : loadedFilters[0]?.slug
+                ? [loadedFilters[0].slug]
+                : [],
         }));
       }
     } finally {
@@ -221,6 +227,11 @@ export default function AdminDashboard() {
       return;
     }
 
+    if (productForm.filterSlugs.length === 0) {
+      setCreateError("Select at least one filter tag.");
+      return;
+    }
+
     setCreatingProduct(true);
 
     try {
@@ -249,7 +260,7 @@ export default function AdminDashboard() {
       }));
       setProductForm({
         ...emptyProductForm,
-        filterSlug: filterTags[0]?.slug ?? "",
+        filterSlugs: filterTags[0]?.slug ? [filterTags[0].slug] : [],
       });
       setCreateMessage(
         `Added ${created.name} at ₦${created.price.toLocaleString()} (yuan ${created.yuanCost}).`
@@ -342,7 +353,11 @@ export default function AdminDashboard() {
       setFilterTags((prev) => [...prev, created]);
       setDraftFilterLabels((prev) => ({ ...prev, [created.slug]: created.label }));
       setFilterForm(emptyFilterForm);
-      setProductForm((prev) => ({ ...prev, filterSlug: prev.filterSlug || created.slug }));
+      setProductForm((prev) => ({
+        ...prev,
+        filterSlugs:
+          prev.filterSlugs.length > 0 ? prev.filterSlugs : [created.slug],
+      }));
       setFilterFormMessage(`Added filter tag "${created.label}".`);
     } catch {
       setFilterFormError("Could not reach the server. Try again.");
@@ -479,6 +494,15 @@ export default function AdminDashboard() {
       return;
     }
 
+    if (form.filterSlugs.length === 0) {
+      setEditMessages((prev) => ({
+        ...prev,
+        [productId]: "Select at least one filter tag.",
+      }));
+      setSavingEditId(null);
+      return;
+    }
+
     try {
       const response = await fetch("/api/admin/products", {
         method: "PUT",
@@ -523,9 +547,16 @@ export default function AdminDashboard() {
     }
   }
 
-  function filterLabel(slug: string | null): string {
-    if (!slug) return "None";
-    return filterTags.find((filter) => filter.slug === slug)?.label ?? slug;
+  function filterLabelsForProduct(product: AdminProductRecord): string {
+    const slugs = product.filterSlugs?.length
+      ? product.filterSlugs
+      : product.filterSlug
+        ? [product.filterSlug]
+        : [];
+    if (slugs.length === 0) return "None";
+    return slugs
+      .map((slug) => filterTags.find((filter) => filter.slug === slug)?.label ?? slug)
+      .join(", ");
   }
 
   async function handleLogout() {
@@ -919,7 +950,7 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-slate-700">{filterLabel(product.filterSlug)}</td>
+                        <td className="px-4 py-3 text-slate-700">{filterLabelsForProduct(product)}</td>
                         <td className="px-4 py-3 text-slate-700 text-xs hidden md:table-cell max-w-[180px] truncate">
                           {formatStorageVariantSummary(product.storageVariants)}
                         </td>
