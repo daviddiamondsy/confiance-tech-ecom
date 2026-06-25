@@ -204,18 +204,6 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
               </div>
 
               <div className="my-16">
-                <CustomerForm
-                  title="Do not Miss Out - Order Now"
-                  subtitle={`Join thousands of satisfied customers. Secure your ${variant.displayName} today.`}
-                  productPrice={variant.price}
-                  productName={variant.displayName}
-                  productId={product.id}
-                  productSlug={product.slug}
-                  deliveryDays={deliveryDays}
-                />
-              </div>
-
-              <div className="my-16">
                 <div className="bg-gradient-to-br from-primary-600 via-primary-700 to-violet-700 rounded-2xl p-8 text-white mb-8 shadow-glow">
                   <h3 className="font-display text-3xl font-bold mb-4">Why Choose {variant.displayName}?</h3>
                   <p className="text-primary-100 text-lg leading-relaxed">
