@@ -1,6 +1,7 @@
 import { sql, sqlDdl } from "@/lib/db/client";
 import { isPostgresErrorCode } from "@/lib/db/postgres-errors";
 import { slugifyProductName } from "@/lib/product-slug";
+import { normalizeProductName, stripConditionSuffix } from "@/lib/product-condition-suffix";
 import type { ProductFilterTag } from "@/lib/product-filters";
 
 /** Idempotent DDL for filter tags on databases that predate product_filters. */
@@ -33,6 +34,23 @@ export async function ensureProductFiltersSchema(): Promise<void> {
     SET filter_slug = 'clean'
     WHERE filter_slug IN ('iphone', 'samsung') OR (filter_slug IS NULL AND id != '11')
   `;
+  await syncProductNamesWithFilterSlugs();
+}
+
+/** Fix product names when filter_slug was migrated without updating (Clean)/(New) suffix. */
+export async function syncProductNamesWithFilterSlugs(): Promise<void> {
+  const { rows } = await sql<{ id: string; name: string; filter_slug: string | null }>`
+    SELECT id, name, filter_slug FROM products WHERE filter_slug IS NOT NULL
+  `;
+
+  for (const row of rows) {
+    const fixed = normalizeProductName(stripConditionSuffix(row.name), row.filter_slug);
+    if (fixed !== row.name) {
+      await sql`
+        UPDATE products SET name = ${fixed}, updated_at = NOW() WHERE id = ${row.id}
+      `;
+    }
+  }
 }
 
 /** Adds products.filter_slug when the products table already exists. */
@@ -168,4 +186,19 @@ export async function updateProductFilterSlug(
     SET filter_slug = ${filterSlug}, updated_at = NOW()
     WHERE id = ${productId}
   `;
+
+  if (filterSlug) {
+    const { rows } = await sql<{ name: string }>`
+      SELECT name FROM products WHERE id = ${productId} LIMIT 1
+    `;
+    const existingName = rows[0]?.name;
+    if (existingName) {
+      const fixed = normalizeProductName(stripConditionSuffix(existingName), filterSlug);
+      if (fixed !== existingName) {
+        await sql`
+          UPDATE products SET name = ${fixed}, updated_at = NOW() WHERE id = ${productId}
+        `;
+      }
+    }
+  }
 }
