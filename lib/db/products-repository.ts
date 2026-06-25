@@ -3,7 +3,7 @@ import {
 } from "@/lib/admin-product-form";
 import { sql } from "@/lib/db/client";
 import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
-import { slugForProductId, slugifyProductName, catalogProductIdForSlug } from "@/lib/product-slug";
+import { slugForProductId, slugifyProductName, catalogProductIdForSlug, CATALOG_SLUGS } from "@/lib/product-slug";
 import { fetchColorsByProductIds, fetchColorsForProduct } from "@/lib/db/colors-repository";
 import { fetchPricingConfig } from "@/lib/db/pricing-config-repository";
 import { priceFromYuan } from "@/lib/pricing";
@@ -70,7 +70,7 @@ function mapRowToProduct(
 
   return {
     id: row.id,
-    slug: row.slug ?? slugForProductId(row.id, row.name),
+    slug: CATALOG_SLUGS[row.id] ?? row.slug ?? slugForProductId(row.id, row.name),
     name: resolveProductDisplayName(row.name, row.filter_slug),
     price: resolvePrice(baseYuan, row.price, config),
     originalPrice: row.original_price ?? undefined,
@@ -662,9 +662,11 @@ export async function updateAdminProduct(
   const previousBaseName = stripConditionSuffix(existing.name);
   const nextBaseName = stripConditionSuffix(name);
   const slug =
-    nextBaseName !== previousBaseName
-      ? await uniqueSlug(slugifyProductName(name), productId)
-      : existing.slug ?? (await uniqueSlug(slugifyProductName(name), productId));
+    CATALOG_SLUGS[productId] != null
+      ? CATALOG_SLUGS[productId]
+      : nextBaseName !== previousBaseName
+        ? await uniqueSlug(slugifyProductName(name), productId)
+        : existing.slug ?? (await uniqueSlug(slugifyProductName(name), productId));
 
   if (shouldSyncStorage) {
     await replaceProductStorageOptions(productId, storageVariantsForSave ?? [], config);
