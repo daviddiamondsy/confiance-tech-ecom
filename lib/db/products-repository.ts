@@ -189,11 +189,14 @@ function mapRowToProduct(
         })
       : undefined;
 
+  const listingPrice =
+    storageOptions?.[0]?.price ?? resolvePrice(baseYuan, row.price, config, shipping);
+
   return {
     id: row.id,
     slug: CATALOG_SLUGS[row.id] ?? row.slug ?? slugForProductId(row.id, row.name),
     name: resolveProductDisplayName(row.name, primaryFilterSlug, resolvedFilterSlugs),
-    price: resolvePrice(baseYuan, row.price, config, shipping),
+    price: listingPrice,
     originalPrice: row.original_price ?? undefined,
     image: row.image,
     badge: row.badge ?? undefined,
@@ -382,12 +385,21 @@ export async function fetchAdminProducts(): Promise<AdminProductRecord[]> {
       filtersByProduct.get(row.id) ?? (row.filter_slug ? [row.filter_slug] : []);
     const primaryFilterSlug =
       row.filter_slug ?? primaryConditionFilterSlug(filterSlugs) ?? null;
+    const firstOption = options[0];
+    const listPrice = firstOption
+      ? resolvePrice(
+          firstOption.yuan_cost != null ? Number(firstOption.yuan_cost) : yuanCost,
+          firstOption.price,
+          config,
+          shipping
+        )
+      : resolvePrice(yuanCost, row.price, config, shipping);
     return {
       id: row.id,
       slug: row.slug ?? slugForProductId(row.id, row.name),
       name: resolveProductDisplayName(row.name, primaryFilterSlug, filterSlugs),
       yuanCost,
-      price: resolvePrice(yuanCost, row.price, config, shipping),
+      price: listPrice,
       filterSlug: primaryFilterSlug,
       filterSlugs,
       image: row.image,
@@ -602,6 +614,28 @@ async function replaceProductStorageOptions(
   }
 }
 
+async function syncStorageOptionPrices(
+  productId: string,
+  yuanCost: number,
+  config: PricingConfig,
+  shipping: ProductShippingCosts
+): Promise<void> {
+  const { rows: storageRows } = await sql<StorageRow>`
+    SELECT product_id, storage, price, yuan_cost, sort_order
+    FROM product_storage_options
+    WHERE product_id = ${productId}
+    ORDER BY sort_order ASC
+  `;
+
+  if (storageRows.length === 0) return;
+
+  const variants = storageRows.map((option) => ({
+    storage: option.storage,
+    yuan: option.yuan_cost != null ? Number(option.yuan_cost) : yuanCost,
+  }));
+  await replaceProductStorageOptions(productId, variants, config, shipping);
+}
+
 export async function createAdminProduct(input: CreateProductInput): Promise<{
   id: string;
   slug: string;
@@ -785,6 +819,7 @@ export async function updateAdminProduct(
       input.chinaShippingYuan ?? existing.china_shipping_yuan ?? undefined,
     international_shipping_ngn:
       input.internationalShippingNgn ?? existing.international_shipping_ngn ?? undefined,
+    name,
   });
 
   const storage = storageInput;
@@ -868,6 +903,8 @@ export async function updateAdminProduct(
     const { replaceProductColors } = await import("@/lib/db/colors-repository");
     await replaceProductColors(productId, input.colors);
   }
+
+  await syncStorageOptionPrices(productId, yuanCost, config, shipping);
 
   const products = await fetchAdminProducts();
   const updated = products.find((product) => product.id === productId);

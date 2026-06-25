@@ -53,20 +53,25 @@ export function parseInternationalShippingNgn(value: unknown): InternationalShip
 export function productShippingFromRow(row: {
   china_shipping_yuan?: number | null;
   international_shipping_ngn?: number | null;
+  name?: string | null;
 }): ProductShippingCosts {
-  const china = row.china_shipping_yuan ?? DEFAULT_CHINA_SHIPPING_YUAN;
-  const international = row.international_shipping_ngn ?? DEFAULT_INTERNATIONAL_SHIPPING_NGN;
+  const fallback = row.name?.trim()
+    ? defaultShippingForProductName(row.name)
+    : DEFAULT_PRODUCT_SHIPPING;
+  const china = row.china_shipping_yuan ?? fallback.chinaShippingYuan;
+  const international = row.international_shipping_ngn ?? fallback.internationalShippingNgn;
 
-  if (CHINA_SHIPPING_YUAN_OPTIONS.includes(china as ChinaShippingYuan)) {
-    if (INTERNATIONAL_SHIPPING_NGN_OPTIONS.includes(international as InternationalShippingNgn)) {
-      return {
-        chinaShippingYuan: china as ChinaShippingYuan,
-        internationalShippingNgn: international as InternationalShippingNgn,
-      };
-    }
+  if (
+    CHINA_SHIPPING_YUAN_OPTIONS.includes(china as ChinaShippingYuan) &&
+    INTERNATIONAL_SHIPPING_NGN_OPTIONS.includes(international as InternationalShippingNgn)
+  ) {
+    return {
+      chinaShippingYuan: china as ChinaShippingYuan,
+      internationalShippingNgn: international as InternationalShippingNgn,
+    };
   }
 
-  return DEFAULT_PRODUCT_SHIPPING;
+  return fallback;
 }
 
 export function formatChinaShippingYuan(value: ChinaShippingYuan): string {

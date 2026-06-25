@@ -9,6 +9,7 @@ import { Check } from "lucide-react";
 import Image from "next/image";
 import type { Product } from "@/lib/product-utils";
 import { getSelectedVariant, getDisplaySpecs } from "@/lib/product-utils";
+import { storefrontProductBadge } from "@/lib/product-condition-suffix";
 import { STOREFRONT_TRUST_FEATURES } from "@/lib/storefront-trust-features";
 import { STOREFRONT_PRODUCT_DETAIL_TRUST_COPY } from "@/lib/device-quality-copy";
 
@@ -31,6 +32,8 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
     [product, variant.storage]
   );
 
+  const badge = storefrontProductBadge(product);
+
   return (
     <>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
@@ -43,9 +46,9 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                 fill
                 className="object-contain p-6"
               />
-              {product.badge && (
+              {badge && (
                 <span className="absolute top-4 left-4 px-4 py-1.5 bg-primary-600 text-white text-sm font-semibold rounded-full shadow-soft">
-                  {product.badge}
+                  {badge}
                 </span>
               )}
             </div>
