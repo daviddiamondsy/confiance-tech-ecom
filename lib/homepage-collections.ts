@@ -7,15 +7,15 @@ export interface HomepageCollectionTag {
 
 /** Brand groupings for homepage rows (not the All Products condition filters). */
 export const HOMEPAGE_COLLECTION_TAGS: HomepageCollectionTag[] = [
-  { slug: "iphone", label: "iPhone" },
-  { slug: "macbook", label: "MacBook" },
+  { slug: "apple", label: "Apple" },
   { slug: "samsung", label: "Samsung" },
 ];
 
 export function getProductBrandSlug(product: Product): string | null {
   const name = product.name.toLowerCase();
-  if (name.includes("iphone")) return "iphone";
-  if (name.includes("macbook")) return "macbook";
+  if (name.includes("iphone") || name.includes("macbook") || name.includes("apple")) {
+    return "apple";
+  }
   if (name.includes("galaxy") || name.includes("samsung")) return "samsung";
   return null;
 }
@@ -33,16 +33,13 @@ export function getHomepageCollectionOptions(products: Product[]): HomepageColle
   return HOMEPAGE_COLLECTION_TAGS.filter((tag) => usedBrands.has(tag.slug));
 }
 
-/** See more: MacBook → New tab; iPhone/Samsung → Clean + name search. */
+/** See more: brand search on All Products (New/Clean tabs stay separate). */
 export function homepageCollectionHref(brandSlug: string): string {
-  if (brandSlug === "macbook") {
-    return "/products?category=new";
-  }
-  if (brandSlug === "iphone") {
-    return "/products?category=clean&q=iPhone";
+  if (brandSlug === "apple") {
+    return "/products?q=Apple";
   }
   if (brandSlug === "samsung") {
-    return "/products?category=clean&q=Samsung";
+    return "/products?q=Samsung";
   }
   return "/products";
 }
