@@ -624,6 +624,14 @@ export default function AdminDashboard() {
               <button type="button" className="btn-outline text-sm py-2 px-4" onClick={() => setActiveTab("filters")}>
                 Edit filter tags
               </button>
+              <button
+                type="button"
+                className="btn-outline text-sm py-2 px-4"
+                disabled={applyingSchema}
+                onClick={handleApplySchema}
+              >
+                {applyingSchema ? "Applying schema..." : "Apply database schema"}
+              </button>
             </div>
           </div>
         </div>
@@ -756,22 +764,21 @@ export default function AdminDashboard() {
         <section className="card-elevated p-6">
           <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Product filter tags</h2>
           <p className="text-sm text-slate-600 mb-6">
-            These tags power the filters on the All Products page. Assign a tag when adding or
-            editing a product.
+            These tags power the filters on the All Products page. Assign one or more tags when adding
+            or editing a product.
           </p>
 
-          {isDev && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 mb-6">
-              <p className="text-sm font-medium text-amber-900 mb-3">Development tools</p>
-              <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
-                <button
-                  type="button"
-                  className="btn-outline text-sm py-2 px-4"
-                  disabled={applyingSchema}
-                  onClick={handleApplySchema}
-                >
-                  {applyingSchema ? "Applying schema..." : "Apply database schema"}
-                </button>
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 mb-6">
+            <button
+              type="button"
+              className="btn-outline text-sm py-2 px-4"
+              disabled={applyingSchema}
+              onClick={handleApplySchema}
+            >
+              {applyingSchema ? "Applying schema..." : "Apply database schema"}
+            </button>
+            {isDev ? (
+              <>
                 <button
                   type="button"
                   className="btn-outline text-sm py-2 px-4"
@@ -780,12 +787,12 @@ export default function AdminDashboard() {
                 >
                   {importingCatalog ? "Importing..." : "Import default catalog"}
                 </button>
-                <p className="text-xs text-amber-800">
-                  Dev only. Use <code className="text-xs">npm run db:setup</code> in production.
+                <p className="text-xs text-slate-500">
+                  Import is for local dev only. Catalog data lives in Postgres in production.
                 </p>
-              </div>
-            </div>
-          )}
+              </>
+            ) : null}
+          </div>
 
           <form onSubmit={handleCreateFilter} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div>
