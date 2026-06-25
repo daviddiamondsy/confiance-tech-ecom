@@ -9,6 +9,7 @@ import {
   emptyProductForm,
   primaryYuanFromForm,
   productFormPayloadForSave,
+  storageVariantsFieldError,
   type ProductFormState,
 } from "@/lib/admin-product-form";
 import { priceFromYuan, sellingMarkupForYuan } from "@/lib/pricing";
@@ -169,6 +170,13 @@ export default function AdminDashboard() {
     event.preventDefault();
     setCreateMessage("");
     setCreateError("");
+
+    const storageVariantsError = storageVariantsFieldError(productForm.storageVariants);
+    if (storageVariantsError) {
+      setCreateError(storageVariantsError);
+      return;
+    }
+
     setCreatingProduct(true);
 
     try {
@@ -364,6 +372,13 @@ export default function AdminDashboard() {
     }
   }
 
+  function formatStorageVariantSummary(
+    variants: AdminProductRecord["storageVariants"]
+  ): string {
+    if (variants.length === 0) return "Single price";
+    return variants.map((variant) => `${variant.storage} (${variant.yuan}¥)`).join(", ");
+  }
+
   async function handleProductUpdate(event: FormEvent, productId: string) {
     event.preventDefault();
     setEditMessages((prev) => ({ ...prev, [productId]: "" }));
@@ -371,6 +386,13 @@ export default function AdminDashboard() {
 
     const form = editForms[productId];
     if (!form) return;
+
+    const storageVariantsError = storageVariantsFieldError(form.storageVariants);
+    if (storageVariantsError) {
+      setEditMessages((prev) => ({ ...prev, [productId]: storageVariantsError }));
+      setSavingEditId(null);
+      return;
+    }
 
     try {
       const response = await fetch("/api/admin/products", {
@@ -398,7 +420,13 @@ export default function AdminDashboard() {
       }));
       setEditMessages((prev) => ({
         ...prev,
-        [productId]: `Saved ${updated.name} at ₦${updated.price.toLocaleString()}.`,
+        [productId]: `Saved ${updated.name} at ₦${updated.price.toLocaleString()}.${
+          updated.storageVariants.length > 0
+            ? ` ${updated.storageVariants.length} storage variant(s): ${updated.storageVariants
+                .map((variant) => variant.storage)
+                .join(", ")}.`
+            : ""
+        }`,
       }));
     } catch {
       setEditMessages((prev) => ({
@@ -735,6 +763,7 @@ export default function AdminDashboard() {
                     <tr>
                       <th className="px-4 py-3 font-medium">Product</th>
                       <th className="px-4 py-3 font-medium">Filter</th>
+                      <th className="px-4 py-3 font-medium">Storage</th>
                       <th className="px-4 py-3 font-medium">Yuan</th>
                       <th className="px-4 py-3 font-medium">Price</th>
                       <th className="px-4 py-3 font-medium">Actions</th>
@@ -757,6 +786,9 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-slate-700">{filterLabel(product.filterSlug)}</td>
+                        <td className="px-4 py-3 text-slate-700 text-xs">
+                          {formatStorageVariantSummary(product.storageVariants)}
+                        </td>
                         <td className="px-4 py-3 text-slate-700">
                           {product.yuanCost != null ? product.yuanCost : "—"}
                         </td>

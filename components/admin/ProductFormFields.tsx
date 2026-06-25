@@ -190,7 +190,7 @@ export default function ProductFormFields({
                 <textarea
                   id={`${idPrefix}-storageVariants`}
                   className="input-field min-h-[80px]"
-                  placeholder={"256GB:4200\n512GB:4600\n1TB:5200"}
+                  placeholder={"128GB:1400\n256GB:1500"}
                   value={form.storageVariants}
                   onChange={(event) => {
                     const storageVariants = event.target.value;
@@ -203,8 +203,8 @@ export default function ProductFormFields({
                   }}
                 />
                 <p className="text-xs text-slate-500 mt-1">
-                  One per line or comma-separated. Each line needs storage:yuan (e.g. 512GB:4600).
-                  This powers the storage picker and prices on the product page.
+                  One per line or comma-separated. Each line needs storage:yuan (e.g. 128GB:1400).
+                  Use this field for multiple sizes. Do not list sizes in the product name or storage label.
                 </p>
               </div>
 

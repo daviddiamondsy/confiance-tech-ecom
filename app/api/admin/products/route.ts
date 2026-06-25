@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Storage variants must use storage:yuan on each line (e.g. 512GB:4600)",
+            "Storage variants must use storage:yuan on each line (e.g. 128GB:1400 and 256GB:1500)",
         },
         { status: 400 }
       );
@@ -201,7 +201,7 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json(
           {
             error:
-              "Storage variants must use storage:yuan on each line (e.g. 512GB:4600)",
+              "Storage variants must use storage:yuan on each line (e.g. 128GB:1400 and 256GB:1500)",
           },
           { status: 400 }
         );
