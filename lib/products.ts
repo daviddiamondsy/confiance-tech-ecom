@@ -6,6 +6,8 @@ export { priceFromYuan, sellingMarkupForYuan, toCharmPrice } from "@/lib/pricing
 
 import { catalogProductIdForSlug } from "@/lib/product-slug";
 import { isPostgresConfigured } from "@/lib/db/client";
+import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
+import { isMissingShippingColumnsError } from "@/lib/db/postgres-errors";
 import {
   fetchProductByIdFromDb,
   fetchProductBySlugFromDb,
@@ -33,7 +35,16 @@ export async function getProducts(): Promise<Product[]> {
   try {
     return await fetchProductsFromDb();
   } catch (error) {
-    console.error("[products] Postgres fetch failed", error);
+    if (isMissingShippingColumnsError(error)) {
+      try {
+        await ensureCatalogSchema();
+        return await fetchProductsFromDb();
+      } catch (retryError) {
+        console.error("[products] Postgres fetch failed after schema migration", retryError);
+      }
+    } else {
+      console.error("[products] Postgres fetch failed", error);
+    }
     return [];
   }
 }
