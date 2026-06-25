@@ -1,8 +1,17 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  DollarSign,
+  Package,
+  Search,
+  Tags,
+  TrendingUp,
+} from "lucide-react";
+import AdminShell, { type AdminTab } from "@/components/admin/AdminShell";
+import AdminStatCard from "@/components/admin/AdminStatCard";
+import ProductEditModal from "@/components/admin/ProductEditModal";
 import ProductFormFields from "@/components/admin/ProductFormFields";
 import {
   adminProductToForm,
@@ -29,6 +38,8 @@ const emptyFilterForm = {
   slug: "",
 };
 
+const isDev = process.env.NODE_ENV === "development";
+
 function previewFromForm(form: ProductFormState, pricing: PricingConfig) {
   const yuan = primaryYuanFromForm(form);
   if (yuan == null) {
@@ -52,6 +63,7 @@ function previewFromForm(form: ProductFormState, pricing: PricingConfig) {
 export default function AdminDashboard() {
   const router = useRouter();
 
+  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [pricing, setPricing] = useState<PricingConfig>({
     yuanToNaira: 207,
     sellingMarkup: 1.2,
@@ -64,6 +76,7 @@ export default function AdminDashboard() {
   const [draftFilterLabels, setDraftFilterLabels] = useState<Record<string, string>>({});
   const [editForms, setEditForms] = useState<Record<string, ProductFormState>>({});
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [productSearch, setProductSearch] = useState("");
   const [pricingMessage, setPricingMessage] = useState("");
   const [filterMessages, setFilterMessages] = useState<Record<string, string>>({});
   const [editMessages, setEditMessages] = useState<Record<string, string>>({});
@@ -86,6 +99,32 @@ export default function AdminDashboard() {
     () => previewFromForm(productForm, pricing),
     [productForm, pricing]
   );
+
+  const filteredProducts = useMemo(() => {
+    const query = productSearch.trim().toLowerCase();
+    if (!query) return products;
+
+    return products.filter((product) => {
+      const filterLabel =
+        filterTags.find((filter) => filter.slug === product.filterSlug)?.label ?? "";
+      return (
+        product.name.toLowerCase().includes(query) ||
+        product.slug.toLowerCase().includes(query) ||
+        filterLabel.toLowerCase().includes(query)
+      );
+    });
+  }, [products, productSearch, filterTags]);
+
+  const editingProduct = editingProductId
+    ? products.find((product) => product.id === editingProductId)
+    : null;
+
+  const editingPreview = useMemo(() => {
+    if (!editingProductId || !editForms[editingProductId]) {
+      return { previewPrice: null, previewMarkup: null };
+    }
+    return previewFromForm(editForms[editingProductId], pricing);
+  }, [editingProductId, editForms, pricing]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -497,42 +536,79 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-slate-600">
-        Loading admin panel...
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-slate-600 bg-surface-muted">
+        <div className="h-8 w-8 rounded-full border-2 border-primary-200 border-t-primary-600 animate-spin" />
+        <p>Loading catalog admin...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-surface-muted">
-      <header className="glass-header sticky top-0 z-10">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+    <AdminShell activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout}>
+      {activeTab === "overview" && (
+        <div className="space-y-8">
           <div>
-            <h1 className="font-display text-xl font-bold text-slate-900">Catalog admin</h1>
-            <p className="text-sm text-slate-600">Pricing, filters, products, and colors</p>
+            <h2 className="font-display text-2xl font-bold text-slate-900">Overview</h2>
+            <p className="text-sm text-slate-600 mt-1">
+              Snapshot of your catalog and pricing settings.
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Link href="/" className="btn-outline text-sm py-2 px-4">
-              Return to store
-            </Link>
-            <button type="button" onClick={handleLogout} className="btn-outline text-sm py-2 px-4">
-              Sign out
-            </button>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <AdminStatCard
+              label="Products"
+              value={String(products.length)}
+              hint="In the live catalog"
+              icon={Package}
+            />
+            <AdminStatCard
+              label="Filter tags"
+              value={String(filterTags.length)}
+              hint="Used on the All Products page"
+              icon={Tags}
+            />
+            <AdminStatCard
+              label="Yuan rate"
+              value={`₦${pricing.yuanToNaira}`}
+              hint="Per yuan converted to naira"
+              icon={TrendingUp}
+            />
+            <AdminStatCard
+              label="Standard markup"
+              value={`${Math.round((pricing.sellingMarkup - 1) * 100)}%`}
+              hint={`Expensive items: ${pricing.expensiveSellingMarkup != null ? `${Math.round((pricing.expensiveSellingMarkup - 1) * 100)}%` : "disabled"} above ${pricing.expensiveYuanThreshold ?? "—"}¥`}
+              icon={DollarSign}
+            />
+          </div>
+
+          <div className="card-elevated p-6">
+            <h3 className="font-display text-lg font-bold text-slate-900 mb-4">Quick actions</h3>
+            <div className="flex flex-wrap gap-3">
+              <button type="button" className="btn-primary text-sm py-2 px-4" onClick={() => setActiveTab("products")}>
+                Manage products
+              </button>
+              <button type="button" className="btn-outline text-sm py-2 px-4" onClick={() => setActiveTab("pricing")}>
+                Update pricing
+              </button>
+              <button type="button" className="btn-outline text-sm py-2 px-4" onClick={() => setActiveTab("filters")}>
+                Edit filter tags
+              </button>
+            </div>
           </div>
         </div>
-      </header>
+      )}
 
-      <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+      {activeTab === "pricing" && (
         <section className="card-elevated p-6">
           <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Pricing formula</h2>
           <p className="text-sm text-slate-600 mb-6">
             Selling price = (product yuan x yuan-to-naira rate + total shipping) x markup, then rounded
             to charm pricing (ends in 9999). Total shipping = china shipping (yuan x rate) +
-            international shipping NGN. Both are set per product below. Items at or above the yuan
+            international shipping NGN. Both are set per product. Items at or above the yuan
             threshold use the lower expensive-item markup (default 1.15 = 15%).
           </p>
 
-          <form onSubmit={handlePricingSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <form onSubmit={handlePricingSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label htmlFor="yuanToNaira" className="block text-sm font-medium text-slate-700 mb-2">
                 Yuan to naira rate
@@ -628,19 +704,24 @@ export default function AdminDashboard() {
               <p className="text-xs text-slate-500 mt-1">Default 1.15 = 15% markup</p>
             </div>
 
-            <div className="sm:col-span-3 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="sm:col-span-2 lg:col-span-4 flex flex-col sm:flex-row sm:items-center gap-3">
               <button type="submit" className="btn-primary" disabled={savingPricing}>
                 {savingPricing ? "Saving..." : "Save pricing"}
               </button>
               {pricingMessage && (
-                <p className="text-sm text-emerald-700" role="status">
+                <p
+                  className={`text-sm ${pricingMessage.includes("Could not") ? "text-red-600" : "text-emerald-700"}`}
+                  role="status"
+                >
                   {pricingMessage}
                 </p>
               )}
             </div>
           </form>
         </section>
+      )}
 
+      {activeTab === "filters" && (
         <section className="card-elevated p-6">
           <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Product filter tags</h2>
           <p className="text-sm text-slate-600 mb-6">
@@ -648,27 +729,32 @@ export default function AdminDashboard() {
             editing a product.
           </p>
 
-          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 mb-6">
-            <button
-              type="button"
-              className="btn-outline text-sm py-2 px-4"
-              disabled={applyingSchema}
-              onClick={handleApplySchema}
-            >
-              {applyingSchema ? "Applying schema..." : "Apply database schema"}
-            </button>
-            <button
-              type="button"
-              className="btn-outline text-sm py-2 px-4"
-              disabled={importingCatalog}
-              onClick={handleImportCatalog}
-            >
-              {importingCatalog ? "Importing..." : "Import default catalog"}
-            </button>
-            <p className="text-xs text-slate-500">
-              Import loads all iPhones and MacBook from the built-in catalog into Postgres.
-            </p>
-          </div>
+          {isDev && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 mb-6">
+              <p className="text-sm font-medium text-amber-900 mb-3">Development tools</p>
+              <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
+                <button
+                  type="button"
+                  className="btn-outline text-sm py-2 px-4"
+                  disabled={applyingSchema}
+                  onClick={handleApplySchema}
+                >
+                  {applyingSchema ? "Applying schema..." : "Apply database schema"}
+                </button>
+                <button
+                  type="button"
+                  className="btn-outline text-sm py-2 px-4"
+                  disabled={importingCatalog}
+                  onClick={handleImportCatalog}
+                >
+                  {importingCatalog ? "Importing..." : "Import default catalog"}
+                </button>
+                <p className="text-xs text-amber-800">
+                  Dev only. Use <code className="text-xs">npm run db:setup</code> in production.
+                </p>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleCreateFilter} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div>
@@ -719,13 +805,13 @@ export default function AdminDashboard() {
             </p>
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {filterTags.map((filter) => (
               <div
                 key={filter.slug}
-                className="border border-slate-100 rounded-xl p-4 bg-slate-50/50 flex flex-col sm:flex-row gap-3 sm:items-center"
+                className="border border-slate-100 rounded-xl p-4 bg-slate-50/50 flex flex-col lg:flex-row gap-3 lg:items-center"
               >
-                <code className="text-xs text-slate-500 sm:w-28">{filter.slug}</code>
+                <code className="text-xs text-slate-500 lg:w-28 shrink-0">{filter.slug}</code>
                 <input
                   type="text"
                   className="input-field flex-1"
@@ -737,7 +823,7 @@ export default function AdminDashboard() {
                     }))
                   }
                 />
-                <div className="flex gap-2">
+                <div className="flex gap-2 shrink-0">
                   <button
                     type="button"
                     className="btn-primary text-sm py-2 px-4"
@@ -755,7 +841,7 @@ export default function AdminDashboard() {
                   </button>
                 </div>
                 {filterMessages[filter.slug] && (
-                  <p className="text-sm text-emerald-700 sm:col-span-3" role="status">
+                  <p className="text-sm text-emerald-700 lg:basis-full" role="status">
                     {filterMessages[filter.slug]}
                   </p>
                 )}
@@ -769,56 +855,78 @@ export default function AdminDashboard() {
             )}
           </div>
         </section>
+      )}
 
-        <section className="card-elevated p-6">
-          <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Products</h2>
-          <p className="text-sm text-slate-600 mb-6">
-            View and edit catalog products. Price is recalculated from yuan when you save.
-          </p>
+      {activeTab === "products" && (
+        <div className="space-y-8">
+          <section className="card-elevated p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div>
+                <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Products</h2>
+                <p className="text-sm text-slate-600">
+                  {filteredProducts.length} of {products.length} products shown. Price recalculates from yuan on save.
+                </p>
+              </div>
+              <div className="relative w-full sm:w-72">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
+                  aria-hidden
+                />
+                <input
+                  type="search"
+                  className="input-field pl-10"
+                  placeholder="Search by name, slug, or filter..."
+                  value={productSearch}
+                  onChange={(event) => setProductSearch(event.target.value)}
+                  aria-label="Search products"
+                />
+              </div>
+            </div>
 
-          {products.length === 0 ? (
-            <p className="text-sm text-slate-600">
-              No products in the database. Run <code className="text-xs">npm run db:seed</code> after
-              migrating, or add one below.
-            </p>
-          ) : (
-            <div className="space-y-4">
+            {products.length === 0 ? (
+              <p className="text-sm text-slate-600">
+                No products in the database. Run <code className="text-xs">npm run db:seed</code> after
+                migrating, or add one below.
+              </p>
+            ) : filteredProducts.length === 0 ? (
+              <p className="text-sm text-slate-600">No products match your search.</p>
+            ) : (
               <div className="overflow-x-auto rounded-xl border border-slate-100">
                 <table className="min-w-full text-sm">
                   <thead className="bg-slate-50 text-left text-slate-600">
                     <tr>
                       <th className="px-4 py-3 font-medium">Product</th>
                       <th className="px-4 py-3 font-medium">Filter</th>
-                      <th className="px-4 py-3 font-medium">Storage</th>
+                      <th className="px-4 py-3 font-medium hidden md:table-cell">Storage</th>
                       <th className="px-4 py-3 font-medium">Yuan</th>
                       <th className="px-4 py-3 font-medium">Price</th>
                       <th className="px-4 py-3 font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {products.map((product) => (
-                      <tr key={product.id} className="bg-white">
+                    {filteredProducts.map((product) => (
+                      <tr key={product.id} className="bg-white hover:bg-slate-50/50 transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <img
                               src={product.image}
                               alt=""
-                              className="h-10 w-10 rounded-lg object-contain bg-slate-50 border border-slate-100"
+                              className="h-10 w-10 rounded-lg object-contain bg-slate-50 border border-slate-100 shrink-0"
                             />
-                            <div>
-                              <p className="font-medium text-slate-900">{product.name}</p>
-                              <p className="text-xs text-slate-500">{product.slug}</p>
+                            <div className="min-w-0">
+                              <p className="font-medium text-slate-900 truncate">{product.name}</p>
+                              <p className="text-xs text-slate-500 truncate">{product.slug}</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-slate-700">{filterLabel(product.filterSlug)}</td>
-                        <td className="px-4 py-3 text-slate-700 text-xs">
+                        <td className="px-4 py-3 text-slate-700 text-xs hidden md:table-cell max-w-[180px] truncate">
                           {formatStorageVariantSummary(product.storageVariants)}
                         </td>
-                        <td className="px-4 py-3 text-slate-700">
-                          {product.yuanCost != null ? product.yuanCost : "—"}
+                        <td className="px-4 py-3 text-slate-700 whitespace-nowrap">
+                          {product.yuanCost != null ? `${product.yuanCost}¥` : "—"}
                         </td>
-                        <td className="px-4 py-3 text-slate-700">
+                        <td className="px-4 py-3 text-slate-700 whitespace-nowrap font-medium">
                           ₦{product.price.toLocaleString()}
                         </td>
                         <td className="px-4 py-3">
@@ -826,13 +934,9 @@ export default function AdminDashboard() {
                             <button
                               type="button"
                               className="btn-outline text-sm py-2 px-3"
-                              onClick={() =>
-                                setEditingProductId((current) =>
-                                  current === product.id ? null : product.id
-                                )
-                              }
+                              onClick={() => setEditingProductId(product.id)}
                             >
-                              {editingProductId === product.id ? "Close" : "Edit"}
+                              Edit
                             </button>
                             <button
                               type="button"
@@ -843,7 +947,7 @@ export default function AdminDashboard() {
                               {deletingProductId === product.id ? "Deleting..." : "Delete"}
                             </button>
                           </div>
-                          {editMessages[product.id] && (
+                          {editMessages[product.id] && !editingProductId && (
                             <p
                               className={`text-xs mt-2 ${
                                 editMessages[product.id].includes("Could not")
@@ -861,114 +965,72 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+            )}
+          </section>
 
-              {products.map((product) => {
-                if (editingProductId !== product.id) return null;
-                const form = editForms[product.id];
-                if (!form) return null;
-                const editPreview = previewFromForm(form, pricing);
+          <section className="card-elevated p-6">
+            <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Add product</h2>
+            <p className="text-sm text-slate-600 mb-6">
+              Enter the yuan cost and product details. Selling price is calculated from the pricing
+              formula. Requires Postgres.
+            </p>
 
-                return (
-                  <form
-                    key={`edit-${product.id}`}
-                    onSubmit={(event) => handleProductUpdate(event, product.id)}
-                    className="border border-primary-100 rounded-xl p-5 bg-primary-50/30 space-y-4"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="font-medium text-slate-900">Edit {product.name}</h3>
-                      <p className="text-xs text-slate-500">ID {product.id}</p>
-                    </div>
+            <form onSubmit={handleCreateProduct} className="space-y-4">
+              <ProductFormFields
+                idPrefix="create"
+                form={productForm}
+                filterTags={filterTags}
+                previewPrice={createPreview.previewPrice}
+                previewMarkup={createPreview.previewMarkup}
+                onChange={(updates) => setProductForm((prev) => ({ ...prev, ...updates }))}
+              />
 
-                    <ProductFormFields
-                      idPrefix={`edit-${product.id}`}
-                      form={form}
-                      filterTags={filterTags}
-                      previewPrice={editPreview.previewPrice}
-                      previewMarkup={editPreview.previewMarkup}
-                      onChange={(updates) =>
-                        setEditForms((prev) => ({
-                          ...prev,
-                          [product.id]: { ...prev[product.id], ...updates },
-                        }))
-                      }
-                    />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <button type="submit" className="btn-primary" disabled={creatingProduct}>
+                  {creatingProduct ? "Adding..." : "Add product"}
+                </button>
+                {createMessage && (
+                  <p className="text-sm text-emerald-700" role="status">
+                    {createMessage}
+                  </p>
+                )}
+                {createError && (
+                  <p className="text-sm text-red-600" role="alert">
+                    {createError}
+                  </p>
+                )}
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
 
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                      <button
-                        type="submit"
-                        className="btn-primary"
-                        disabled={savingEditId === product.id}
-                      >
-                        {savingEditId === product.id ? "Saving..." : "Save changes"}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-outline"
-                        onClick={() => {
-                          setEditForms((prev) => ({
-                            ...prev,
-                            [product.id]: adminProductToForm(product),
-                          }));
-                          setEditMessages((prev) => ({ ...prev, [product.id]: "" }));
-                        }}
-                      >
-                        Reset
-                      </button>
-                      {editMessages[product.id] && (
-                        <p
-                          className={`text-sm ${
-                            editMessages[product.id].startsWith("Could not")
-                              ? "text-red-600"
-                              : "text-emerald-700"
-                          }`}
-                          role="status"
-                        >
-                          {editMessages[product.id]}
-                        </p>
-                      )}
-                    </div>
-                  </form>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        <section className="card-elevated p-6">
-          <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Add product</h2>
-          <p className="text-sm text-slate-600 mb-6">
-            Enter the yuan cost and product details. Selling price is calculated from the pricing
-            formula above. Requires Postgres.
-          </p>
-
-          <form onSubmit={handleCreateProduct} className="space-y-4">
-            <ProductFormFields
-              idPrefix="create"
-              form={productForm}
-              filterTags={filterTags}
-              previewPrice={createPreview.previewPrice}
-              previewMarkup={createPreview.previewMarkup}
-              onChange={(updates) => setProductForm((prev) => ({ ...prev, ...updates }))}
-            />
-
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <button type="submit" className="btn-primary" disabled={creatingProduct}>
-                {creatingProduct ? "Adding..." : "Add product"}
-              </button>
-              {createMessage && (
-                <p className="text-sm text-emerald-700" role="status">
-                  {createMessage}
-                </p>
-              )}
-              {createError && (
-                <p className="text-sm text-red-600" role="alert">
-                  {createError}
-                </p>
-              )}
-            </div>
-          </form>
-        </section>
-      </main>
-    </div>
+      {editingProduct && editForms[editingProduct.id] && (
+        <ProductEditModal
+          product={editingProduct}
+          form={editForms[editingProduct.id]}
+          filterTags={filterTags}
+          previewPrice={editingPreview.previewPrice}
+          previewMarkup={editingPreview.previewMarkup}
+          saving={savingEditId === editingProduct.id}
+          message={editMessages[editingProduct.id] ?? ""}
+          onChange={(updates) =>
+            setEditForms((prev) => ({
+              ...prev,
+              [editingProduct.id]: { ...prev[editingProduct.id], ...updates },
+            }))
+          }
+          onSubmit={(event) => handleProductUpdate(event, editingProduct.id)}
+          onReset={() => {
+            setEditForms((prev) => ({
+              ...prev,
+              [editingProduct.id]: adminProductToForm(editingProduct),
+            }));
+            setEditMessages((prev) => ({ ...prev, [editingProduct.id]: "" }));
+          }}
+          onClose={() => setEditingProductId(null)}
+        />
+      )}
+    </AdminShell>
   );
 }

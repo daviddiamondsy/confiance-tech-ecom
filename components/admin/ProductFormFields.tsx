@@ -176,15 +176,32 @@ export default function ProductFormFields({
         <label htmlFor={`${idPrefix}-image`} className="block text-sm font-medium text-slate-700 mb-2">
           Image path or URL
         </label>
-        <input
-          id={`${idPrefix}-image`}
-          type="text"
-          className="input-field"
-          placeholder="/product-images/iphone-16.png"
-          value={form.image}
-          onChange={(event) => onChange({ image: event.target.value })}
-          required
-        />
+        <div className="flex flex-col sm:flex-row gap-4">
+          <input
+            id={`${idPrefix}-image`}
+            type="text"
+            className="input-field flex-1"
+            placeholder="/product-images/iphone-16.png"
+            value={form.image}
+            onChange={(event) => onChange({ image: event.target.value })}
+            required
+          />
+          {form.image.trim() && (
+            <div className="shrink-0 flex items-center justify-center h-20 w-20 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+              <img
+                src={form.image}
+                alt="Product preview"
+                className="h-full w-full object-contain"
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                }}
+              />
+            </div>
+          )}
+        </div>
+        <p className="text-xs text-slate-500 mt-1">
+          Use a path under <code className="text-xs">/public</code> (e.g. /product-images/...) or a full URL.
+        </p>
       </div>
 
       <div className="sm:col-span-2">
@@ -231,33 +248,33 @@ export default function ProductFormFields({
         />
       </div>
 
-              <div className="sm:col-span-2">
-                <label
-                  htmlFor={`${idPrefix}-storageVariants`}
-                  className="block text-sm font-medium text-slate-700 mb-2"
-                >
-                  Storage variants with yuan (optional)
-                </label>
-                <textarea
-                  id={`${idPrefix}-storageVariants`}
-                  className="input-field min-h-[80px]"
-                  placeholder={"128GB:1400\n256GB:1500"}
-                  value={form.storageVariants}
-                  onChange={(event) => {
-                    const storageVariants = event.target.value;
-                    const nextUsesVariants = storageVariants.trim().length > 0;
-                    onChange(
-                      nextUsesVariants
-                        ? { storageVariants, yuanCost: "", storage: "" }
-                        : { storageVariants }
-                    );
-                  }}
-                />
-                <p className="text-xs text-slate-500 mt-1">
-                  One per line or comma-separated. Each line needs storage:yuan (e.g. 128GB:1400).
-                  Use this field for multiple sizes. Do not list sizes in the product name or storage label.
-                </p>
-              </div>
+      <div className="sm:col-span-2">
+        <label
+          htmlFor={`${idPrefix}-storageVariants`}
+          className="block text-sm font-medium text-slate-700 mb-2"
+        >
+          Storage variants with yuan (optional)
+        </label>
+        <textarea
+          id={`${idPrefix}-storageVariants`}
+          className="input-field min-h-[80px]"
+          placeholder={"128GB:1400\n256GB:1500"}
+          value={form.storageVariants}
+          onChange={(event) => {
+            const storageVariants = event.target.value;
+            const nextUsesVariants = storageVariants.trim().length > 0;
+            onChange(
+              nextUsesVariants
+                ? { storageVariants, yuanCost: "", storage: "" }
+                : { storageVariants }
+            );
+          }}
+        />
+        <p className="text-xs text-slate-500 mt-1">
+          One per line or comma-separated. Each line needs storage:yuan (e.g. 128GB:1400).
+          Use this field for multiple sizes. Do not list sizes in the product name or storage label.
+        </p>
+      </div>
 
       <div className="sm:col-span-2">
         <label
