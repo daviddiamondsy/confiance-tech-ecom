@@ -41,7 +41,7 @@ export default function ProductFormFields({
           required
         />
         <p className="text-xs text-slate-500 mt-1">
-          “(Clean)” or “(New)” is added automatically from the filter tag (MacBook uses New).
+          “(Clean)” or “(New)” is added from the filter tag (New vs Clean).
         </p>
       </div>
 

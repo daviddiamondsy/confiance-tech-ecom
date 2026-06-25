@@ -19,10 +19,19 @@ export async function ensureProductFiltersSchema(): Promise<void> {
   `;
   await sql`
     INSERT INTO product_filters (slug, label, sort_order) VALUES
-      ('iphone', 'iPhone', 0),
-      ('macbook', 'MacBook', 1),
-      ('samsung', 'Samsung', 2)
+      ('new', 'New', 0),
+      ('clean', 'Clean', 1)
     ON CONFLICT (slug) DO NOTHING
+  `;
+  await sql`
+    UPDATE products
+    SET filter_slug = 'new'
+    WHERE filter_slug = 'macbook' OR id = '11'
+  `;
+  await sql`
+    UPDATE products
+    SET filter_slug = 'clean'
+    WHERE filter_slug IN ('iphone', 'samsung') OR (filter_slug IS NULL AND id != '11')
   `;
 }
 

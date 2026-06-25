@@ -1,28 +1,27 @@
 import ProductCard from "@/components/ProductCard";
 import type { Product } from "@/lib/product-utils";
+import { getHomeCollectionProducts } from "@/lib/product-catalog-utils";
 import {
-  catalogFilterHref,
-  getCatalogFilterOptions,
-  getHomeCollectionProducts,
-} from "@/lib/product-catalog-utils";
-import type { ProductFilterTag } from "@/lib/product-filters";
+  filterProductsByBrand,
+  getHomepageCollectionOptions,
+  homepageCollectionHref,
+} from "@/lib/homepage-collections";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 interface HomeProductCollectionsProps {
   products: Product[];
-  filterTags: ProductFilterTag[];
 }
 
-export default function HomeProductCollections({
-  products,
-  filterTags,
-}: HomeProductCollectionsProps) {
-  const collections = getCatalogFilterOptions(products, filterTags)
-    .map((tag) => ({
-      tag,
-      ...getHomeCollectionProducts(products, tag.slug),
-    }))
+export default function HomeProductCollections({ products }: HomeProductCollectionsProps) {
+  const collections = getHomepageCollectionOptions(products)
+    .map((tag) => {
+      const brandProducts = filterProductsByBrand(products, tag.slug);
+      return {
+        tag,
+        ...getHomeCollectionProducts(brandProducts, tag.slug),
+      };
+    })
     .filter((collection) => collection.items.length > 0);
 
   if (collections.length === 0) {
@@ -44,12 +43,12 @@ export default function HomeProductCollections({
               </h2>
             </div>
             <Link
-                href={catalogFilterHref(tag.slug)}
-                className="inline-flex items-center gap-2 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
-              >
-                See more
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              href={homepageCollectionHref(tag.slug)}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+            >
+              See more
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">

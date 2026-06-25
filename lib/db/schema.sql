@@ -82,17 +82,19 @@ END
 WHERE slug IS NULL AND id IN ('6', '7', '8', '9', '10', '11', '12');
 
 INSERT INTO product_filters (slug, label, sort_order) VALUES
-  ('iphone', 'iPhone', 0),
-  ('macbook', 'MacBook', 1)
+  ('new', 'New', 0),
+  ('clean', 'Clean', 1)
 ON CONFLICT (slug) DO NOTHING;
 
 ALTER TABLE products ADD COLUMN IF NOT EXISTS filter_slug TEXT;
 ALTER TABLE product_filters ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
 
-UPDATE products SET filter_slug = 'iphone'
-WHERE id IN ('6', '7', '8', '9', '10', '12') AND filter_slug IS NULL;
-UPDATE products SET filter_slug = 'macbook'
-WHERE id = '11' AND filter_slug IS NULL;
+UPDATE products SET filter_slug = 'new'
+WHERE id = '11' OR filter_slug = 'macbook';
+
+UPDATE products SET filter_slug = 'clean'
+WHERE id IN ('6', '7', '8', '9', '10', '12', '13')
+   OR filter_slug IN ('iphone', 'samsung');
 ALTER TABLE pricing_config ADD COLUMN IF NOT EXISTS expensive_yuan_threshold NUMERIC(12, 2);
 ALTER TABLE pricing_config ADD COLUMN IF NOT EXISTS expensive_selling_markup NUMERIC(6, 3) DEFAULT 1.15;
 

@@ -7,9 +7,14 @@ export const PRODUCT_CONDITION_SUFFIX = {
 const CONDITION_SUFFIX_PATTERN = /\s*\((Clean|New)\)\s*$/i;
 
 export function conditionSuffixForFilter(filterSlug: string | null | undefined): string {
-  return filterSlug === "macbook"
-    ? PRODUCT_CONDITION_SUFFIX.new
-    : PRODUCT_CONDITION_SUFFIX.clean;
+  if (filterSlug === "new" || filterSlug === "macbook") {
+    return PRODUCT_CONDITION_SUFFIX.new;
+  }
+  return PRODUCT_CONDITION_SUFFIX.clean;
+}
+
+export function isNewProductFilter(filterSlug: string | null | undefined): boolean {
+  return filterSlug === "new" || filterSlug === "macbook";
 }
 
 export function stripConditionSuffix(name: string): string {

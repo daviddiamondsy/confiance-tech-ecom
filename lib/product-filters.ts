@@ -6,10 +6,12 @@ export interface ProductFilterTag {
   label: string;
 }
 
+export const NEW_PRODUCT_FILTER_SLUG = "new";
+export const CLEAN_PRODUCT_FILTER_SLUG = "clean";
+
 export const DEFAULT_PRODUCT_FILTER_TAGS: ProductFilterTag[] = [
-  { slug: "iphone", label: "iPhone" },
-  { slug: "macbook", label: "MacBook" },
-  { slug: "samsung", label: "Samsung" },
+  { slug: NEW_PRODUCT_FILTER_SLUG, label: "New" },
+  { slug: CLEAN_PRODUCT_FILTER_SLUG, label: "Clean" },
 ];
 
 export async function getProductFilterTags(): Promise<ProductFilterTag[]> {
@@ -19,7 +21,10 @@ export async function getProductFilterTags(): Promise<ProductFilterTag[]> {
 
   try {
     const tags = await fetchProductFiltersFromDb();
-    return tags.length > 0 ? tags : DEFAULT_PRODUCT_FILTER_TAGS;
+    const conditionTags = tags.filter((tag) =>
+      [NEW_PRODUCT_FILTER_SLUG, CLEAN_PRODUCT_FILTER_SLUG].includes(tag.slug)
+    );
+    return conditionTags.length > 0 ? conditionTags : DEFAULT_PRODUCT_FILTER_TAGS;
   } catch (error) {
     console.error("[product-filters] fetch failed, using defaults", error);
     return DEFAULT_PRODUCT_FILTER_TAGS;

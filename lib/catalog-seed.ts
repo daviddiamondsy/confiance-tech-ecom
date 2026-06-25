@@ -78,7 +78,6 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
       name: "Apple iPhone 15 Pro Max (Clean)",
       price: priceFromYuan(4600),
       image: PRODUCT_IMAGES.iphone15ProMax,
-      badge: "New",
       description:
         "The iPhone 15 Pro Max features a titanium design, A17 Pro chip, Action button, and the most advanced camera system on iPhone. " +
         IPHONE_QUALITY_TAIL,

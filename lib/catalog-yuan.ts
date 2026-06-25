@@ -13,16 +13,16 @@ export const CATALOG_YUAN: Record<
   "13": { yuan: 4200, storageYuan: { "256GB": 4200, "512GB": 4400 } },
 };
 
-/** Catalog filter tag slug per product id. */
+/** Catalog filter tag slug per product id (New vs Clean). */
 export const CATALOG_FILTERS: Record<string, string> = {
-  "6": "iphone",
-  "7": "iphone",
-  "8": "iphone",
-  "9": "iphone",
-  "10": "iphone",
-  "11": "macbook",
-  "12": "iphone",
-  "13": "samsung",
+  "6": "clean",
+  "7": "clean",
+  "8": "clean",
+  "9": "clean",
+  "10": "clean",
+  "11": "new",
+  "12": "clean",
+  "13": "clean",
 };
 
 /** Default colors shown on product pages (display only). */
