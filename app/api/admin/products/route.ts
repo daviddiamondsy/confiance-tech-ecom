@@ -12,6 +12,7 @@ import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
 import { getPostgresErrorMessage } from "@/lib/db/postgres-errors";
 import {
   createAdminProduct,
+  deleteAdminProduct,
   fetchAdminProducts,
   updateAdminProduct,
   type UpdateProductInput,
@@ -125,6 +126,15 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
+      if (error.message === "STORAGE_VARIANT_SYNC_FAILED") {
+        return NextResponse.json(
+          {
+            error:
+              "Storage variants did not save correctly. Run Apply schema in admin, then save again.",
+          },
+          { status: 500 }
+        );
+      }
     }
     const detail = getPostgresErrorMessage(error);
     console.error("[admin/products] create failed", error);
@@ -235,6 +245,15 @@ export async function PUT(req: NextRequest) {
           { status: 400 }
         );
       }
+      if (error.message === "STORAGE_VARIANT_SYNC_FAILED") {
+        return NextResponse.json(
+          {
+            error:
+              "Storage variants did not save correctly. Run Apply schema in admin, then save again.",
+          },
+          { status: 500 }
+        );
+      }
       if (error.message === "NOT_FOUND") {
         return NextResponse.json({ error: "Product not found" }, { status: 404 });
       }
@@ -247,6 +266,38 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json(
       {
         error: "Could not update product",
+        ...(detail ? { detail } : {}),
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!isPostgresConfigured()) {
+    return postgresRequired();
+  }
+
+  const productId = req.nextUrl.searchParams.get("productId")?.trim();
+  if (!productId) {
+    return NextResponse.json({ error: "productId query param is required" }, { status: 400 });
+  }
+
+  try {
+    await deleteAdminProduct(productId);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    if (error instanceof Error && error.message === "NOT_FOUND") {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+    const detail = getPostgresErrorMessage(error);
+    console.error("[admin/products] delete failed", error);
+    return NextResponse.json(
+      {
+        error: "Could not delete product",
         ...(detail ? { detail } : {}),
       },
       { status: 500 }
