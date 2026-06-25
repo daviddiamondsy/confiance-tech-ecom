@@ -1,6 +1,7 @@
 import { sql, sqlDdl } from "@/lib/db/client";
 import { ensureProductFiltersSchema } from "@/lib/db/filters-repository";
 import { applyProductShippingBackfillIfNeeded } from "@/lib/db/product-shipping-migration";
+import { applyCatalogBackfillsIfNeeded } from "@/lib/db/catalog-backfill";
 
 /** Idempotent catalog DDL for admin product CRUD on fresh Neon databases. */
 export async function ensureCatalogSchema(): Promise<void> {
@@ -54,7 +55,11 @@ export async function ensureCatalogSchema(): Promise<void> {
   `;
   await sqlDdl`
     ALTER TABLE products
-    ADD COLUMN IF NOT EXISTS international_shipping_ngn INTEGER NOT NULL DEFAULT 30000
+    ADD COLUMN IF NOT EXISTS international_shipping_ngn INTEGER NOT NULL DEFAULT 25000
+  `;
+  await sqlDdl`
+    ALTER TABLE products
+    ALTER COLUMN international_shipping_ngn SET DEFAULT 25000
   `;
 
   await sqlDdl`
@@ -100,6 +105,7 @@ export async function ensureCatalogSchema(): Promise<void> {
   `;
 
   await applyProductShippingBackfillIfNeeded();
+  await applyCatalogBackfillsIfNeeded();
 }
 
 /** @deprecated Use ensureCatalogSchema */
