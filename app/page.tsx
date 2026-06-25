@@ -37,15 +37,10 @@ export default async function Home() {
             <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-xl leading-relaxed">
               {STOREFRONT_HERO_COPY}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/products" className="btn-primary px-8 py-4 text-base">
-                Shop Now
-                <ArrowRight className="h-5 w-5" />
-              </Link>
-              <Link href="#products" className="btn-secondary px-8 py-4 text-base">
-                View Products
-              </Link>
-            </div>
+            <Link href="/products" className="btn-primary px-8 py-4 text-base">
+              Shop Now
+              <ArrowRight className="h-5 w-5" />
+            </Link>
           </div>
         </div>
       </section>
