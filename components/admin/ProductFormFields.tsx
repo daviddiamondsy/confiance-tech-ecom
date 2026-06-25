@@ -1,5 +1,9 @@
 import type { ProductFormState } from "@/lib/admin-product-form";
 import { usesStorageVariantsField } from "@/lib/admin-product-form";
+import {
+  CHINA_SHIPPING_YUAN_OPTIONS,
+  INTERNATIONAL_SHIPPING_NGN_OPTIONS,
+} from "@/lib/product-shipping";
 
 interface ProductFilterTag {
   slug: string;
@@ -71,6 +75,53 @@ export default function ProductFormFields({
             {previewMarkup != null && ` (markup x${previewMarkup})`}
           </p>
         )}
+      </div>
+
+      <div>
+        <label
+          htmlFor={`${idPrefix}-china-shipping`}
+          className="block text-sm font-medium text-slate-700 mb-2"
+        >
+          China shipping (yuan)
+        </label>
+        <select
+          id={`${idPrefix}-china-shipping`}
+          className="input-field"
+          value={form.chinaShippingYuan}
+          onChange={(event) => onChange({ chinaShippingYuan: event.target.value })}
+          required
+        >
+          {CHINA_SHIPPING_YUAN_OPTIONS.map((amount) => (
+            <option key={amount} value={amount}>
+              {amount === 0 ? "0 yuan (none)" : `${amount} yuan`}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-slate-500 mt-1">
+          Added to international shipping below to get total shipping cost.
+        </p>
+      </div>
+
+      <div>
+        <label
+          htmlFor={`${idPrefix}-international-shipping`}
+          className="block text-sm font-medium text-slate-700 mb-2"
+        >
+          International shipping (NGN)
+        </label>
+        <select
+          id={`${idPrefix}-international-shipping`}
+          className="input-field"
+          value={form.internationalShippingNgn}
+          onChange={(event) => onChange({ internationalShippingNgn: event.target.value })}
+          required
+        >
+          {INTERNATIONAL_SHIPPING_NGN_OPTIONS.map((amount) => (
+            <option key={amount} value={amount}>
+              ₦{amount.toLocaleString()}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>

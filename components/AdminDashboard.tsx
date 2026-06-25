@@ -12,16 +12,12 @@ import {
   storageVariantsFieldError,
   type ProductFormState,
 } from "@/lib/admin-product-form";
-import { priceFromYuan, sellingMarkupForYuan } from "@/lib/pricing";
+import { priceFromYuan, sellingMarkupForYuan, type PricingConfig } from "@/lib/pricing";
+import {
+  parseChinaShippingYuan,
+  parseInternationalShippingNgn,
+} from "@/lib/product-shipping";
 import type { AdminProductRecord } from "@/lib/db/products-repository";
-
-interface PricingConfig {
-  yuanToNaira: number;
-  shippingNgn: number;
-  sellingMarkup: number;
-  expensiveYuanThreshold?: number | null;
-  expensiveSellingMarkup?: number | null;
-}
 
 interface ProductFilterTag {
   slug: string;
@@ -38,10 +34,19 @@ function previewFromForm(form: ProductFormState, pricing: PricingConfig) {
   if (yuan == null) {
     return { previewPrice: null, previewMarkup: null };
   }
-  return {
-    previewPrice: priceFromYuan(yuan, pricing),
-    previewMarkup: sellingMarkupForYuan(yuan, pricing),
-  };
+
+  try {
+    const shipping = {
+      chinaShippingYuan: parseChinaShippingYuan(form.chinaShippingYuan),
+      internationalShippingNgn: parseInternationalShippingNgn(form.internationalShippingNgn),
+    };
+    return {
+      previewPrice: priceFromYuan(yuan, pricing, shipping),
+      previewMarkup: sellingMarkupForYuan(yuan, pricing),
+    };
+  } catch {
+    return { previewPrice: null, previewMarkup: null };
+  }
 }
 
 export default function AdminDashboard() {
@@ -49,7 +54,6 @@ export default function AdminDashboard() {
 
   const [pricing, setPricing] = useState<PricingConfig>({
     yuanToNaira: 207,
-    shippingNgn: 30000,
     sellingMarkup: 1.2,
     expensiveYuanThreshold: 3500,
     expensiveSellingMarkup: 1.15,
@@ -522,9 +526,10 @@ export default function AdminDashboard() {
         <section className="card-elevated p-6">
           <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Pricing formula</h2>
           <p className="text-sm text-slate-600 mb-6">
-            Selling price = (yuan x yuan-to-naira rate + shipping) x markup, then rounded to charm
-            pricing (ends in 9999). Items at or above the yuan threshold use the lower expensive-item
-            markup (default 1.15 = 15%).
+            Selling price = (product yuan x yuan-to-naira rate + total shipping) x markup, then rounded
+            to charm pricing (ends in 9999). Total shipping = china shipping (yuan x rate) +
+            international shipping NGN. Both are set per product below. Items at or above the yuan
+            threshold use the lower expensive-item markup (default 1.15 = 15%).
           </p>
 
           <form onSubmit={handlePricingSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -543,27 +548,6 @@ export default function AdminDashboard() {
                   setPricing((prev) => ({
                     ...prev,
                     yuanToNaira: Number(event.target.value),
-                  }))
-                }
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="shippingNgn" className="block text-sm font-medium text-slate-700 mb-2">
-                Shipping (NGN)
-              </label>
-              <input
-                id="shippingNgn"
-                type="number"
-                step="1"
-                min="0"
-                className="input-field"
-                value={pricing.shippingNgn}
-                onChange={(event) =>
-                  setPricing((prev) => ({
-                    ...prev,
-                    shippingNgn: Number(event.target.value),
                   }))
                 }
                 required

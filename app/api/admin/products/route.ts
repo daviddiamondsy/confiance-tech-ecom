@@ -3,9 +3,7 @@ import { isAdminAuthenticated } from "@/lib/admin-auth";
 import {
   parseColorsInput,
   parseFeaturesInput,
-  parseStorageVariants,
   parseStorageVariantsField,
-  primaryYuanFromForm,
 } from "@/lib/admin-product-form";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
@@ -17,6 +15,27 @@ import {
   updateAdminProduct,
   type UpdateProductInput,
 } from "@/lib/db/products-repository";
+import {
+  defaultShippingForProductName,
+  parseChinaShippingYuan,
+  parseInternationalShippingNgn,
+  type ChinaShippingYuan,
+  type InternationalShippingNgn,
+} from "@/lib/product-shipping";
+
+function parseProductShippingInput(
+  body: Record<string, unknown>,
+  productName: string
+): { chinaShippingYuan: ChinaShippingYuan; internationalShippingNgn: InternationalShippingNgn } {
+  const defaults = defaultShippingForProductName(productName);
+  const chinaRaw = body.chinaShippingYuan ?? defaults.chinaShippingYuan;
+  const internationalRaw = body.internationalShippingNgn ?? defaults.internationalShippingNgn;
+
+  return {
+    chinaShippingYuan: parseChinaShippingYuan(chinaRaw),
+    internationalShippingNgn: parseInternationalShippingNgn(internationalRaw),
+  };
+}
 
 function postgresRequired() {
   return NextResponse.json(
@@ -92,6 +111,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "yuanCost must be a positive number" }, { status: 400 });
   }
 
+  let shipping: {
+    chinaShippingYuan: ChinaShippingYuan;
+    internationalShippingNgn: InternationalShippingNgn;
+  };
+
+  try {
+    shipping = parseProductShippingInput(body, name);
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (error.message === "INVALID_CHINA_SHIPPING" ||
+        error.message === "INVALID_INTERNATIONAL_SHIPPING")
+    ) {
+      return NextResponse.json({ error: "Invalid shipping option selected" }, { status: 400 });
+    }
+    throw error;
+  }
+
   try {
     await ensureCatalogSchema();
     const created = await createAdminProduct({
@@ -105,6 +142,7 @@ export async function POST(req: NextRequest) {
       colors,
       features,
       storageVariants,
+      ...shipping,
     });
     const products = await fetchAdminProducts();
     const product = products.find((item) => item.id === created.id);
@@ -119,6 +157,12 @@ export async function POST(req: NextRequest) {
           { error: "Set yuan cost or at least one storage:yuan variant" },
           { status: 400 }
         );
+      }
+      if (
+        error.message === "INVALID_CHINA_SHIPPING" ||
+        error.message === "INVALID_INTERNATIONAL_SHIPPING"
+      ) {
+        return NextResponse.json({ error: "Invalid shipping option selected" }, { status: 400 });
       }
       if (error.message === "DUPLICATE_STORAGE_VARIANT") {
         return NextResponse.json(
@@ -186,6 +230,12 @@ function buildUpdateInput(body: Record<string, unknown>): UpdateProductInput {
   if (body.storageVariants !== undefined) {
     input.storageVariants = parseStorageVariantsField(body.storageVariants);
   }
+  if (body.chinaShippingYuan !== undefined) {
+    input.chinaShippingYuan = parseChinaShippingYuan(body.chinaShippingYuan);
+  }
+  if (body.internationalShippingNgn !== undefined) {
+    input.internationalShippingNgn = parseInternationalShippingNgn(body.internationalShippingNgn);
+  }
 
   return input;
 }
@@ -221,6 +271,12 @@ export async function PUT(req: NextRequest) {
           },
           { status: 400 }
         );
+      }
+      if (
+        error.message === "INVALID_CHINA_SHIPPING" ||
+        error.message === "INVALID_INTERNATIONAL_SHIPPING"
+      ) {
+        return NextResponse.json({ error: "Invalid shipping option selected" }, { status: 400 });
       }
     }
     throw error;
@@ -259,6 +315,12 @@ export async function PUT(req: NextRequest) {
       }
       if (error.message === "INVALID_YUAN") {
         return NextResponse.json({ error: "yuanCost must be a positive number" }, { status: 400 });
+      }
+      if (
+        error.message === "INVALID_CHINA_SHIPPING" ||
+        error.message === "INVALID_INTERNATIONAL_SHIPPING"
+      ) {
+        return NextResponse.json({ error: "Invalid shipping option selected" }, { status: 400 });
       }
     }
     const detail = getPostgresErrorMessage(error);

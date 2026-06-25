@@ -3,10 +3,10 @@ import {
   DEFAULT_PRICING_CONFIG,
   type PricingConfig,
 } from "@/lib/pricing";
+import { productShippingFromRow } from "@/lib/product-shipping";
 
 interface PricingConfigRow {
   yuan_to_naira: string;
-  shipping_ngn: number;
   selling_markup: string;
   expensive_yuan_threshold: string | null;
   expensive_selling_markup: string | null;
@@ -15,7 +15,6 @@ interface PricingConfigRow {
 function mapRow(row: PricingConfigRow): PricingConfig {
   return {
     yuanToNaira: Number(row.yuan_to_naira),
-    shippingNgn: row.shipping_ngn,
     sellingMarkup: Number(row.selling_markup),
     expensiveYuanThreshold:
       row.expensive_yuan_threshold != null ? Number(row.expensive_yuan_threshold) : null,
@@ -29,7 +28,6 @@ export async function fetchPricingConfig(): Promise<PricingConfig> {
     const { rows } = await sql<PricingConfigRow>`
       SELECT
         yuan_to_naira,
-        shipping_ngn,
         selling_markup,
         expensive_yuan_threshold,
         expensive_selling_markup
@@ -52,17 +50,15 @@ export async function updatePricingConfig(
        id, yuan_to_naira, shipping_ngn, selling_markup,
        expensive_yuan_threshold, expensive_selling_markup, updated_at
      )
-     VALUES ('default', $1, $2, $3, $4, $5, NOW())
+     VALUES ('default', $1, 0, $2, $3, $4, NOW())
      ON CONFLICT (id) DO UPDATE SET
        yuan_to_naira = EXCLUDED.yuan_to_naira,
-       shipping_ngn = EXCLUDED.shipping_ngn,
        selling_markup = EXCLUDED.selling_markup,
        expensive_yuan_threshold = EXCLUDED.expensive_yuan_threshold,
        expensive_selling_markup = EXCLUDED.expensive_selling_markup,
        updated_at = NOW()`,
     [
       config.yuanToNaira,
-      config.shippingNgn,
       config.sellingMarkup,
       config.expensiveYuanThreshold ?? null,
       config.expensiveSellingMarkup ?? null,
@@ -75,13 +71,21 @@ export async function updatePricingConfig(
 export async function recalculateAllPrices(config: PricingConfig): Promise<void> {
   const { priceFromYuan } = await import("@/lib/pricing");
 
-  const { rows: products } = await sql<{ id: string; yuan_cost: string | null }>`
-    SELECT id, yuan_cost FROM products WHERE yuan_cost IS NOT NULL
+  const { rows: products } = await sql<{
+    id: string;
+    yuan_cost: string | null;
+    china_shipping_yuan: number;
+    international_shipping_ngn: number;
+  }>`
+    SELECT id, yuan_cost, china_shipping_yuan, international_shipping_ngn
+    FROM products
+    WHERE yuan_cost IS NOT NULL
   `;
 
   for (const product of products) {
     const yuan = Number(product.yuan_cost);
-    const price = priceFromYuan(yuan, config);
+    const shipping = productShippingFromRow(product);
+    const price = priceFromYuan(yuan, config, shipping);
     await sql.query(`UPDATE products SET price = $1, updated_at = NOW() WHERE id = $2`, [
       price,
       product.id,
@@ -91,11 +95,23 @@ export async function recalculateAllPrices(config: PricingConfig): Promise<void>
   const { rows: options } = await sql<{
     id: number;
     yuan_cost: string | null;
-  }>`SELECT id, yuan_cost FROM product_storage_options WHERE yuan_cost IS NOT NULL`;
+    china_shipping_yuan: number;
+    international_shipping_ngn: number;
+  }>`
+    SELECT
+      o.id,
+      o.yuan_cost,
+      p.china_shipping_yuan,
+      p.international_shipping_ngn
+    FROM product_storage_options o
+    JOIN products p ON p.id = o.product_id
+    WHERE o.yuan_cost IS NOT NULL
+  `;
 
   for (const option of options) {
     const yuan = Number(option.yuan_cost);
-    const price = priceFromYuan(yuan, config);
+    const shipping = productShippingFromRow(option);
+    const price = priceFromYuan(yuan, config, shipping);
     await sql.query(`UPDATE product_storage_options SET price = $1 WHERE id = $2`, [
       price,
       option.id,
