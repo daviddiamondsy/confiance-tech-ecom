@@ -20,8 +20,8 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
   return [
     {
       id: "6",
-      name: "Apple iPhone 13 256GB (Clean)",
-      price: priceFromYuan(1700),
+      name: "Apple iPhone 13 (Clean)",
+      price: priceFromYuan(1400),
       image: PRODUCT_IMAGES.iphone13,
       badge: "Popular",
       description:
@@ -39,12 +39,16 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
       specifications: {
         Display: "6.1-inch Super Retina XDR",
         Processor: "A15 Bionic chip",
-        Storage: "256GB",
+        Storage: "128GB",
         Camera: "Dual 12MP Wide + Ultra Wide",
         Battery: "Up to 19 hours video",
         "Battery health": BATTERY_HEALTH_SPEC,
         Connectivity: "5G, Wi-Fi 6, Bluetooth 5.0",
       },
+      storageOptions: [
+        { storage: "128GB", price: priceFromYuan(1400) },
+        { storage: "256GB", price: priceFromYuan(1700) },
+      ],
     },
     {
       id: "7",
