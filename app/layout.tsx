@@ -12,7 +12,7 @@ import { STOREFRONT_META_DESCRIPTION } from "@/lib/device-quality-copy";
 const META_PIXEL_ID = "YOUR_PIXEL_ID_HERE";
 
 export const metadata: Metadata = {
-  title: "Confiance Tech - Grade A Computing Devices",
+  title: "Confiance Tech - Brand New and UK Grade A Computing Devices",
   description: STOREFRONT_META_DESCRIPTION,
 };
 

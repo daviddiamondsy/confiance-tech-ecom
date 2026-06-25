@@ -16,7 +16,7 @@ export const STOREFRONT_TRUST_FEATURES: StorefrontTrustFeature[] = [
   {
     icon: Package,
     title: "With Accessories",
-    description: "Comes with charger",
+    description: "Add-ons for a better experience",
   },
   {
     icon: Headphones,
@@ -25,7 +25,7 @@ export const STOREFRONT_TRUST_FEATURES: StorefrontTrustFeature[] = [
   },
   {
     icon: Shield,
-    title: "Clean Devices",
-    description: "Grade A condition. Inspected before every shipment",
+    title: "Brand New & UK Grade A",
+    description: "Computing devices inspected before every shipment",
   },
 ];

@@ -13,7 +13,7 @@ export const CATALOG_SLUGS: Record<string, string> = {
 export function slugifyProductName(name: string): string {
   return name
     .toLowerCase()
-    .replace(/\s*\(clean\)\s*/gi, "")
+    .replace(/\s*\((clean|new)\)\s*/gi, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .replace(/-+/g, "-");

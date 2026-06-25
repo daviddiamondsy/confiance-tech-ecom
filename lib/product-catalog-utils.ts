@@ -69,6 +69,25 @@ export function filterProducts(products: Product[], filterSlug: string): Product
   return products.filter((product) => getProductFilterSlug(product) === filterSlug);
 }
 
+export const HOME_COLLECTION_SIZE = 4;
+
+export function getHomeCollectionProducts(
+  products: Product[],
+  filterSlug: string,
+  limit = HOME_COLLECTION_SIZE
+): { items: Product[]; total: number; hasMore: boolean } {
+  const filtered = filterProducts(products, filterSlug);
+  return {
+    items: filtered.slice(0, limit),
+    total: filtered.length,
+    hasMore: filtered.length > limit,
+  };
+}
+
+export function catalogFilterHref(filterSlug: string): string {
+  return `/products?category=${encodeURIComponent(filterSlug)}`;
+}
+
 export function searchProducts(products: Product[], query: string): Product[] {
   const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) return products;

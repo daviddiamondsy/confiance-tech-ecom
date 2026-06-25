@@ -10,6 +10,7 @@ import Image from "next/image";
 import type { Product } from "@/lib/product-utils";
 import { getSelectedVariant, getDisplaySpecs } from "@/lib/product-utils";
 import { STOREFRONT_TRUST_FEATURES } from "@/lib/storefront-trust-features";
+import { STOREFRONT_PRODUCT_DETAIL_TRUST_COPY } from "@/lib/device-quality-copy";
 
 interface ProductDetailViewProps {
   product: Product;
@@ -218,7 +219,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                 <div className="bg-gradient-to-br from-primary-600 via-primary-700 to-violet-700 rounded-2xl p-8 text-white mb-8 shadow-glow">
                   <h3 className="font-display text-3xl font-bold mb-4">Why Choose {variant.displayName}?</h3>
                   <p className="text-primary-100 text-lg leading-relaxed">
-                    Reliable tech in clean condition and a team that stands behind every order.
+                    {STOREFRONT_PRODUCT_DETAIL_TRUST_COPY}
                   </p>
                 </div>
 
