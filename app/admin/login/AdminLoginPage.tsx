@@ -43,9 +43,12 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-surface-muted">
       <div className="w-full max-w-md card-elevated p-8">
-        <h1 className="font-display text-2xl font-bold text-slate-900 mb-2">Admin login</h1>
+        <p className="text-xs font-semibold uppercase tracking-widest text-primary-600 mb-2">
+          Confiance Tech
+        </p>
+        <h1 className="font-display text-2xl font-bold text-slate-900 mb-2">Catalog admin</h1>
         <p className="text-slate-600 mb-8 text-sm">
-          Manage pricing and product colors for the Confiance Tech catalog.
+          Sign in to manage pricing, filter tags, and products.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
