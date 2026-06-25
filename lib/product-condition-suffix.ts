@@ -30,6 +30,15 @@ export function normalizeProductName(
   return `${base} ${suffix}`;
 }
 
+/** Storefront name: filter tag wins over a stale (Clean)/(New) suffix in the DB. */
+export function resolveProductDisplayName(
+  name: string,
+  filterSlug?: string | null
+): string {
+  if (!filterSlug) return name;
+  return normalizeProductName(name, filterSlug);
+}
+
 /** Suffix at end of a product display name, if present. */
 export function conditionSuffixInName(name: string): string | null {
   const match = name.match(CONDITION_SUFFIX_PATTERN);

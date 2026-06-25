@@ -11,6 +11,7 @@ import type { Product, StorageOption } from "@/lib/product-utils";
 import {
   isNewProductFilter,
   normalizeProductName as applyConditionProductName,
+  resolveProductDisplayName,
   stripConditionSuffix,
 } from "@/lib/product-condition-suffix";
 
@@ -66,7 +67,7 @@ function mapRowToProduct(
   return {
     id: row.id,
     slug: row.slug ?? slugForProductId(row.id, row.name),
-    name: row.name,
+    name: resolveProductDisplayName(row.name, row.filter_slug),
     price: resolvePrice(baseYuan, row.price, config),
     originalPrice: row.original_price ?? undefined,
     image: row.image,
@@ -575,13 +576,11 @@ export async function updateAdminProduct(
   }
 
   let name: string;
-  if (input.name !== undefined) {
-    name = applyConditionProductName(input.name, nextFilterSlug);
-  } else if (input.filterSlug !== undefined && input.filterSlug !== existing.filter_slug) {
-    name = applyConditionProductName(stripConditionSuffix(existing.name), nextFilterSlug);
-  } else {
-    name = existing.name;
-  }
+  const baseName =
+    input.name !== undefined
+      ? stripConditionSuffix(input.name.trim())
+      : stripConditionSuffix(existing.name);
+  name = applyConditionProductName(baseName, nextFilterSlug);
 
   const image = input.image !== undefined ? input.image.trim() : existing.image;
   const description =
