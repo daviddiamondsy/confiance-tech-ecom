@@ -8,6 +8,11 @@ import {
   BATTERY_HEALTH_SPEC,
 } from "@/lib/device-quality-copy";
 import type { Product, StorageOption } from "@/lib/product-utils";
+import {
+  isNewProductFilter,
+  normalizeProductName as applyConditionProductName,
+  stripConditionSuffix,
+} from "@/lib/product-condition-suffix";
 
 interface ProductRow {
   id: string;
@@ -339,11 +344,6 @@ export interface AdminProductRecord {
 
 export type UpdateProductInput = Partial<Omit<CreateProductInput, "slug">>;
 
-import {
-  normalizeProductName as applyConditionProductName,
-  stripConditionSuffix,
-} from "@/lib/product-condition-suffix";
-
 async function nextProductId(): Promise<string> {
   const { rows } = await sql<{ next_id: number }>`
     SELECT COALESCE(MAX(CAST(id AS INTEGER)), 0) + 1 AS next_id
@@ -380,9 +380,9 @@ async function uniqueSlug(baseSlug: string, excludeProductId?: string): Promise<
 
 function buildProductSpecs(input: {
   storage?: string;
-  filterSlug: string;
+  productName?: string;
 }): Record<string, string> {
-  const isIphone = input.filterSlug === "iphone";
+  const isIphone = Boolean(input.productName?.toLowerCase().includes("iphone"));
   return {
     ...(input.storage ? { Storage: input.storage } : {}),
     ...(isIphone ? { "Battery health": BATTERY_HEALTH_SPEC } : {}),
@@ -491,16 +491,16 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
   });
   const { storageVariants, baseYuan, storageLabel: storage } = pricing;
   const price = priceFromYuan(baseYuan, config);
-  const isMacbook = input.filterSlug === "macbook";
-  const isIphone = input.filterSlug === "iphone";
+  const isNew = isNewProductFilter(input.filterSlug);
+  const isIphone = /iphone/i.test(name);
   const features =
     input.features?.map((feature) => feature.trim()).filter(Boolean) ??
-    (isMacbook
+    (isNew
       ? ["Brand new product", "Inspected, tested, and certified"]
       : isIphone
         ? [BATTERY_HEALTH_FEATURE, "UK Grade A condition with accessories included", "Inspected, tested, and certified"]
         : ["UK Grade A condition with accessories included", "Inspected, tested, and certified"]);
-  const specifications = buildProductSpecs({ storage, filterSlug: input.filterSlug });
+  const specifications = buildProductSpecs({ storage, productName: name });
 
   await sql.query(
     `INSERT INTO products (
@@ -626,7 +626,7 @@ export async function updateAdminProduct(
   const price = priceFromYuan(yuanCost, config);
   const specifications = buildProductSpecs({
     storage,
-    filterSlug: nextFilterSlug,
+    productName: name,
   });
 
   const slug =

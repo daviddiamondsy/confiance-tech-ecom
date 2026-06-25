@@ -19,7 +19,7 @@ export const STOREFRONT_FEATURED_COPY =
   "Hand-picked brand new and UK Grade A devices, inspected and tested before dispatch. Each one is backed by our guarantee.";
 
 export const STOREFRONT_CATALOG_COPY =
-  "Explore brand new and UK Grade A iPhones, MacBooks, and more. Every unit is inspected before it ships.";
+  "Explore brand new and UK Grade A devices by condition. Every unit is inspected before it ships.";
 
 export const STOREFRONT_FOOTER_COPY =
   "Confiance Tech is your trusted place for brand new and UK Grade A computing devices with accessories included. Every unit is inspected before it ships.";

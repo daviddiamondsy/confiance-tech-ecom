@@ -1,5 +1,13 @@
 import type { Product } from "@/lib/product-utils";
 import type { ProductFilterTag } from "@/lib/product-filters";
+import {
+  conditionSuffixInName,
+  PRODUCT_CONDITION_SUFFIX,
+} from "@/lib/product-condition-suffix";
+import {
+  CLEAN_PRODUCT_FILTER_SLUG,
+  NEW_PRODUCT_FILTER_SLUG,
+} from "@/lib/product-filters";
 
 export type ProductSort = "featured" | "price-asc" | "price-desc" | "name-asc";
 export type ProductView = "grid" | "list";
@@ -15,10 +23,24 @@ export const SORT_LABELS: Record<ProductSort, string> = {
 };
 
 export function getProductFilterSlug(product: Product): string | null {
-  if (product.filterSlug) return product.filterSlug;
+  if (product.filterSlug) {
+    if (product.filterSlug === "macbook") return NEW_PRODUCT_FILTER_SLUG;
+    if (product.filterSlug === "iphone" || product.filterSlug === "samsung") {
+      return CLEAN_PRODUCT_FILTER_SLUG;
+    }
+    return product.filterSlug;
+  }
+
+  const suffix = conditionSuffixInName(product.name);
+  if (suffix === PRODUCT_CONDITION_SUFFIX.new) return NEW_PRODUCT_FILTER_SLUG;
+  if (suffix === PRODUCT_CONDITION_SUFFIX.clean) return CLEAN_PRODUCT_FILTER_SLUG;
+
   const name = product.name.toLowerCase();
-  if (name.includes("macbook")) return "macbook";
-  if (name.includes("iphone")) return "iphone";
+  if (name.includes("macbook")) return NEW_PRODUCT_FILTER_SLUG;
+  if (name.includes("iphone") || name.includes("galaxy") || name.includes("samsung")) {
+    return CLEAN_PRODUCT_FILTER_SLUG;
+  }
+
   return null;
 }
 
@@ -41,6 +63,8 @@ export function getCatalogFilterOptions(
 
 export function parseCatalogFilter(value: string | null): string {
   if (!value || value === ALL_PRODUCTS_FILTER) return ALL_PRODUCTS_FILTER;
+  if (value === "macbook") return NEW_PRODUCT_FILTER_SLUG;
+  if (value === "iphone" || value === "samsung") return CLEAN_PRODUCT_FILTER_SLUG;
   return value;
 }
 
@@ -73,14 +97,13 @@ export const HOME_COLLECTION_SIZE = 4;
 
 export function getHomeCollectionProducts(
   products: Product[],
-  filterSlug: string,
+  _groupSlug: string,
   limit = HOME_COLLECTION_SIZE
 ): { items: Product[]; total: number; hasMore: boolean } {
-  const filtered = filterProducts(products, filterSlug);
   return {
-    items: filtered.slice(0, limit),
-    total: filtered.length,
-    hasMore: filtered.length > limit,
+    items: products.slice(0, limit),
+    total: products.length,
+    hasMore: products.length > limit,
   };
 }
 

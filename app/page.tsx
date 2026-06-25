@@ -6,13 +6,12 @@ import TrustFeaturesGrid from "@/components/TrustFeaturesGrid";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { getProducts } from "@/lib/products";
-import { getProductFilterTags } from "@/lib/product-filters";
 import { STOREFRONT_HERO_COPY, STOREFRONT_FEATURED_COPY } from "@/lib/device-quality-copy";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [products, filterTags] = await Promise.all([getProducts(), getProductFilterTags()]);
+  const products = await getProducts();
 
   return (
     <div className="min-h-screen bg-surface-muted">
@@ -58,14 +57,14 @@ export default async function Home() {
           <div className="text-center mb-14">
             <span className="section-label">Our Collection</span>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-4 tracking-tight">
-              Shop by Category
+              Featured Products
             </h2>
             <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed">
               {STOREFRONT_FEATURED_COPY}
             </p>
           </div>
 
-          <HomeProductCollections products={products} filterTags={filterTags} />
+          <HomeProductCollections products={products} />
         </div>
       </section>
 
