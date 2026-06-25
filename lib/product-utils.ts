@@ -40,8 +40,10 @@ export function getSelectedVariant(
     name: product.name,
     filterSlug: product.filterSlug,
     filterSlugs: product.filterSlugs,
-    storage: product.storageOptions?.length ? storage : undefined,
+    storage,
     color,
+    multipleStorageOptions: (product.storageOptions?.length ?? 0) > 1,
+    multipleColorOptions: (product.colorOptions?.length ?? 0) > 1,
   });
 
   return {

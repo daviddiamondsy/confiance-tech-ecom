@@ -73,11 +73,12 @@ export async function recalculateAllPrices(config: PricingConfig): Promise<void>
 
   const { rows: products } = await sql<{
     id: string;
+    name: string;
     yuan_cost: string | null;
     china_shipping_yuan: number;
     international_shipping_ngn: number;
   }>`
-    SELECT id, yuan_cost, china_shipping_yuan, international_shipping_ngn
+    SELECT id, name, yuan_cost, china_shipping_yuan, international_shipping_ngn
     FROM products
     WHERE yuan_cost IS NOT NULL
   `;
@@ -97,12 +98,14 @@ export async function recalculateAllPrices(config: PricingConfig): Promise<void>
     yuan_cost: string | null;
     china_shipping_yuan: number;
     international_shipping_ngn: number;
+    name: string;
   }>`
     SELECT
       o.id,
       o.yuan_cost,
       p.china_shipping_yuan,
-      p.international_shipping_ngn
+      p.international_shipping_ngn,
+      p.name
     FROM product_storage_options o
     JOIN products p ON p.id = o.product_id
     WHERE o.yuan_cost IS NOT NULL

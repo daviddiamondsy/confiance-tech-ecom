@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { productPath } from "@/lib/product-slug";
+import { storefrontProductBadge } from "@/lib/product-condition-suffix";
 
 interface Product {
   id: string;
@@ -22,6 +23,7 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : null;
+  const badge = storefrontProductBadge(product);
 
   if (variant === "list") {
     return (
@@ -37,9 +39,9 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
               fill
               className="object-contain p-4 group-hover:scale-105 transition-transform duration-500 ease-out"
             />
-            {product.badge && (
+            {badge && (
               <span className="absolute top-3 left-3 px-3 py-1 bg-primary-600 text-white text-xs font-semibold rounded-full shadow-soft">
-                {product.badge}
+                {badge}
               </span>
             )}
           </Link>
@@ -86,9 +88,9 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
             className="object-contain p-4 group-hover:scale-105 transition-transform duration-500 ease-out"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          {product.badge && (
+          {badge && (
             <span className="absolute top-3 left-3 px-3 py-1 bg-primary-600 text-white text-xs font-semibold rounded-full shadow-soft">
-              {product.badge}
+              {badge}
             </span>
           )}
           {discount && (

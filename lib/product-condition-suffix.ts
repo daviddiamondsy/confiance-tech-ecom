@@ -73,6 +73,28 @@ export function replaceConditionSuffix(
   return name.replace(suffix, replacement);
 }
 
+/** Hide badge when it duplicates the (Clean)/(New) suffix already in the product name. */
+export function storefrontProductBadge(input: {
+  badge?: string | null;
+  name: string;
+}): string | undefined {
+  const badge = input.badge?.trim();
+  if (!badge) return undefined;
+
+  const suffix = conditionSuffixInName(input.name);
+  if (!suffix) return badge;
+
+  const normalizedBadge = badge.toLowerCase();
+  if (normalizedBadge === "new" && suffix === PRODUCT_CONDITION_SUFFIX.new) {
+    return undefined;
+  }
+  if (normalizedBadge === "clean" && suffix === PRODUCT_CONDITION_SUFFIX.clean) {
+    return undefined;
+  }
+
+  return badge;
+}
+
 /** Storefront title: base name, optional storage, optional color, then (Clean)/(New). */
 export function buildVariantDisplayName(input: {
   name: string;
@@ -80,6 +102,8 @@ export function buildVariantDisplayName(input: {
   filterSlugs?: readonly string[] | null;
   storage?: string;
   color?: string;
+  multipleStorageOptions?: boolean;
+  multipleColorOptions?: boolean;
 }): string {
   const conditionSlug =
     input.filterSlug ?? primaryConditionFilterSlug(input.filterSlugs ?? []);
@@ -92,11 +116,13 @@ export function buildVariantDisplayName(input: {
     : (conditionSuffixInName(normalized) ?? PRODUCT_CONDITION_SUFFIX.clean);
 
   let label = base;
-  if (input.storage) {
+  if (input.storage && input.multipleStorageOptions) {
     label = `${base} ${input.storage}`;
   }
-  if (input.color) {
-    label = input.storage ? `${label} - ${input.color}` : `${base} - ${input.color}`;
+  if (input.color && input.multipleColorOptions) {
+    label = input.storage && input.multipleStorageOptions
+      ? `${label} - ${input.color}`
+      : `${base} - ${input.color}`;
   }
   return `${label} ${suffix}`;
 }
