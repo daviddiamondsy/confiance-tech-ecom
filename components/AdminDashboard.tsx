@@ -72,6 +72,7 @@ export default function AdminDashboard() {
   const [applyingSchema, setApplyingSchema] = useState(false);
   const [importingCatalog, setImportingCatalog] = useState(false);
   const [deletingFilterSlug, setDeletingFilterSlug] = useState<string | null>(null);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
   const [productForm, setProductForm] = useState<ProductFormState>(emptyProductForm);
   const [creatingProduct, setCreatingProduct] = useState(false);
   const [createMessage, setCreateMessage] = useState("");
@@ -339,6 +340,47 @@ export default function AdminDashboard() {
         ...prev,
         [slug]: "Could not reach the server. Try again.",
       }));
+    }
+  }
+
+  async function handleDeleteProduct(product: AdminProductRecord) {
+    const confirmed = window.confirm(
+      `Delete "${product.name}" from the catalog?\n\nThis cannot be undone. Built-in catalog items may reappear on the storefront from the default seed after delete.`
+    );
+    if (!confirmed) return;
+
+    setEditMessages((prev) => ({ ...prev, [product.id]: "" }));
+    setDeletingProductId(product.id);
+
+    try {
+      const response = await fetch(
+        `/api/admin/products?productId=${encodeURIComponent(product.id)}`,
+        { method: "DELETE" }
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        setEditMessages((prev) => ({
+          ...prev,
+          [product.id]: data.error ?? "Could not delete product",
+        }));
+        return;
+      }
+
+      setProducts((prev) => prev.filter((item) => item.id !== product.id));
+      setEditForms((prev) => {
+        const next = { ...prev };
+        delete next[product.id];
+        return next;
+      });
+      setEditingProductId((current) => (current === product.id ? null : current));
+    } catch {
+      setEditMessages((prev) => ({
+        ...prev,
+        [product.id]: "Could not reach the server. Try again.",
+      }));
+    } finally {
+      setDeletingProductId(null);
     }
   }
 
@@ -796,17 +838,39 @@ export default function AdminDashboard() {
                           ₦{product.price.toLocaleString()}
                         </td>
                         <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            className="btn-outline text-sm py-2 px-3"
-                            onClick={() =>
-                              setEditingProductId((current) =>
-                                current === product.id ? null : product.id
-                              )
-                            }
-                          >
-                            {editingProductId === product.id ? "Close" : "Edit"}
-                          </button>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              className="btn-outline text-sm py-2 px-3"
+                              onClick={() =>
+                                setEditingProductId((current) =>
+                                  current === product.id ? null : product.id
+                                )
+                              }
+                            >
+                              {editingProductId === product.id ? "Close" : "Edit"}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-outline text-sm py-2 px-3 text-red-600 border-red-200 hover:bg-red-50"
+                              disabled={deletingProductId === product.id}
+                              onClick={() => handleDeleteProduct(product)}
+                            >
+                              {deletingProductId === product.id ? "Deleting..." : "Delete"}
+                            </button>
+                          </div>
+                          {editMessages[product.id] && (
+                            <p
+                              className={`text-xs mt-2 ${
+                                editMessages[product.id].includes("Could not")
+                                  ? "text-red-600"
+                                  : "text-emerald-700"
+                              }`}
+                              role="status"
+                            >
+                              {editMessages[product.id]}
+                            </p>
+                          )}
                         </td>
                       </tr>
                     ))}

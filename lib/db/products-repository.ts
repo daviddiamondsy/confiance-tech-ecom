@@ -2,6 +2,7 @@ import {
   finalizeStorageVariantsForSave,
 } from "@/lib/admin-product-form";
 import { sql } from "@/lib/db/client";
+import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
 import { slugForProductId, slugifyProductName, catalogProductIdForSlug } from "@/lib/product-slug";
 import { fetchColorsByProductIds, fetchColorsForProduct } from "@/lib/db/colors-repository";
 import { fetchPricingConfig } from "@/lib/db/pricing-config-repository";
@@ -457,6 +458,8 @@ async function replaceProductStorageOptions(
   variants: Array<{ storage: string; yuan: number }>,
   config: Awaited<ReturnType<typeof fetchPricingConfig>>
 ): Promise<void> {
+  await ensureCatalogSchema();
+
   const normalized = finalizeStorageVariantsForSave(variants);
 
   await sql`DELETE FROM product_storage_options WHERE product_id = ${productId}`;
@@ -464,11 +467,26 @@ async function replaceProductStorageOptions(
   for (let index = 0; index < normalized.length; index += 1) {
     const variant = normalized[index];
     const variantPrice = priceFromYuan(variant.yuan, config);
-    await sql.query(
-      `INSERT INTO product_storage_options (product_id, storage, price, yuan_cost, sort_order)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [productId, variant.storage, variantPrice, variant.yuan, index]
-    );
+    await sql`
+      INSERT INTO product_storage_options (product_id, storage, price, yuan_cost, sort_order)
+      VALUES (
+        ${productId},
+        ${variant.storage},
+        ${variantPrice},
+        ${variant.yuan},
+        ${index}
+      )
+    `;
+  }
+
+  const { rows } = await sql<{ count: number }>`
+    SELECT COUNT(*)::int AS count
+    FROM product_storage_options
+    WHERE product_id = ${productId}
+  `;
+
+  if ((rows[0]?.count ?? 0) !== normalized.length) {
+    throw new Error("STORAGE_VARIANT_SYNC_FAILED");
   }
 }
 
@@ -693,4 +711,16 @@ export async function updateAdminProduct(
   }
 
   return updated;
+}
+
+export async function deleteAdminProduct(productId: string): Promise<void> {
+  const { rows } = await sql<{ id: string }>`
+    SELECT id FROM products WHERE id = ${productId} LIMIT 1
+  `;
+
+  if (!rows[0]) {
+    throw new Error("NOT_FOUND");
+  }
+
+  await sql`DELETE FROM products WHERE id = ${productId}`;
 }
