@@ -76,7 +76,7 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
   }
 
   return (
-    <article className="group card-elevated overflow-hidden hover:-translate-y-1">
+    <article className="group card-elevated overflow-hidden hover:-translate-y-1 flex flex-col h-full">
       <Link href={productPath(product)} className="block">
         <div className="relative aspect-square bg-slate-100 overflow-hidden">
           <Image
@@ -99,7 +99,7 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
         </div>
       </Link>
 
-      <div className="p-5">
+      <div className="p-5 flex flex-col flex-1">
         <Link href={productPath(product)}>
           <h3 className="font-display font-semibold text-slate-900 mb-3 line-clamp-2 group-hover:text-primary-600 transition-colors leading-snug">
             {product.name}
@@ -117,7 +117,7 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
           )}
         </div>
 
-        <Link href={productPath(product)}>
+        <Link href={productPath(product)} className="mt-auto">
           <span className="w-full py-2.5 bg-slate-900 text-white text-sm font-medium rounded-xl hover:bg-primary-600 transition-all duration-200 flex items-center justify-center gap-2 group/btn">
             View Product
             <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-0.5 transition-transform" />
