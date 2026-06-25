@@ -30,6 +30,8 @@ interface CustomerFormProps {
   productPrice?: number;
   productName?: string;
   productId?: string;
+  /** Selected storage variant label (e.g. 256GB) for server-side price lookup */
+  productStorage?: string;
   /** URL slug for checkout cancel redirect back to the product page */
   productSlug?: string;
   /** Days until delivery due (Holdam deliveryDueAt); defaults to HOLDAM_DELIVERY_DAYS server-side */
@@ -43,6 +45,7 @@ export default function CustomerForm({
   productPrice,
   productName,
   productId,
+  productStorage,
   productSlug,
   deliveryDays,
 }: CustomerFormProps) {
@@ -118,6 +121,7 @@ export default function CustomerForm({
           productSlug,
           productName,
           productPrice,
+          productStorage,
           deliveryDays,
           customerData: formData,
         }),

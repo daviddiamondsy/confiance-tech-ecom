@@ -11,6 +11,7 @@ export interface PricingConfig {
 }
 
 export const DEFAULT_PRICING_CONFIG: PricingConfig = {
+  /** Fallback when pricing_config row is missing; admin Pricing tab is the source of truth. */
   yuanToNaira: 207,
   sellingMarkup: 1.2,
   expensiveYuanThreshold: 3500,

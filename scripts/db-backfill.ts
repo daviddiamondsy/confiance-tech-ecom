@@ -1,6 +1,5 @@
 import { config } from "dotenv";
 import { isPostgresConfigured } from "@/lib/db/client";
-import { applyCatalogBackfillsIfNeeded } from "@/lib/db/catalog-backfill";
 import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
 
 config({ path: ".env.local" });
@@ -13,8 +12,8 @@ async function main() {
     process.exit(1);
   }
 
+  // ensureCatalogSchema already runs catalog backfills; no second pass needed.
   await ensureCatalogSchema();
-  await applyCatalogBackfillsIfNeeded();
   console.log("Catalog backfills applied (S24 Ultra + ₦25,000 international shipping).");
 }
 

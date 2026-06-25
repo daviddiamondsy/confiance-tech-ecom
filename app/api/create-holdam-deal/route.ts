@@ -3,6 +3,7 @@ import Holdam from "@holdam/ts";
 import { sendOrderEmail } from "@/lib/order-email";
 import { deliveryDueAtFromDays, resolveDeliveryDays } from "@/lib/delivery-deadline";
 import { mapHoldamDealCreateError } from "@/lib/checkout-errors";
+import { resolveCheckoutPrice } from "@/lib/resolve-checkout-price";
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
@@ -12,6 +13,7 @@ export async function POST(req: NextRequest) {
       productSlug,
       productName,
       productPrice,
+      productStorage,
       deliveryDays,
       customerData,
     } = await req.json();
@@ -93,12 +95,33 @@ export async function POST(req: NextRequest) {
       buyerLastName,
     });
 
-    const amountNgn = Number(productPrice);
-    if (!Number.isFinite(amountNgn) || amountNgn < 1) {
-      return NextResponse.json(
-        { error: "Invalid product price" },
-        { status: 400 }
-      );
+    const catalogPrice = await resolveCheckoutPrice({
+      productId: productId ? String(productId) : undefined,
+      productSlug: productSlug ? String(productSlug) : undefined,
+      storage: productStorage ? String(productStorage) : undefined,
+    });
+
+    if (!catalogPrice) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    const amountNgn = catalogPrice.price;
+    const resolvedProductName = productName ? String(productName) : catalogPrice.productName;
+    const resolvedProductId = catalogPrice.productId;
+    const resolvedProductSlug = catalogPrice.productSlug;
+
+    const clientPrice = Number(productPrice);
+    if (
+      Number.isFinite(clientPrice) &&
+      clientPrice > 0 &&
+      clientPrice !== amountNgn
+    ) {
+      console.warn("[API][create-holdam-deal] Client price differed from catalog; using DB price", {
+        clientPrice,
+        catalogPrice: amountNgn,
+        productId: resolvedProductId,
+        productSlug: resolvedProductSlug,
+      });
     }
 
     const deliverWithinDays = resolveDeliveryDays(deliveryDays);
@@ -106,7 +129,7 @@ export async function POST(req: NextRequest) {
     const businessName =
       process.env.HOLDAM_BUSINESS_NAME?.trim() || "Confiance Tech";
 
-    const cancelProductPath = productSlug || productId;
+    const cancelProductPath = resolvedProductSlug || resolvedProductId;
 
     const dealRequest = {
       amount: amountNgn,
@@ -114,13 +137,13 @@ export async function POST(req: NextRequest) {
       seller: sellerId,
       buyerFirstName,
       buyerLastName,
-      title: `${productName}, Order for ${customerData.name}`,
+      title: `${resolvedProductName}, Order for ${customerData.name}`,
       deliveryDueAt,
       successUrl: `${siteBaseUrl}/payment-success?deal_id={DEAL_ID}`,
       cancelUrl: `${siteBaseUrl}/products/${cancelProductPath}`,
       metadata: {
-        productId,
-        productName,
+        productId: resolvedProductId,
+        productName: resolvedProductName,
         productPrice: amountNgn,
         deliveryDays: deliverWithinDays,
         deliveryDueAt,
@@ -146,9 +169,9 @@ export async function POST(req: NextRequest) {
 
     // Do not block redirect to checkout — email runs in background
     void sendOrderEmail({
-      productId,
-      productName,
-      productPrice,
+      productId: resolvedProductId,
+      productName: resolvedProductName,
+      productPrice: amountNgn,
       customerName: customerData.name,
       customerPhone: customerData.phone,
       customerAddress: customerData.address,

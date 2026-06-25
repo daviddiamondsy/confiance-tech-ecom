@@ -27,7 +27,10 @@ async function hasMigration(id: string): Promise<boolean> {
 }
 
 async function recordMigration(id: string): Promise<void> {
-  await sql`INSERT INTO schema_migrations (id) VALUES (${id})`;
+  await sql`
+    INSERT INTO schema_migrations (id) VALUES (${id})
+    ON CONFLICT (id) DO NOTHING
+  `;
 }
 
 /** Move default international shipping from ₦30,000 to ₦25,000 (phones/tablets, not laptops). */
@@ -50,7 +53,6 @@ export async function applyInternationalShipping25000BackfillIfNeeded(): Promise
 /** Ensure Samsung Galaxy S24 Ultra exists with slug samsung-galaxy-s24-ultra. */
 export async function backfillSamsungGalaxyS24UltraIfNeeded(): Promise<void> {
   await ensureSchemaMigrationsTable();
-  if (await hasMigration(SAMSUNG_S24_ULTRA_MIGRATION)) return;
 
   const { rows } = await sql<{ id: string }>`
     SELECT id FROM products WHERE slug = ${SAMSUNG_GALAXY_S24_ULTRA_SLUG} LIMIT 1

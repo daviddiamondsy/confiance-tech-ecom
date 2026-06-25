@@ -208,6 +208,7 @@ export default function AdminDashboard() {
       }
 
       setPricing(await response.json());
+      await loadData();
       setPricingMessage("Pricing updated. All catalog prices were recalculated.");
     } catch {
       setPricingMessage("Could not reach the server. Try again.");
