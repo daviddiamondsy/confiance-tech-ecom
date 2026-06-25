@@ -6,7 +6,7 @@ export { priceFromYuan, sellingMarkupForYuan, toCharmPrice } from "@/lib/pricing
 
 import { buildCatalogProducts } from "@/lib/catalog-seed";
 import { CATALOG_FILTERS, DEFAULT_PRODUCT_COLORS } from "@/lib/catalog-yuan";
-import { slugForProductId } from "@/lib/product-slug";
+import { slugForProductId, catalogProductIdForSlug } from "@/lib/product-slug";
 import { isPostgresConfigured } from "@/lib/db/client";
 import {
   fetchProductByIdFromDb,
@@ -50,17 +50,34 @@ export async function getProducts(): Promise<Product[]> {
   }
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  const staticMatch = staticProducts.find(
+function staticProductForSlug(slug: string) {
+  return staticProducts.find(
     (product) => product.slug === slug || product.id === slug
   );
+}
+
+async function resolveDbProductForSlug(slug: string): Promise<Product | undefined> {
+  const product = await fetchProductBySlugFromDb(slug);
+  if (product) return product;
+
+  const catalogId = catalogProductIdForSlug(slug);
+  if (catalogId) {
+    return fetchProductByIdFromDb(catalogId);
+  }
+
+  return undefined;
+}
+
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  const staticMatch = staticProductForSlug(slug);
   if (!isPostgresConfigured()) {
     return staticMatch;
   }
 
   try {
-    const product = await fetchProductBySlugFromDb(slug);
+    const product = await resolveDbProductForSlug(slug);
     if (product) return product;
+
     if (staticMatch) return staticMatch;
     return getProductById(slug);
   } catch (error) {

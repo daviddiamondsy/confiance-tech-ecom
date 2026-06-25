@@ -47,11 +47,11 @@ export function getSelectedVariant(
 
   let displayName =
     storage && product.storageOptions
-      ? replaceConditionSuffix(catalogName, ` ${storage}${suffix}`)
+      ? replaceConditionSuffix(catalogName, ` ${storage} ${suffix}`)
       : catalogName;
 
   if (color) {
-    displayName = replaceConditionSuffix(displayName, ` - ${color}${suffix}`);
+    displayName = replaceConditionSuffix(displayName, ` - ${color} ${suffix}`);
   }
 
   return {

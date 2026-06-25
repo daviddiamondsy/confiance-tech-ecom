@@ -1,5 +1,5 @@
 import { sql } from "@/lib/db/client";
-import { slugForProductId, slugifyProductName } from "@/lib/product-slug";
+import { slugForProductId, slugifyProductName, catalogProductIdForSlug } from "@/lib/product-slug";
 import { fetchColorsByProductIds, fetchColorsForProduct } from "@/lib/db/colors-repository";
 import { fetchPricingConfig } from "@/lib/db/pricing-config-repository";
 import { priceFromYuan } from "@/lib/pricing";
@@ -161,7 +161,13 @@ export async function fetchProductBySlugFromDb(slug: string): Promise<Product | 
   `;
 
   const row = rows[0];
-  if (!row) return undefined;
+  if (!row) {
+    const catalogId = catalogProductIdForSlug(slug);
+    if (catalogId) {
+      return fetchProductByIdFromDb(catalogId);
+    }
+    return undefined;
+  }
 
   const { rows: storageRows } = await sql<StorageRow>`
     SELECT product_id, storage, price, yuan_cost, sort_order

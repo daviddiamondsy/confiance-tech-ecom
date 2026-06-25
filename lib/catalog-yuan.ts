@@ -3,7 +3,7 @@ export const CATALOG_YUAN: Record<
   string,
   { yuan: number; storageYuan?: Record<string, number> }
 > = {
-  "6": { yuan: 1700 },
+  "6": { yuan: 1400, storageYuan: { "128GB": 1400, "256GB": 1700 } },
   "7": { yuan: 3000 },
   "8": { yuan: 4600, storageYuan: { "256GB": 4600, "512GB": 5100 } },
   "9": { yuan: 2000, storageYuan: { "256GB": 2000, "512GB": 2200 } },

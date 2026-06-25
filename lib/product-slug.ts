@@ -23,6 +23,17 @@ export function slugForProductId(id: string, name: string): string {
   return CATALOG_SLUGS[id] ?? slugifyProductName(name);
 }
 
+/** Resolve a legacy catalog URL slug (e.g. iphone-13-256gb) to a catalog product id. */
+export function catalogProductIdForSlug(slug: string): string | undefined {
+  const normalized = slug.trim().toLowerCase();
+  for (const [id, catalogSlug] of Object.entries(CATALOG_SLUGS)) {
+    if (catalogSlug === normalized || id === normalized) {
+      return id;
+    }
+  }
+  return undefined;
+}
+
 export function productPath(product: { slug: string }): string {
   return `/products/${product.slug}`;
 }
