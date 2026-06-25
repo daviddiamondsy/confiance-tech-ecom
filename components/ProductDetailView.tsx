@@ -56,7 +56,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
               {variant.displayName}
             </h1>
 
-            {product.storageOptions && product.storageOptions.length > 1 && (
+            {product.storageOptions && product.storageOptions.length > 0 && (
               <div className="mb-6">
                 <p className="text-sm font-medium text-slate-700 mb-3">Storage</p>
                 <div className="flex flex-wrap gap-3">

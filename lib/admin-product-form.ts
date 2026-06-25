@@ -20,6 +20,13 @@ export function normalizeStorageLabel(storage: string): string {
     .replace(/\btb\b/gi, "TB");
 }
 
+export function splitStorageVariantLines(raw: string): string[] {
+  return raw
+    .split(/\r?\n|,/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 function parseStorageVariantPart(part: string): { storage: string; yuan: number } | null {
   const trimmed = part.trim();
   if (!trimmed) return null;
@@ -55,10 +62,7 @@ function parseStorageVariantPart(part: string): { storage: string; yuan: number 
 export function parseStorageVariants(raw: unknown): Array<{ storage: string; yuan: number }> | undefined {
   if (typeof raw !== "string" || !raw.trim()) return undefined;
 
-  const parts = raw
-    .split(/[\n,]+/)
-    .map((part) => part.trim())
-    .filter(Boolean);
+  const parts = splitStorageVariantLines(raw);
 
   const variants = parts
     .map((part) => parseStorageVariantPart(part))
@@ -67,12 +71,51 @@ export function parseStorageVariants(raw: unknown): Array<{ storage: string; yua
   return variants.length > 0 ? variants : undefined;
 }
 
+/** Normalize, dedupe, and validate variant rows before persisting. */
+export function finalizeStorageVariantsForSave(
+  variants: Array<{ storage: string; yuan: number }>
+): Array<{ storage: string; yuan: number }> {
+  const seen = new Set<string>();
+  const normalized: Array<{ storage: string; yuan: number }> = [];
+
+  for (const variant of variants) {
+    const storage = normalizeStorageLabel(variant.storage);
+    if (!storage) {
+      throw new Error("INVALID_STORAGE_VARIANTS");
+    }
+    if (seen.has(storage)) {
+      throw new Error("DUPLICATE_STORAGE_VARIANT");
+    }
+    seen.add(storage);
+    normalized.push({ storage, yuan: variant.yuan });
+  }
+
+  return normalized;
+}
+
 export function storageVariantsFieldError(raw: string): string | null {
   if (!raw.trim()) return null;
+
+  const parts = splitStorageVariantLines(raw);
   const variants = parseStorageVariants(raw);
+
   if (!variants?.length) {
-    return "Use one variant per line with storage:yuan (e.g. 128GB:1400 and 256GB:1500).";
+    return "Use one variant per line with storage:yuan (e.g. 128GB:1500 and 256GB:1700).";
   }
+
+  if (variants.length !== parts.length) {
+    return `Could not parse ${parts.length - variants.length} line(s). Each line needs storage:yuan (e.g. 256GB:1700).`;
+  }
+
+  try {
+    finalizeStorageVariantsForSave(variants);
+  } catch (error) {
+    if (error instanceof Error && error.message === "DUPLICATE_STORAGE_VARIANT") {
+      return "Each storage size must be unique (e.g. 128GB and 256GB, not 128GB twice).";
+    }
+    return "Use one variant per line with storage:yuan (e.g. 128GB:1500 and 256GB:1700).";
+  }
+
   return null;
 }
 
@@ -87,7 +130,7 @@ export function parseStorageVariantsField(raw: unknown): Array<{ storage: string
   if (!variants?.length) {
     throw new Error("INVALID_STORAGE_VARIANTS");
   }
-  return variants;
+  return finalizeStorageVariantsForSave(variants);
 }
 
 export function usesStorageVariantsField(form: Pick<ProductFormState, "storageVariants">): boolean {

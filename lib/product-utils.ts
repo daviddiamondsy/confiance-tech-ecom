@@ -1,8 +1,5 @@
 import {
-  conditionSuffixForFilter,
-  conditionSuffixInName,
-  normalizeProductName,
-  replaceConditionSuffix,
+  buildVariantDisplayName,
 } from "@/lib/product-condition-suffix";
 
 export interface StorageOption {
@@ -38,21 +35,12 @@ export function getSelectedVariant(
   const price = option?.price ?? product.price;
   const color = product.colorOptions?.[colorIndex] ?? product.colorOptions?.[0];
 
-  const catalogName = product.filterSlug
-    ? normalizeProductName(product.name, product.filterSlug)
-    : product.name;
-  const suffix = product.filterSlug
-    ? conditionSuffixForFilter(product.filterSlug)
-    : (conditionSuffixInName(catalogName) ?? "(Clean)");
-
-  let displayName =
-    storage && product.storageOptions
-      ? replaceConditionSuffix(catalogName, ` ${storage} ${suffix}`)
-      : catalogName;
-
-  if (color) {
-    displayName = replaceConditionSuffix(displayName, ` - ${color} ${suffix}`);
-  }
+  const displayName = buildVariantDisplayName({
+    name: product.name,
+    filterSlug: product.filterSlug,
+    storage: product.storageOptions?.length ? storage : undefined,
+    color,
+  });
 
   return {
     storage: storage ?? product.specifications.Storage,
