@@ -111,7 +111,7 @@ SET slug = 'iphone-13-pro-max'
 WHERE id = '12';
 
 ALTER TABLE products ADD COLUMN IF NOT EXISTS china_shipping_yuan INTEGER NOT NULL DEFAULT 10;
-ALTER TABLE products ADD COLUMN IF NOT EXISTS international_shipping_ngn INTEGER NOT NULL DEFAULT 30000;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS international_shipping_ngn INTEGER NOT NULL DEFAULT 25000;
 
 CREATE TABLE IF NOT EXISTS product_filter_assignments (
   product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -137,6 +137,6 @@ SET
   END,
   international_shipping_ngn = CASE
     WHEN lower(name) LIKE '%macbook%' OR lower(name) LIKE '%laptop%' THEN 50000
-    ELSE 30000
+    ELSE 25000
   END,
   updated_at = NOW();

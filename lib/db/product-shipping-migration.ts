@@ -23,7 +23,7 @@ export async function backfillProductShippingCosts(): Promise<void> {
       END,
       international_shipping_ngn = CASE
         WHEN lower(name) LIKE '%macbook%' OR lower(name) LIKE '%laptop%' THEN 50000
-        ELSE 30000
+        ELSE 25000
       END,
       updated_at = NOW()
   `;
