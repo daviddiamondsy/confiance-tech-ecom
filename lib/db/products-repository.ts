@@ -222,9 +222,8 @@ export async function upsertCatalogProducts(products: SeedProductInput[]): Promi
       ]
     );
 
-    await sql`DELETE FROM product_storage_options WHERE product_id = ${product.id}`;
-
     if (product.storageOptions?.length) {
+      await sql`DELETE FROM product_storage_options WHERE product_id = ${product.id}`;
       for (let optionIndex = 0; optionIndex < product.storageOptions.length; optionIndex += 1) {
         const option = product.storageOptions[optionIndex];
         const yuanCost = product.storageYuan?.[option.storage] ?? product.yuanCost ?? null;
@@ -273,7 +272,7 @@ export async function fetchAdminProducts(): Promise<AdminProductRecord[]> {
     return {
       id: row.id,
       slug: row.slug ?? slugForProductId(row.id, row.name),
-      name: row.name,
+      name: resolveProductDisplayName(row.name, row.filter_slug),
       yuanCost,
       price: resolvePrice(yuanCost, row.price, config),
       filterSlug: row.filter_slug,
@@ -628,8 +627,10 @@ export async function updateAdminProduct(
     productName: name,
   });
 
+  const previousBaseName = stripConditionSuffix(existing.name);
+  const nextBaseName = stripConditionSuffix(name);
   const slug =
-    input.name !== undefined
+    nextBaseName !== previousBaseName
       ? await uniqueSlug(slugifyProductName(name), productId)
       : existing.slug ?? (await uniqueSlug(slugifyProductName(name), productId));
 

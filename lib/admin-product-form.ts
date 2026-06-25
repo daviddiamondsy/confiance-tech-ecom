@@ -13,6 +13,45 @@ export interface ProductFormState {
   features: string;
 }
 
+export function normalizeStorageLabel(storage: string): string {
+  return storage
+    .replace(/\s+/g, "")
+    .replace(/\bgb\b/gi, "GB")
+    .replace(/\btb\b/gi, "TB");
+}
+
+function parseStorageVariantPart(part: string): { storage: string; yuan: number } | null {
+  const trimmed = part.trim();
+  if (!trimmed) return null;
+
+  let storage = "";
+  let yuanRaw = "";
+
+  for (const separator of [":", "\t"]) {
+    const index = trimmed.indexOf(separator);
+    if (index !== -1) {
+      storage = trimmed.slice(0, index).trim();
+      yuanRaw = trimmed.slice(index + 1).trim();
+      break;
+    }
+  }
+
+  if (!storage) {
+    const spaced = trimmed.match(/^(.+?)[\s-]+(\d+(?:\.\d+)?)$/);
+    if (spaced) {
+      storage = spaced[1].trim();
+      yuanRaw = spaced[2];
+    }
+  }
+
+  if (!storage || !yuanRaw) return null;
+
+  const yuan = Number(yuanRaw);
+  if (!Number.isFinite(yuan) || yuan <= 0) return null;
+
+  return { storage: normalizeStorageLabel(storage), yuan };
+}
+
 export function parseStorageVariants(raw: unknown): Array<{ storage: string; yuan: number }> | undefined {
   if (typeof raw !== "string" || !raw.trim()) return undefined;
 
@@ -22,17 +61,19 @@ export function parseStorageVariants(raw: unknown): Array<{ storage: string; yua
     .filter(Boolean);
 
   const variants = parts
-    .map((part) => {
-      const colonIndex = part.indexOf(":");
-      if (colonIndex === -1) return null;
-      const storage = part.slice(0, colonIndex).trim();
-      const yuan = Number(part.slice(colonIndex + 1).trim());
-      if (!storage || !Number.isFinite(yuan) || yuan <= 0) return null;
-      return { storage, yuan };
-    })
+    .map((part) => parseStorageVariantPart(part))
     .filter((variant): variant is { storage: string; yuan: number } => variant != null);
 
   return variants.length > 0 ? variants : undefined;
+}
+
+export function storageVariantsFieldError(raw: string): string | null {
+  if (!raw.trim()) return null;
+  const variants = parseStorageVariants(raw);
+  if (!variants?.length) {
+    return "Use one variant per line with storage:yuan (e.g. 128GB:1400 and 256GB:1500).";
+  }
+  return null;
 }
 
 /** Parse storage variants from admin form; rejects non-empty invalid input. */
