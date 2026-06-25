@@ -21,34 +21,8 @@ const staticProducts = buildCatalogProducts().map((product) => ({
   colorOptions: DEFAULT_PRODUCT_COLORS[product.id],
 }));
 
-/** @deprecated Use getProducts() for server components. */
+/** Local dev only when DATABASE_URL is not set. Storefront with Postgres uses admin DB only. */
 export const products: Product[] = staticProducts;
-
-function mergeCatalogWithStatic(dbProducts: Product[]): Product[] {
-  if (dbProducts.length === 0) return staticProducts;
-
-  const dbIds = new Set(dbProducts.map((product) => product.id));
-  const dbSlugs = new Set(dbProducts.map((product) => product.slug));
-  const staticOnly = staticProducts.filter(
-    (product) => !dbIds.has(product.id) && !dbSlugs.has(product.slug)
-  );
-
-  return [...dbProducts, ...staticOnly];
-}
-
-export async function getProducts(): Promise<Product[]> {
-  if (!isPostgresConfigured()) {
-    return staticProducts;
-  }
-
-  try {
-    const rows = await fetchProductsFromDb();
-    return mergeCatalogWithStatic(rows);
-  } catch (error) {
-    console.error("[products] Postgres fetch failed, using static catalog", error);
-    return staticProducts;
-  }
-}
 
 function staticProductForSlug(slug: string) {
   return staticProducts.find(
@@ -68,21 +42,31 @@ async function resolveDbProductForSlug(slug: string): Promise<Product | undefine
   return undefined;
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  const staticMatch = staticProductForSlug(slug);
+export async function getProducts(): Promise<Product[]> {
   if (!isPostgresConfigured()) {
-    return staticMatch;
+    return staticProducts;
+  }
+
+  try {
+    return await fetchProductsFromDb();
+  } catch (error) {
+    console.error("[products] Postgres fetch failed", error);
+    return [];
+  }
+}
+
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  if (!isPostgresConfigured()) {
+    return staticProductForSlug(slug);
   }
 
   try {
     const product = await resolveDbProductForSlug(slug);
     if (product) return product;
-
-    if (staticMatch) return staticMatch;
     return getProductById(slug);
   } catch (error) {
-    console.error("[products] Postgres fetch failed, using static catalog", error);
-    return staticMatch ?? staticProducts.find((product) => product.id === slug);
+    console.error("[products] Postgres fetch failed for slug", slug, error);
+    return undefined;
   }
 }
 
@@ -92,11 +76,9 @@ export async function getProductById(id: string): Promise<Product | undefined> {
   }
 
   try {
-    const product = await fetchProductByIdFromDb(id);
-    if (product) return product;
-    return staticProducts.find((item) => item.id === id);
+    return await fetchProductByIdFromDb(id);
   } catch (error) {
-    console.error("[products] Postgres fetch failed, using static catalog", error);
-    return staticProducts.find((product) => product.id === id);
+    console.error("[products] Postgres fetch failed for id", id, error);
+    return undefined;
   }
 }
