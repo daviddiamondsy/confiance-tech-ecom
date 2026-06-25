@@ -1,5 +1,14 @@
 import { stripConditionSuffix } from "@/lib/product-condition-suffix";
 
+import {
+  formatChinaShippingYuan,
+  formatInternationalShippingNgn,
+  DEFAULT_CHINA_SHIPPING_YUAN,
+  DEFAULT_INTERNATIONAL_SHIPPING_NGN,
+  type ChinaShippingYuan,
+  type InternationalShippingNgn,
+} from "@/lib/product-shipping";
+
 export interface ProductFormState {
   name: string;
   yuanCost: string;
@@ -11,6 +20,8 @@ export interface ProductFormState {
   storageVariants: string;
   colors: string;
   features: string;
+  chinaShippingYuan: string;
+  internationalShippingNgn: string;
 }
 
 export function normalizeStorageLabel(storage: string): string {
@@ -190,6 +201,8 @@ export function adminProductToForm(product: {
   storageVariants: Array<{ storage: string; yuan: number }>;
   colors: string[];
   features: string[];
+  chinaShippingYuan: number;
+  internationalShippingNgn: number;
 }): ProductFormState {
   const hasVariants = product.storageVariants.length > 0;
 
@@ -206,6 +219,10 @@ export function adminProductToForm(product: {
     ),
     colors: product.colors.join(", "),
     features: product.features.join("\n"),
+    chinaShippingYuan: formatChinaShippingYuan(product.chinaShippingYuan as ChinaShippingYuan),
+    internationalShippingNgn: formatInternationalShippingNgn(
+      product.internationalShippingNgn as InternationalShippingNgn
+    ),
   };
 }
 
@@ -220,4 +237,6 @@ export const emptyProductForm: ProductFormState = {
   storageVariants: "",
   colors: "",
   features: "",
+  chinaShippingYuan: String(DEFAULT_CHINA_SHIPPING_YUAN),
+  internationalShippingNgn: String(DEFAULT_INTERNATIONAL_SHIPPING_NGN),
 };

@@ -109,3 +109,18 @@ DELETE FROM products WHERE id = '13';
 UPDATE products
 SET slug = 'iphone-13-pro-max'
 WHERE id = '12';
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS china_shipping_yuan INTEGER NOT NULL DEFAULT 10;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS international_shipping_ngn INTEGER NOT NULL DEFAULT 30000;
+
+UPDATE products
+SET
+  china_shipping_yuan = CASE
+    WHEN lower(name) LIKE '%macbook%' OR lower(name) LIKE '%laptop%' THEN 30
+    ELSE 10
+  END,
+  international_shipping_ngn = CASE
+    WHEN lower(name) LIKE '%macbook%' OR lower(name) LIKE '%laptop%' THEN 50000
+    ELSE 30000
+  END,
+  updated_at = NOW();

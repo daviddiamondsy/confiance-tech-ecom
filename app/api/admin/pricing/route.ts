@@ -22,7 +22,6 @@ export async function PUT(req: NextRequest) {
 
   const body = await req.json();
   const yuanToNaira = Number(body.yuanToNaira);
-  const shippingNgn = Number(body.shippingNgn);
   const sellingMarkup = Number(body.sellingMarkup);
   const expensiveYuanThresholdRaw = body.expensiveYuanThreshold;
   const expensiveSellingMarkupRaw = body.expensiveSellingMarkup;
@@ -38,8 +37,6 @@ export async function PUT(req: NextRequest) {
   if (
     !Number.isFinite(yuanToNaira) ||
     yuanToNaira <= 0 ||
-    !Number.isFinite(shippingNgn) ||
-    shippingNgn < 0 ||
     !Number.isFinite(sellingMarkup) ||
     sellingMarkup <= 0
   ) {
@@ -69,7 +66,6 @@ export async function PUT(req: NextRequest) {
 
   const config = await updatePricingConfig({
     yuanToNaira,
-    shippingNgn,
     sellingMarkup,
     expensiveYuanThreshold,
     expensiveSellingMarkup,
