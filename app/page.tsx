@@ -1,17 +1,19 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import ProductCard from "@/components/ProductCard";
+import HomeProductCollections from "@/components/HomeProductCollections";
 import FaqAccordion from "@/components/FaqAccordion";
 import TrustFeaturesGrid from "@/components/TrustFeaturesGrid";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { getProducts } from "@/lib/products";
+import { getProductFilterTags } from "@/lib/product-filters";
 import { STOREFRONT_HERO_COPY, STOREFRONT_FEATURED_COPY } from "@/lib/device-quality-copy";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const products = await getProducts();
+  const [products, filterTags] = await Promise.all([getProducts(), getProductFilterTags()]);
+
   return (
     <div className="min-h-screen bg-surface-muted">
       <Header />
@@ -38,7 +40,7 @@ export default async function Home() {
               {STOREFRONT_HERO_COPY}
             </p>
             <Link href="/products" className="btn-primary px-8 py-4 text-base">
-              Shop Now
+              View all Products
               <ArrowRight className="h-5 w-5" />
             </Link>
           </div>
@@ -50,31 +52,20 @@ export default async function Home() {
         <TrustFeaturesGrid />
       </section>
 
-      {/* Products Section */}
+      {/* Product collections by filter tag */}
       <section id="products" className="py-20 md:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <span className="section-label">Our Collection</span>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-4 tracking-tight">
-              Featured Products
+              Shop by Category
             </h2>
             <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed">
               {STOREFRONT_FEATURED_COPY}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-
-          <div className="text-center mt-14">
-            <Link href="/products" className="btn-outline px-8 py-3.5">
-              View All Products
-              <ArrowRight className="h-5 w-5" />
-            </Link>
-          </div>
+          <HomeProductCollections products={products} filterTags={filterTags} />
         </div>
       </section>
 

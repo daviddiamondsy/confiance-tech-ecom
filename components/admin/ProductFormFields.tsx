@@ -40,7 +40,9 @@ export default function ProductFormFields({
           onChange={(event) => onChange({ name: event.target.value })}
           required
         />
-        <p className="text-xs text-slate-500 mt-1">“(Clean)” is added automatically if missing.</p>
+        <p className="text-xs text-slate-500 mt-1">
+          “(Clean)” or “(New)” is added automatically from the filter tag (MacBook uses New).
+        </p>
       </div>
 
       <div>

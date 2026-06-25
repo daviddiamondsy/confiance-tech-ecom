@@ -1,3 +1,8 @@
+import {
+  conditionSuffixInName,
+  replaceConditionSuffix,
+} from "@/lib/product-condition-suffix";
+
 export interface StorageOption {
   storage: string;
   price: number;
@@ -31,13 +36,15 @@ export function getSelectedVariant(
   const price = option?.price ?? product.price;
   const color = product.colorOptions?.[colorIndex] ?? product.colorOptions?.[0];
 
+  const suffix = conditionSuffixInName(product.name) ?? " (Clean)";
+
   let displayName =
     storage && product.storageOptions
-      ? product.name.replace(" (Clean)", ` ${storage} (Clean)`)
+      ? replaceConditionSuffix(product.name, ` ${storage}${suffix}`)
       : product.name;
 
   if (color) {
-    displayName = displayName.replace(" (Clean)", ` - ${color} (Clean)`);
+    displayName = replaceConditionSuffix(displayName, ` - ${color}${suffix}`);
   }
 
   return {

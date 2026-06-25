@@ -8,7 +8,7 @@ import { GRADE_A_FAQ_ANSWER } from "@/lib/device-quality-copy";
 
 const faqs = [
   {
-    question: "What does Grade A mean?",
+    question: "What does brand new and UK Grade A mean?",
     answer: GRADE_A_FAQ_ANSWER,
   },
   {

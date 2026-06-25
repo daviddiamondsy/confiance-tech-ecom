@@ -103,6 +103,8 @@ export async function POST(req: NextRequest) {
 
     const deliverWithinDays = resolveDeliveryDays(deliveryDays);
     const deliveryDueAt = deliveryDueAtFromDays(deliverWithinDays);
+    const businessName =
+      process.env.HOLDAM_BUSINESS_NAME?.trim() || "Confiance Tech";
 
     const cancelProductPath = productSlug || productId;
 
@@ -122,6 +124,7 @@ export async function POST(req: NextRequest) {
         productPrice: amountNgn,
         deliveryDays: deliverWithinDays,
         deliveryDueAt,
+        businessName,
         customerAddress: customerData.address,
         customerState: customerData.state,
         buyerPhone: customerData.phone,

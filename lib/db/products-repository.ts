@@ -339,11 +339,10 @@ export interface AdminProductRecord {
 
 export type UpdateProductInput = Partial<Omit<CreateProductInput, "slug">>;
 
-function normalizeProductName(name: string): string {
-  const trimmed = name.trim();
-  if (trimmed.endsWith("(Clean)")) return trimmed;
-  return `${trimmed} (Clean)`;
-}
+import {
+  normalizeProductName as applyConditionProductName,
+  stripConditionSuffix,
+} from "@/lib/product-condition-suffix";
 
 async function nextProductId(): Promise<string> {
   const { rows } = await sql<{ next_id: number }>`
@@ -474,7 +473,7 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
   const config = await fetchPricingConfig();
   const id = await nextProductId();
   const sortOrder = await nextSortOrder();
-  const name = normalizeProductName(input.name);
+  const name = applyConditionProductName(input.name, input.filterSlug);
   const baseSlug = input.slug?.trim() || slugifyProductName(name);
   const slug = await uniqueSlug(baseSlug);
 
@@ -492,12 +491,15 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
   });
   const { storageVariants, baseYuan, storageLabel: storage } = pricing;
   const price = priceFromYuan(baseYuan, config);
+  const isMacbook = input.filterSlug === "macbook";
   const isIphone = input.filterSlug === "iphone";
   const features =
     input.features?.map((feature) => feature.trim()).filter(Boolean) ??
-    (isIphone
-      ? [BATTERY_HEALTH_FEATURE, "Clean condition with accessories included", "Inspected, tested, and certified"]
-      : ["Clean condition with accessories included", "Inspected, tested, and certified"]);
+    (isMacbook
+      ? ["Brand new product", "Inspected, tested, and certified"]
+      : isIphone
+        ? [BATTERY_HEALTH_FEATURE, "UK Grade A condition with accessories included", "Inspected, tested, and certified"]
+        : ["UK Grade A condition with accessories included", "Inspected, tested, and certified"]);
   const specifications = buildProductSpecs({ storage, filterSlug: input.filterSlug });
 
   await sql.query(
@@ -572,7 +574,14 @@ export async function updateAdminProduct(
     }
   }
 
-  const name = input.name !== undefined ? normalizeProductName(input.name) : existing.name;
+  let name: string;
+  if (input.name !== undefined) {
+    name = applyConditionProductName(input.name, nextFilterSlug);
+  } else if (input.filterSlug !== undefined && input.filterSlug !== existing.filter_slug) {
+    name = applyConditionProductName(stripConditionSuffix(existing.name), nextFilterSlug);
+  } else {
+    name = existing.name;
+  }
 
   const image = input.image !== undefined ? input.image.trim() : existing.image;
   const description =

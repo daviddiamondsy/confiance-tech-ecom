@@ -202,12 +202,12 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
     },
     {
       id: "11",
-      name: "Apple MacBook Pro M4 24GB 512GB (Clean)",
+      name: "Apple MacBook Pro M4 24GB 512GB (New)",
       price: priceFromYuan(10500),
       image: PRODUCT_IMAGES.macbookPro,
       badge: "New",
       description:
-        "MacBook Pro with Apple M4 chip, 24GB unified memory, and 512GB SSD. Clean condition. Inspected, tested, and certified.",
+        "MacBook Pro with Apple M4 chip, 24GB unified memory, and 512GB SSD. Brand new product. Inspected, tested, and certified.",
       features: [
         "Apple M4 Chip",
         "24GB Unified Memory",

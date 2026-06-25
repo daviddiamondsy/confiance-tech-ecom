@@ -1,3 +1,5 @@
+import { stripConditionSuffix } from "@/lib/product-condition-suffix";
+
 export interface ProductFormState {
   name: string;
   yuanCost: string;
@@ -108,7 +110,7 @@ export function adminProductToForm(product: {
   const hasVariants = product.storageVariants.length > 0;
 
   return {
-    name: product.name.replace(/\s*\(Clean\)\s*$/i, ""),
+    name: stripConditionSuffix(product.name),
     yuanCost: hasVariants ? "" : String(product.yuanCost ?? ""),
     image: product.image,
     description: product.description,

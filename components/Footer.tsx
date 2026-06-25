@@ -103,7 +103,7 @@ export default function Footer() {
 
         <div className="border-t border-white/10 mt-14 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
           <p>© {new Date().getFullYear()} Confiance Tech. All rights reserved.</p>
-          <p className="text-xs">Grade A devices with accessories, shipped nationwide.</p>
+          <p className="text-xs">Brand new and UK Grade A devices with accessories, shipped nationwide.</p>
         </div>
       </div>
     </footer>
