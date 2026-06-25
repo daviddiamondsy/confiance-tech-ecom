@@ -25,3 +25,12 @@ export function getPostgresErrorMessage(error: unknown): string | undefined {
 export function isPostgresErrorCode(error: unknown, code: string): boolean {
   return getPostgresErrorCode(error) === code;
 }
+
+export function isMissingShippingColumnsError(error: unknown): boolean {
+  const message = (getPostgresErrorMessage(error) ?? "").toLowerCase();
+  return (
+    message.includes("china_shipping_yuan") ||
+    message.includes("international_shipping_ngn") ||
+    (message.includes("column") && message.includes("does not exist"))
+  );
+}

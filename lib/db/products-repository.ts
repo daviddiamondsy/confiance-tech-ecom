@@ -10,10 +10,13 @@ import { priceFromYuan, type PricingConfig } from "@/lib/pricing";
 import {
   defaultShippingForProductName,
   productShippingFromRow,
+  DEFAULT_CHINA_SHIPPING_YUAN,
+  DEFAULT_INTERNATIONAL_SHIPPING_NGN,
   type ChinaShippingYuan,
   type InternationalShippingNgn,
   type ProductShippingCosts,
 } from "@/lib/product-shipping";
+import { getPostgresErrorMessage, isMissingShippingColumnsError } from "@/lib/db/postgres-errors";
 import {
   BATTERY_HEALTH_FEATURE,
   BATTERY_HEALTH_SPEC,
@@ -42,6 +45,98 @@ interface ProductRow {
   sort_order: number;
   china_shipping_yuan: number;
   international_shipping_ngn: number;
+}
+
+type ProductRowWithoutShipping = Omit<ProductRow, "china_shipping_yuan" | "international_shipping_ngn">;
+
+function withDefaultShipping(row: ProductRowWithoutShipping): ProductRow {
+  return {
+    ...row,
+    china_shipping_yuan: DEFAULT_CHINA_SHIPPING_YUAN,
+    international_shipping_ngn: DEFAULT_INTERNATIONAL_SHIPPING_NGN,
+  };
+}
+
+async function fetchAllProductRows(): Promise<ProductRow[]> {
+  try {
+    const { rows } = await sql<ProductRow>`
+      SELECT
+        id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
+        description, features, specifications, sort_order,
+        china_shipping_yuan, international_shipping_ngn
+      FROM products
+      ORDER BY sort_order ASC, id ASC
+    `;
+    return rows;
+  } catch (error) {
+    if (!isMissingShippingColumnsError(error)) throw error;
+    console.warn(
+      "[products] shipping columns missing; using defaults. Run Apply database schema in admin.",
+      getPostgresErrorMessage(error)
+    );
+    const { rows } = await sql<ProductRowWithoutShipping>`
+      SELECT
+        id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
+        description, features, specifications, sort_order
+      FROM products
+      ORDER BY sort_order ASC, id ASC
+    `;
+    return rows.map(withDefaultShipping);
+  }
+}
+
+async function fetchProductRowById(id: string): Promise<ProductRow | undefined> {
+  try {
+    const { rows } = await sql<ProductRow>`
+      SELECT
+        id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
+        description, features, specifications, sort_order,
+        china_shipping_yuan, international_shipping_ngn
+      FROM products
+      WHERE id = ${id}
+      LIMIT 1
+    `;
+    return rows[0];
+  } catch (error) {
+    if (!isMissingShippingColumnsError(error)) throw error;
+    const { rows } = await sql<ProductRowWithoutShipping>`
+      SELECT
+        id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
+        description, features, specifications, sort_order
+      FROM products
+      WHERE id = ${id}
+      LIMIT 1
+    `;
+    const row = rows[0];
+    return row ? withDefaultShipping(row) : undefined;
+  }
+}
+
+async function fetchProductRowBySlug(slug: string): Promise<ProductRow | undefined> {
+  try {
+    const { rows } = await sql<ProductRow>`
+      SELECT
+        id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
+        description, features, specifications, sort_order,
+        china_shipping_yuan, international_shipping_ngn
+      FROM products
+      WHERE slug = ${slug}
+      LIMIT 1
+    `;
+    return rows[0];
+  } catch (error) {
+    if (!isMissingShippingColumnsError(error)) throw error;
+    const { rows } = await sql<ProductRowWithoutShipping>`
+      SELECT
+        id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
+        description, features, specifications, sort_order
+      FROM products
+      WHERE slug = ${slug}
+      LIMIT 1
+    `;
+    const row = rows[0];
+    return row ? withDefaultShipping(row) : undefined;
+  }
 }
 
 interface StorageRow {
@@ -102,15 +197,7 @@ function mapRowToProduct(
 
 export async function fetchProductsFromDb(): Promise<Product[]> {
   const config = await fetchPricingConfig();
-
-  const { rows: productRows } = await sql<ProductRow>`
-    SELECT
-      id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
-      description, features, specifications, sort_order,
-      china_shipping_yuan, international_shipping_ngn
-    FROM products
-    ORDER BY sort_order ASC, id ASC
-  `;
+  const productRows = await fetchAllProductRows();
 
   if (productRows.length === 0) return [];
 
@@ -143,18 +230,7 @@ export async function fetchProductsFromDb(): Promise<Product[]> {
 
 export async function fetchProductByIdFromDb(id: string): Promise<Product | undefined> {
   const config = await fetchPricingConfig();
-
-  const { rows } = await sql<ProductRow>`
-    SELECT
-      id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
-      description, features, specifications, sort_order,
-      china_shipping_yuan, international_shipping_ngn
-    FROM products
-    WHERE id = ${id}
-    LIMIT 1
-  `;
-
-  const row = rows[0];
+  const row = await fetchProductRowById(id);
   if (!row) return undefined;
 
   const { rows: storageRows } = await sql<StorageRow>`
@@ -171,18 +247,8 @@ export async function fetchProductByIdFromDb(id: string): Promise<Product | unde
 
 export async function fetchProductBySlugFromDb(slug: string): Promise<Product | undefined> {
   const config = await fetchPricingConfig();
+  const row = await fetchProductRowBySlug(slug);
 
-  const { rows } = await sql<ProductRow>`
-    SELECT
-      id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
-      description, features, specifications, sort_order,
-      china_shipping_yuan, international_shipping_ngn
-    FROM products
-    WHERE slug = ${slug}
-    LIMIT 1
-  `;
-
-  const row = rows[0];
   if (!row) {
     const catalogId = catalogProductIdForSlug(slug);
     if (catalogId) {
@@ -267,15 +333,7 @@ export async function upsertCatalogProducts(products: SeedProductInput[]): Promi
 
 export async function fetchAdminProducts(): Promise<AdminProductRecord[]> {
   const config = await fetchPricingConfig();
-
-  const { rows } = await sql<ProductRow>`
-    SELECT
-      id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
-      description, features, specifications, sort_order,
-      china_shipping_yuan, international_shipping_ngn
-    FROM products
-    ORDER BY sort_order ASC, id ASC
-  `;
+  const rows = await fetchAllProductRows();
 
   if (rows.length === 0) return [];
 
@@ -615,18 +673,7 @@ export async function updateAdminProduct(
   input: UpdateProductInput
 ): Promise<AdminProductRecord> {
   const config = await fetchPricingConfig();
-
-  const { rows } = await sql<ProductRow>`
-    SELECT
-      id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
-      description, features, specifications, sort_order,
-      china_shipping_yuan, international_shipping_ngn
-    FROM products
-    WHERE id = ${productId}
-    LIMIT 1
-  `;
-
-  const existing = rows[0];
+  const existing = await fetchProductRowById(productId);
   if (!existing) {
     throw new Error("NOT_FOUND");
   }
