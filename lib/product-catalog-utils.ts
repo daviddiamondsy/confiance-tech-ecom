@@ -95,13 +95,18 @@ export function filterProducts(products: Product[], filterSlug: string): Product
 
 export const HOME_COLLECTION_SIZE = 4;
 
+function isPopularBadge(badge: string | undefined): boolean {
+  return badge?.trim().toLowerCase() === "popular";
+}
+
 export function getHomeCollectionProducts(
   products: Product[],
   _groupSlug: string,
   limit = HOME_COLLECTION_SIZE
 ): { items: Product[]; total: number; hasMore: boolean } {
+  const sorted = sortProducts(products, "featured");
   return {
-    items: products.slice(0, limit),
+    items: sorted.slice(0, limit),
     total: products.length,
     hasMore: products.length > limit,
   };
@@ -132,6 +137,13 @@ export function searchProducts(products: Product[], query: string): Product[] {
 export function sortProducts(products: Product[], sort: ProductSort): Product[] {
   const copy = [...products];
   switch (sort) {
+    case "featured":
+      return copy.sort((a, b) => {
+        const aPopular = isPopularBadge(a.badge);
+        const bPopular = isPopularBadge(b.badge);
+        if (aPopular === bPopular) return 0;
+        return aPopular ? -1 : 1;
+      });
     case "price-asc":
       return copy.sort((a, b) => a.price - b.price);
     case "price-desc":
