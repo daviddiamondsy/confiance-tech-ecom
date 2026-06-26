@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { parseFilterSlugsInput } from "@/lib/admin-product-form";
-import { generateProductCopyWithAi } from "@/lib/admin-product-copy-ai";
+import {
+  AdminProductCopyAiError,
+  generateProductCopyWithAi,
+} from "@/lib/admin-product-copy-ai";
 
 export async function POST(req: NextRequest) {
   if (!isAdminAuthenticated()) {
@@ -28,28 +31,14 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json(copy);
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.message === "AI_NOT_CONFIGURED") {
-        return NextResponse.json(
-          {
-            error:
-              "AI copy generation is not configured. Set ADMIN_OPENAI_API_KEY or OPENAI_API_KEY.",
-          },
-          { status: 503 }
-        );
-      }
-      if (error.message === "AI_REQUEST_FAILED") {
-        return NextResponse.json(
-          { error: "Could not generate copy. Check your API key and try again." },
-          { status: 502 }
-        );
-      }
-      if (error.message === "INVALID_AI_RESPONSE") {
-        return NextResponse.json(
-          { error: "AI returned an invalid response. Try again." },
-          { status: 502 }
-        );
-      }
+    if (error instanceof AdminProductCopyAiError) {
+      const status =
+        error.message === "AI_NOT_CONFIGURED"
+          ? 503
+          : error.message === "PRODUCT_NAME_REQUIRED"
+            ? 400
+            : 502;
+      return NextResponse.json({ error: error.userMessage }, { status });
     }
 
     console.error("[admin/generate-product-copy] failed", error);

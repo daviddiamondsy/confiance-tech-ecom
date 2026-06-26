@@ -32,6 +32,43 @@ export function getAdminOpenAiModel(): string {
   return process.env.ADMIN_OPENAI_MODEL?.trim() || "gpt-4o-mini";
 }
 
+export class AdminProductCopyAiError extends Error {
+  constructor(
+    code: string,
+    readonly userMessage: string
+  ) {
+    super(code);
+    this.name = "AdminProductCopyAiError";
+  }
+}
+
+function openAiErrorMessage(status: number, body: string): string {
+  try {
+    const data = JSON.parse(body) as {
+      error?: { message?: string; code?: string; type?: string };
+    };
+    const code = data.error?.code ?? data.error?.type;
+    const message = data.error?.message?.trim();
+
+    if (code === "insufficient_quota") {
+      return "OpenAI quota exceeded. Add billing credits at platform.openai.com or use another API key.";
+    }
+    if (code === "invalid_api_key" || status === 401) {
+      return "Invalid OpenAI API key. Check ADMIN_OPENAI_API_KEY or OPENAI_API_KEY in .env.local.";
+    }
+    if (code === "rate_limit_exceeded") {
+      return "OpenAI rate limit hit. Wait a moment and try again.";
+    }
+    if (message) {
+      return message;
+    }
+  } catch {
+    // Ignore JSON parse errors and fall through.
+  }
+
+  return "Could not generate copy. Check your OpenAI account and try again.";
+}
+
 function conditionLabel(filterSlugs: string[] | undefined): "new" | "clean" | "unspecified" {
   if (filterSlugs?.includes(NEW_PRODUCT_FILTER_SLUG)) return "new";
   if (filterSlugs?.includes(CLEAN_PRODUCT_FILTER_SLUG)) return "clean";
@@ -75,7 +112,10 @@ Rules:
 
 export function parseGeneratedProductCopy(raw: unknown): GeneratedProductCopy {
   if (!raw || typeof raw !== "object") {
-    throw new Error("INVALID_AI_RESPONSE");
+    throw new AdminProductCopyAiError(
+      "INVALID_AI_RESPONSE",
+      "AI returned an invalid response. Try again."
+    );
   }
 
   const record = raw as Record<string, unknown>;
@@ -97,7 +137,10 @@ export function parseGeneratedProductCopy(raw: unknown): GeneratedProductCopy {
   }
 
   if (!description || features.length === 0 || Object.keys(specifications).length === 0) {
-    throw new Error("INVALID_AI_RESPONSE");
+    throw new AdminProductCopyAiError(
+      "INVALID_AI_RESPONSE",
+      "AI returned incomplete copy. Try again."
+    );
   }
 
   return { description, features, specifications };
@@ -139,12 +182,15 @@ export async function generateProductCopyWithAi(
 ): Promise<GeneratedProductCopy> {
   const apiKey = getAdminOpenAiApiKey();
   if (!apiKey) {
-    throw new Error("AI_NOT_CONFIGURED");
+    throw new AdminProductCopyAiError(
+      "AI_NOT_CONFIGURED",
+      "AI copy generation is not configured. Set ADMIN_OPENAI_API_KEY or OPENAI_API_KEY."
+    );
   }
 
   const productName = input.productName.trim();
   if (!productName) {
-    throw new Error("PRODUCT_NAME_REQUIRED");
+    throw new AdminProductCopyAiError("PRODUCT_NAME_REQUIRED", "Product name is required.");
   }
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -167,7 +213,10 @@ export async function generateProductCopyWithAi(
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
     console.error("[admin-product-copy-ai] OpenAI error", response.status, detail);
-    throw new Error("AI_REQUEST_FAILED");
+    throw new AdminProductCopyAiError(
+      "AI_REQUEST_FAILED",
+      openAiErrorMessage(response.status, detail)
+    );
   }
 
   const payload = (await response.json()) as {
@@ -175,14 +224,20 @@ export async function generateProductCopyWithAi(
   };
   const content = payload.choices?.[0]?.message?.content;
   if (!content) {
-    throw new Error("INVALID_AI_RESPONSE");
+    throw new AdminProductCopyAiError(
+      "INVALID_AI_RESPONSE",
+      "AI returned an empty response. Try again."
+    );
   }
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(content);
   } catch {
-    throw new Error("INVALID_AI_RESPONSE");
+    throw new AdminProductCopyAiError(
+      "INVALID_AI_RESPONSE",
+      "AI returned an invalid response. Try again."
+    );
   }
 
   const copy = parseGeneratedProductCopy(parsed);
