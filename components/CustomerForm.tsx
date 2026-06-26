@@ -212,10 +212,10 @@ export default function CustomerForm({
     }
 
     try {
-      const response = await fetch("/api/referral/lookup", {
+      const response = await fetch("/api/referral/balance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, name: formData.name }),
+        body: JSON.stringify({ phone }),
       });
       if (!response.ok) {
         setStoreCreditBalanceNgn(0);
@@ -226,7 +226,7 @@ export default function CustomerForm({
     } catch {
       setStoreCreditBalanceNgn(0);
     }
-  }, [formData.name]);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
