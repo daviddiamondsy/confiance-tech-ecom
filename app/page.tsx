@@ -55,7 +55,7 @@ export default async function Home() {
       <section id="products" className="py-20 md:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
-            <span className="section-label">Our Collection</span>
+            <span className="section-label">Our Collections</span>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-slate-900 mt-3 mb-4 tracking-tight">
               Featured Products
             </h2>
