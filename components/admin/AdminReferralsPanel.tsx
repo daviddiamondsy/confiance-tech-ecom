@@ -31,6 +31,7 @@ export default function AdminReferralsPanel() {
   const [message, setMessage] = useState("");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const loadReferrals = useCallback(async () => {
     setLoading(true);
@@ -97,6 +98,38 @@ export default function AdminReferralsPanel() {
       setTimeout(() => setCopied(false), 2000);
     } catch {
       setError("Could not copy link.");
+    }
+  };
+
+  const handleDelete = async (referral: AdminReferralRow) => {
+    const label = referral.referrerName || referral.code;
+    const confirmed = window.confirm(
+      `Delete referral link for ${label}? The link will stop working. Store credit already earned is not removed.`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(referral.id);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await fetch(`/api/admin/referrals?id=${referral.id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.error || "Could not delete referral link.");
+        return;
+      }
+      setMessage(`Deleted referral link ${referral.code}.`);
+      if (generatedLink?.includes(referral.code)) {
+        setGeneratedLink(null);
+      }
+      await loadReferrals();
+    } catch {
+      setError("Network error while deleting referral link.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -240,13 +273,23 @@ export default function AdminReferralsPanel() {
                     <td className="px-4 py-3">{referral.pendingCount}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{formatNgn(referral.storeCreditBalanceNgn)}</td>
                     <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        className="btn-outline text-sm py-2 px-3"
-                        onClick={() => copyLink(referral.shareUrl)}
-                      >
-                        Copy
-                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className="btn-outline text-sm py-2 px-3"
+                          onClick={() => copyLink(referral.shareUrl)}
+                        >
+                          Copy
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-outline text-sm py-2 px-3 text-red-600 border-red-200 hover:bg-red-50"
+                          disabled={deletingId === referral.id}
+                          onClick={() => void handleDelete(referral)}
+                        >
+                          {deletingId === referral.id ? "Deleting..." : "Delete"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

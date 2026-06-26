@@ -43,6 +43,18 @@ export async function getReferralCodeByCode(code: string): Promise<ReferralCodeR
   return rows[0] ?? null;
 }
 
+export async function getReferralCodeById(id: number): Promise<ReferralCodeRow | null> {
+  if (!Number.isFinite(id) || id <= 0) return null;
+
+  const { rows } = await sql<ReferralCodeRow>`
+    SELECT id, code, referrer_phone, referrer_name, created_at
+    FROM referral_codes
+    WHERE id = ${id}
+    LIMIT 1
+  `;
+  return rows[0] ?? null;
+}
+
 export async function getReferralCodeByPhone(phone: string): Promise<ReferralCodeRow | null> {
   const normalizedPhone = normalizeNigerianPhone(phone);
   if (!normalizedPhone) return null;
@@ -316,4 +328,26 @@ export async function updateReferralCodeName(
     RETURNING id, code, referrer_phone, referrer_name, created_at
   `;
   return rows[0] ?? null;
+}
+
+/** Remove a referral link and its events. Store credit ledger rows are kept for audit. */
+export async function deleteReferralCodeById(id: number): Promise<boolean> {
+  const row = await getReferralCodeById(id);
+  if (!row) return false;
+
+  await sql`
+    UPDATE store_credit_ledger
+    SET referral_event_id = NULL
+    WHERE referral_event_id IN (
+      SELECT id FROM referral_events WHERE referral_code = ${row.code}
+    )
+  `;
+
+  await sql`DELETE FROM referral_events WHERE referral_code = ${row.code}`;
+  const { rows } = await sql<{ id: number }>`
+    DELETE FROM referral_codes WHERE id = ${id}
+    RETURNING id
+  `;
+
+  return rows.length > 0;
 }
