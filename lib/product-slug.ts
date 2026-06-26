@@ -1,12 +1,14 @@
 /** URL slug per legacy catalog id. */
 export const CATALOG_SLUGS: Record<string, string> = {
-  "6": "iphone-13-256gb",
+  "6": "apple-iphone-13",
   "7": "iphone-14-pro-256gb",
   "8": "iphone-15-pro-max",
   "9": "iphone-12-pro-max",
   "10": "iphone-14-pro-max",
   "11": "macbook-pro-m4",
   "12": "iphone-13-pro-max",
+  "13": "samsung-galaxy-s24-ultra",
+  "14": "samsung-galaxy-s25-ultra",
 };
 
 /** Build a URL-safe slug from a product name. */

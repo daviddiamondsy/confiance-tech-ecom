@@ -28,7 +28,7 @@ function resolveVariantPrice(
   return product.price;
 }
 
-/** Authoritative selling price from catalog DB + current pricing config. */
+/** Authoritative selling price from catalog (DB or static dev seed) + current pricing config. */
 export async function resolveCheckoutPrice(input: {
   productId?: string;
   productSlug?: string;

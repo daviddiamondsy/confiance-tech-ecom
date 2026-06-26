@@ -13,6 +13,12 @@ import {
   fetchProductBySlugFromDb,
   fetchProductsFromDb,
 } from "@/lib/db/products-repository";
+import {
+  getStaticCatalogProducts,
+  getStaticProductById,
+  getStaticProductBySlug,
+  shouldUseStaticCatalog,
+} from "@/lib/static-catalog";
 
 async function resolveDbProductForSlug(slug: string): Promise<Product | undefined> {
   const product = await fetchProductBySlugFromDb(slug);
@@ -27,6 +33,10 @@ async function resolveDbProductForSlug(slug: string): Promise<Product | undefine
 }
 
 export async function getProducts(): Promise<Product[]> {
+  if (shouldUseStaticCatalog()) {
+    return getStaticCatalogProducts();
+  }
+
   if (!isPostgresConfigured()) {
     console.warn("[products] DATABASE_URL not set; returning empty catalog");
     return [];
@@ -50,6 +60,18 @@ export async function getProducts(): Promise<Product[]> {
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  if (shouldUseStaticCatalog()) {
+    const product = getStaticProductBySlug(slug);
+    if (product) return product;
+
+    const catalogId = catalogProductIdForSlug(slug);
+    if (catalogId) {
+      return getStaticProductById(catalogId);
+    }
+
+    return undefined;
+  }
+
   if (!isPostgresConfigured()) {
     return undefined;
   }
@@ -65,6 +87,10 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
+  if (shouldUseStaticCatalog()) {
+    return getStaticProductById(id);
+  }
+
   if (!isPostgresConfigured()) {
     return undefined;
   }
