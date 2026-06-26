@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
       productName,
       productPrice,
       productStorage,
+      productColor,
       deliveryDays,
       customerData,
     } = await req.json();
@@ -109,6 +110,8 @@ export async function POST(req: NextRequest) {
     const resolvedProductName = productName ? String(productName) : catalogPrice.productName;
     const resolvedProductId = catalogPrice.productId;
     const resolvedProductSlug = catalogPrice.productSlug;
+    const orderStorage = productStorage ? String(productStorage).trim() : undefined;
+    const orderColor = productColor ? String(productColor).trim() : undefined;
 
     const clientPrice = Number(productPrice);
     if (
@@ -145,6 +148,8 @@ export async function POST(req: NextRequest) {
         productId: resolvedProductId,
         productName: resolvedProductName,
         productPrice: amountNgn,
+        productStorage: orderStorage,
+        productColor: orderColor,
         deliveryDays: deliverWithinDays,
         deliveryDueAt,
         businessName,
@@ -172,6 +177,8 @@ export async function POST(req: NextRequest) {
       productId: resolvedProductId,
       productName: resolvedProductName,
       productPrice: amountNgn,
+      productStorage: orderStorage,
+      productColor: orderColor,
       customerName: customerData.name,
       customerPhone: customerData.phone,
       customerAddress: customerData.address,

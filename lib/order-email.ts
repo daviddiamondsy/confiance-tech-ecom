@@ -2,6 +2,8 @@ export interface OrderEmailPayload {
   productId?: string;
   productName?: string;
   productPrice?: number;
+  productStorage?: string;
+  productColor?: string;
   customerName: string;
   customerPhone: string;
   customerAddress: string;
@@ -23,6 +25,8 @@ const buildEmailHtml = (payload: OrderEmailPayload) => {
   const rows = [
     ["Product", payload.productName || "N/A"],
     ["Product ID", payload.productId || "N/A"],
+    ["Size", payload.productStorage || "N/A"],
+    ["Color", payload.productColor || "N/A"],
     ["Product Price", formatCurrency(payload.productPrice)],
     ["Customer Name", payload.customerName],
     ["Phone", payload.customerPhone],
@@ -57,6 +61,8 @@ const buildEmailText = (payload: OrderEmailPayload) => {
     "",
     `Product: ${payload.productName || "N/A"}`,
     `Product ID: ${payload.productId || "N/A"}`,
+    `Size: ${payload.productStorage || "N/A"}`,
+    `Color: ${payload.productColor || "N/A"}`,
     `Product Price: ${formatCurrency(payload.productPrice)}`,
     `Customer Name: ${payload.customerName}`,
     `Phone: ${payload.customerPhone}`,
