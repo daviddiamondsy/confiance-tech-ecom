@@ -176,6 +176,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                   productId={product.id}
                   productSlug={product.slug}
                   productStorage={variant.storage}
+                  productColor={variant.color}
                   deliveryDays={deliveryDays}
                 />
               </div>
@@ -258,6 +259,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                     productId={product.id}
                     productSlug={product.slug}
                     productStorage={variant.storage}
+                    productColor={variant.color}
                     deliveryDays={deliveryDays}
                   />
                 </div>

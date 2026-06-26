@@ -7,6 +7,8 @@ export async function POST(req: NextRequest) {
       productId,
       productName,
       productPrice,
+      productStorage,
+      productColor,
       customerData,
     } = await req.json();
 
@@ -38,6 +40,8 @@ export async function POST(req: NextRequest) {
       productId,
       productName,
       productPrice,
+      productStorage,
+      productColor,
       customerName: customerData.name,
       customerPhone: customerData.phone,
       customerAddress: customerData.address,
