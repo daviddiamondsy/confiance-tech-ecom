@@ -30,3 +30,9 @@ export function phonesMatch(a: string, b: string): boolean {
   const nb = normalizeNigerianPhone(b);
   return Boolean(na && nb && na === nb);
 }
+
+/** True when input is a full Nigerian mobile number (not a partial while typing). */
+export function isCompleteNigerianPhone(phone: string): boolean {
+  const normalized = normalizeNigerianPhone(phone);
+  return /^\+234[789]\d{9}$/.test(normalized);
+}

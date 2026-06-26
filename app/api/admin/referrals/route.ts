@@ -3,6 +3,7 @@ import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { getPostgresErrorMessage } from "@/lib/db/postgres-errors";
 import { adminCreateOrGetReferralCode, adminDeleteReferral, listAdminReferrals } from "@/lib/referral/service";
+import { isCompleteNigerianPhone } from "@/lib/referral/phone";
 
 function postgresRequired() {
   return NextResponse.json(
@@ -47,6 +48,13 @@ export async function POST(req: NextRequest) {
 
     if (!phone) {
       return NextResponse.json({ error: "Phone number is required." }, { status: 400 });
+    }
+
+    if (!isCompleteNigerianPhone(phone)) {
+      return NextResponse.json(
+        { error: "Enter a complete Nigerian phone number (e.g. 08012345678)." },
+        { status: 400 }
+      );
     }
 
     const result = await adminCreateOrGetReferralCode({ phone, name, customCode });
