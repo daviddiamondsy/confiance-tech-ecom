@@ -1,11 +1,12 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Suspense } from "react";
+import ReferralCapture from "@/components/ReferralCapture";
 import ProductsCatalog from "@/components/ProductsCatalog";
 import { Package } from "lucide-react";
 import { getProductFilterTags } from "@/lib/product-filters";
 import { getProducts } from "@/lib/products";
 import { STOREFRONT_CATALOG_COPY } from "@/lib/device-quality-copy";
-import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 

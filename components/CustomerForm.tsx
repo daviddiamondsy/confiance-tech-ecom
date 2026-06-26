@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { Send, CheckCircle } from "lucide-react";
 import StateSelect from "@/components/StateSelect";
 import { resolveStorefrontCheckoutError } from "@/lib/checkout-errors";
+import {
+  readPersistedReferralCode,
+  clearPersistedReferralCode,
+} from "@/components/ReferralDiscountBanner";
+import { formatNgn } from "@/lib/referral/config";
 
 function checkoutStorageKey(productId?: string) {
   return productId ? `holdam_checkout_${productId}` : "holdam_checkout";
@@ -71,7 +76,14 @@ export default function CustomerForm({
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [pendingCheckoutUrl, setPendingCheckoutUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [storeCreditBalanceNgn, setStoreCreditBalanceNgn] = useState(0);
+  const [applyStoreCredit, setApplyStoreCredit] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    setReferralCode(readPersistedReferralCode());
+  }, []);
 
   const resetCheckoutUiState = useCallback(() => {
     setIsRedirecting(false);
@@ -138,6 +150,8 @@ export default function CustomerForm({
           productColor,
           deliveryDays,
           customerData: formData,
+          referralCode,
+          applyStoreCredit: applyStoreCredit && storeCreditBalanceNgn > 0,
         }),
       });
 
@@ -163,6 +177,10 @@ export default function CustomerForm({
       console.log("[Order] Holdam deal created successfully", { dealId: deal?.id, checkoutUrl });
 
       trackLead();
+
+      if (referralCode) {
+        clearPersistedReferralCode();
+      }
       
       if (checkoutUrl) {
         goToCheckout(checkoutUrl);
@@ -186,6 +204,37 @@ export default function CustomerForm({
     }));
   };
 
+  const fetchStoreCreditBalance = useCallback(async (phone: string) => {
+    if (!phone.trim()) {
+      setStoreCreditBalanceNgn(0);
+      setApplyStoreCredit(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/referral/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, name: formData.name }),
+      });
+      if (!response.ok) {
+        setStoreCreditBalanceNgn(0);
+        return;
+      }
+      const data = await response.json();
+      setStoreCreditBalanceNgn(Number(data.storeCreditBalanceNgn) || 0);
+    } catch {
+      setStoreCreditBalanceNgn(0);
+    }
+  }, [formData.name]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void fetchStoreCreditBalance(formData.phone);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [formData.phone, fetchStoreCreditBalance]);
+
   const primaryButtonLabel = isRedirecting
     ? "Opening checkout…"
     : isSubmitting
@@ -208,6 +257,21 @@ export default function CustomerForm({
       Continue to payment
     </button>
   ) : null;
+
+  const storeCreditField =
+    storeCreditBalanceNgn > 0 ? (
+      <label className="flex items-start gap-3 rounded-lg border border-primary-100 bg-primary-50/60 p-4 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={applyStoreCredit}
+          onChange={(e) => setApplyStoreCredit(e.target.checked)}
+          className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+        />
+        <span className="text-sm text-slate-700 leading-relaxed">
+          Apply {formatNgn(storeCreditBalanceNgn)} store credit to this order
+        </span>
+      </label>
+    ) : null;
 
   if (variant === "inline") {
     return (
@@ -238,6 +302,7 @@ export default function CustomerForm({
           placeholder="Select state"
           className="flex-1 min-w-[180px]"
         />
+        {storeCreditField}
         <button
           type="submit"
           disabled={isSubmitting || isRedirecting}
@@ -296,6 +361,7 @@ export default function CustomerForm({
             placeholder="Select state"
             inputClassName="text-sm py-2.5"
           />
+          {storeCreditField}
           <button
             type="submit"
             disabled={isSubmitting || isRedirecting}
@@ -386,6 +452,7 @@ export default function CustomerForm({
             placeholder="Select your state"
           />
         </div>
+        {storeCreditField}
         <button
           type="submit"
           disabled={isSubmitting || isRedirecting}

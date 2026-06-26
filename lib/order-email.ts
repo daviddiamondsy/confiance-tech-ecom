@@ -1,3 +1,12 @@
+export interface OrderEmailReferralDetails {
+  referralCode?: string;
+  referrerName?: string | null;
+  catalogPriceNgn?: number;
+  checkoutAmountNgn?: number;
+  refereeDiscountNgn?: number;
+  storeCreditAppliedNgn?: number;
+}
+
 export interface OrderEmailPayload {
   productId?: string;
   productName?: string;
@@ -11,6 +20,7 @@ export interface OrderEmailPayload {
   paymentStatus: "pending" | "paid";
   confirmationFee?: number;
   stripeSessionId?: string;
+  referral?: OrderEmailReferralDetails;
 }
 
 const formatCurrency = (amount?: number) => {
@@ -21,13 +31,43 @@ const formatCurrency = (amount?: number) => {
   return `₦${amount.toLocaleString()}`;
 };
 
+function buildReferralRows(referral?: OrderEmailReferralDetails): [string, string][] {
+  if (!referral) return [];
+
+  const rows: [string, string][] = [];
+
+  if (referral.referralCode) {
+    rows.push(["Referral code", referral.referralCode]);
+  }
+  if (referral.referrerName) {
+    rows.push(["Referrer", referral.referrerName]);
+  }
+  if (typeof referral.refereeDiscountNgn === "number" && referral.refereeDiscountNgn > 0) {
+    rows.push(["Referral discount", formatCurrency(referral.refereeDiscountNgn)]);
+  }
+  if (typeof referral.storeCreditAppliedNgn === "number" && referral.storeCreditAppliedNgn > 0) {
+    rows.push(["Store credit applied", formatCurrency(referral.storeCreditAppliedNgn)]);
+  }
+  if (
+    typeof referral.catalogPriceNgn === "number" &&
+    typeof referral.checkoutAmountNgn === "number" &&
+    referral.catalogPriceNgn !== referral.checkoutAmountNgn
+  ) {
+    rows.push(["Catalog price", formatCurrency(referral.catalogPriceNgn)]);
+    rows.push(["Checkout amount", formatCurrency(referral.checkoutAmountNgn)]);
+  }
+
+  return rows;
+}
+
 const buildEmailHtml = (payload: OrderEmailPayload) => {
-  const rows = [
+  const rows: [string, string][] = [
     ["Product", payload.productName || "N/A"],
     ["Product ID", payload.productId || "N/A"],
     ["Size", payload.productStorage || "N/A"],
     ["Color", payload.productColor || "N/A"],
     ["Product Price", formatCurrency(payload.productPrice)],
+    ...buildReferralRows(payload.referral),
     ["Customer Name", payload.customerName],
     ["Phone", payload.customerPhone],
     ["Address", payload.customerAddress],
@@ -56,6 +96,10 @@ const buildEmailHtml = (payload: OrderEmailPayload) => {
 };
 
 const buildEmailText = (payload: OrderEmailPayload) => {
+  const referralLines = buildReferralRows(payload.referral).map(
+    ([label, value]) => `${label}: ${value}`
+  );
+
   return [
     "New Order Request",
     "",
@@ -64,6 +108,7 @@ const buildEmailText = (payload: OrderEmailPayload) => {
     `Size: ${payload.productStorage || "N/A"}`,
     `Color: ${payload.productColor || "N/A"}`,
     `Product Price: ${formatCurrency(payload.productPrice)}`,
+    ...referralLines,
     `Customer Name: ${payload.customerName}`,
     `Phone: ${payload.customerPhone}`,
     `Address: ${payload.customerAddress}`,
@@ -84,6 +129,7 @@ export async function sendOrderEmail(payload: OrderEmailPayload) {
     productName: payload.productName,
     paymentStatus: payload.paymentStatus,
     customerName: payload.customerName,
+    referralCode: payload.referral?.referralCode,
     hasResendApiKey: Boolean(resendApiKey),
     notificationEmail,
     fromEmail,

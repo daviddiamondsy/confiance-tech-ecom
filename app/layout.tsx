@@ -5,6 +5,8 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
+import { Suspense } from "react";
+import ReferralCapture from "@/components/ReferralCapture";
 import "./globals.css";
 import { STOREFRONT_META_DESCRIPTION } from "@/lib/device-quality-copy";
 
@@ -52,6 +54,9 @@ export default function RootLayout({
           />
         </noscript>
         {children}
+        <Suspense fallback={null}>
+          <ReferralCapture />
+        </Suspense>
         {process.env.NODE_ENV === "production" && <Analytics />}
         {process.env.NODE_ENV === "production" && <SpeedInsights />}
       </body>

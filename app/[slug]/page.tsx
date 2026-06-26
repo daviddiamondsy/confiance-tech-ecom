@@ -12,6 +12,8 @@ const RESERVED_ROOT_SLUGS = new Set([
   "payment-success",
   "api-docs",
   "api",
+  "refer",
+  "r",
 ]);
 
 interface ProductShortLinkProps {

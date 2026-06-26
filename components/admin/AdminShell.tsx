@@ -8,10 +8,11 @@ import {
   LogOut,
   Package,
   Tags,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type AdminTab = "overview" | "pricing" | "filters" | "products";
+export type AdminTab = "overview" | "pricing" | "filters" | "products" | "referrals";
 
 interface AdminShellProps {
   activeTab: AdminTab;
@@ -25,6 +26,7 @@ const NAV_ITEMS: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[]
   { id: "pricing", label: "Pricing", icon: DollarSign },
   { id: "filters", label: "Filter tags", icon: Tags },
   { id: "products", label: "Products", icon: Package },
+  { id: "referrals", label: "Referrals", icon: Gift },
 ];
 
 export default function AdminShell({
