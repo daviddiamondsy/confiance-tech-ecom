@@ -955,17 +955,34 @@ export async function backfillCatalogSpecifications(): Promise<number> {
     `;
     if (!rows[0]) continue;
 
-    const { rows: storageRows } = await sql<{ storage: string }>`
-      SELECT storage
+    const { rows: storageRows } = await sql<{ id: number; storage: string }>`
+      SELECT id, storage
       FROM product_storage_options
       WHERE product_id = ${productId}
       ORDER BY sort_order ASC
-      LIMIT 1
     `;
+
+    if (seedProduct.storageOptions?.length) {
+      for (let index = 0; index < seedProduct.storageOptions.length; index += 1) {
+        const seedOption = seedProduct.storageOptions[index];
+        const dbOption = storageRows[index];
+        if (dbOption && dbOption.storage !== seedOption.storage) {
+          await sql.query(`UPDATE product_storage_options SET storage = $1 WHERE id = $2`, [
+            seedOption.storage,
+            dbOption.id,
+          ]);
+        }
+      }
+    }
+
+    const primaryStorage =
+      seedProduct.storageOptions?.[0]?.storage ??
+      storageRows[0]?.storage ??
+      seedProduct.specifications.Storage;
 
     const specifications = mergeSpecificationsWithStorage(
       seedProduct.specifications,
-      storageRows[0]?.storage ?? seedProduct.specifications.Storage
+      primaryStorage
     );
 
     await sql.query(
