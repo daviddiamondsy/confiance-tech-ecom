@@ -73,8 +73,8 @@ export default function ReferralDiscountBanner({ catalogPriceNgn }: ReferralDisc
   }
 
   const friendLine = referrerName
-    ? `Your friend ${referrerName} sent you ${formatNgn(discountNgn)} off your first iPhone.`
-    : `You have ${formatNgn(discountNgn)} off your first iPhone from a friend referral.`;
+    ? `Your friend ${referrerName} sent you ${formatNgn(discountNgn)} off your first order.`
+    : `You have ${formatNgn(discountNgn)} off your first order from a friend referral.`;
 
   return (
     <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
