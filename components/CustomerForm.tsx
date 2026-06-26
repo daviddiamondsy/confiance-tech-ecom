@@ -23,6 +23,19 @@ const trackLead = () => {
   }
 };
 
+function initialOrderFormData() {
+  if (process.env.NODE_ENV !== "development") {
+    return { name: "", address: "", state: "", phone: "" };
+  }
+
+  return {
+    name: "Test Customer",
+    address: "12 Admiralty Way, Lekki Phase 1",
+    state: "Lagos",
+    phone: "08012345678",
+  };
+}
+
 interface CustomerFormProps {
   variant?: "default" | "compact" | "inline";
   title?: string;
@@ -52,12 +65,7 @@ export default function CustomerForm({
   productSlug,
   deliveryDays,
 }: CustomerFormProps) {
-  const [formData, setFormData] = useState({
-    name: "",
-    address: "",
-    state: "",
-    phone: "",
-  });
+  const [formData, setFormData] = useState(initialOrderFormData);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
