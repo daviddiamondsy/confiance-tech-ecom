@@ -49,7 +49,7 @@ function PaymentSuccessContent() {
           <div className="flex items-start gap-3">
             <Gift className="h-5 w-5 text-primary-600 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="font-semibold text-slate-900 mb-1">Love your new phone?</p>
+              <p className="font-semibold text-slate-900 mb-1">Happy with your purchase?</p>
               <p className="text-sm text-slate-600 leading-relaxed mb-3">
                 Refer a friend and earn store credit when their order completes. They save on their
                 first purchase too.

@@ -74,8 +74,8 @@ function ReferDashboardContent() {
           Refer a Friend, Earn Store Credit
         </h1>
         <p className="text-slate-600 leading-relaxed max-w-xl mx-auto">
-          Share your link. Friends save on their first iPhone. You earn store credit after their order
-          completes and the return window closes.
+          Share your link. Friends save on their first order from our store. You earn store credit after
+          their order completes and the return window closes.
         </p>
       </div>
 
@@ -156,7 +156,7 @@ function ReferDashboardContent() {
               <h2 className="font-display text-xl font-bold text-slate-900">How it works</h2>
             </div>
             <ol className="space-y-3 text-slate-600 list-decimal list-inside leading-relaxed">
-              <li>Send your link to a friend buying their first iPhone from us.</li>
+              <li>Send your link to a friend buying their first device from us.</li>
               <li>They get an automatic discount at checkout.</li>
               <li>You receive store credit after their order completes (not returned or disputed).</li>
               <li>Use store credit on your next order from this store.</li>
@@ -172,7 +172,7 @@ function ReferDashboardContent() {
               <table className="w-full text-sm text-left">
                 <thead>
                   <tr className="border-b border-slate-200 text-slate-500">
-                    <th className="py-2 pr-4 font-medium">Phone tier</th>
+                    <th className="py-2 pr-4 font-medium">Price tier</th>
                     <th className="py-2 pr-4 font-medium">Friend saves</th>
                     <th className="py-2 font-medium">You earn</th>
                   </tr>
