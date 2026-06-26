@@ -4,6 +4,7 @@ import {
   parseColorsInput,
   parseFeaturesInput,
   parseFilterSlugsInput,
+  parseSpecificationsInput,
   parseStorageVariantsField,
 } from "@/lib/admin-product-form";
 import { isPostgresConfigured } from "@/lib/db/client";
@@ -76,6 +77,7 @@ export async function POST(req: NextRequest) {
   const storage = body.storage ? String(body.storage).trim() : undefined;
   const colors = parseColorsInput(body.colors);
   const features = parseFeaturesInput(body.features);
+  const specifications = parseSpecificationsInput(body.specifications);
 
   let storageVariants: Array<{ storage: string; yuan: number }> | undefined;
   try {
@@ -142,6 +144,7 @@ export async function POST(req: NextRequest) {
       storage: hasVariants ? undefined : storage,
       colors,
       features,
+      specifications,
       storageVariants,
       ...shipping,
     });
@@ -224,6 +227,14 @@ function buildUpdateInput(body: Record<string, unknown>): UpdateProductInput {
   }
   if (body.features !== undefined) {
     input.features = parseFeaturesInput(body.features) ?? [];
+  }
+  if (body.specifications !== undefined) {
+    const parsed = parseSpecificationsInput(body.specifications);
+    if (parsed !== undefined) {
+      input.specifications = parsed;
+    } else if (typeof body.specifications === "string" && body.specifications.trim() !== "") {
+      input.specifications = {};
+    }
   }
   if (body.storageVariants !== undefined) {
     input.storageVariants = parseStorageVariantsField(body.storageVariants);

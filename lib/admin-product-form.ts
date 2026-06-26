@@ -20,6 +20,7 @@ export interface ProductFormState {
   storageVariants: string;
   colors: string;
   features: string;
+  specifications: string;
   chinaShippingYuan: string;
   internationalShippingNgn: string;
 }
@@ -213,6 +214,50 @@ export function parseFeaturesInput(raw: unknown): string[] | undefined {
   return features.length > 0 ? features : undefined;
 }
 
+/** One spec per line as `Label: value`. Storage is set from the storage field when present. */
+export function parseSpecificationsInput(raw: unknown): Record<string, string> | undefined {
+  if (typeof raw !== "string") return undefined;
+
+  const specs: Record<string, string> = {};
+  for (const line of raw.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const colonIndex = trimmed.indexOf(":");
+    if (colonIndex === -1) continue;
+
+    const key = trimmed.slice(0, colonIndex).trim();
+    const value = trimmed.slice(colonIndex + 1).trim();
+    if (key && key !== "Storage") {
+      specs[key] = value;
+    }
+  }
+
+  return Object.keys(specs).length > 0 ? specs : undefined;
+}
+
+export function formatSpecificationsInput(
+  specs: Record<string, string> | undefined | null
+): string {
+  if (!specs) return "";
+
+  return Object.entries(specs)
+    .filter(([key]) => key !== "Storage")
+    .map(([key, value]) => `${key}: ${value}`)
+    .join("\n");
+}
+
+export function mergeSpecificationsWithStorage(
+  specs: Record<string, string> | undefined,
+  storage: string | undefined
+): Record<string, string> {
+  const merged = { ...(specs ?? {}) };
+  if (storage?.trim()) {
+    merged.Storage = storage.trim();
+  }
+  return merged;
+}
+
 export function adminProductToForm(product: {
   name: string;
   yuanCost: number | null;
@@ -225,6 +270,7 @@ export function adminProductToForm(product: {
   storageVariants: Array<{ storage: string; yuan: number }>;
   colors: string[];
   features: string[];
+  specifications: Record<string, string>;
   chinaShippingYuan: number;
   internationalShippingNgn: number;
 }): ProductFormState {
@@ -247,6 +293,7 @@ export function adminProductToForm(product: {
     ),
     colors: product.colors.join(", "),
     features: product.features.join("\n"),
+    specifications: formatSpecificationsInput(product.specifications),
     chinaShippingYuan: formatChinaShippingYuan(product.chinaShippingYuan as ChinaShippingYuan),
     internationalShippingNgn: formatInternationalShippingNgn(
       product.internationalShippingNgn as InternationalShippingNgn
@@ -265,6 +312,7 @@ export const emptyProductForm: ProductFormState = {
   storageVariants: "",
   colors: "",
   features: "",
+  specifications: "",
   chinaShippingYuan: String(DEFAULT_CHINA_SHIPPING_YUAN),
   internationalShippingNgn: String(DEFAULT_INTERNATIONAL_SHIPPING_NGN),
 };

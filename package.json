@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:seed": "tsx scripts/db-seed.ts",
+    "db:backfill-specifications": "tsx scripts/db-backfill-specifications.ts",
     "db:setup": "npm run db:migrate && npm run db:seed",
     "prepare": "husky",
     "hooks:install": "husky"
