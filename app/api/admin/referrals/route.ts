@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     if (!isCompleteNigerianPhone(phone)) {
       return NextResponse.json(
-        { error: "Enter a complete Nigerian phone number (e.g. 08012345678)." },
+        { error: "Enter a complete Nigerian mobile number." },
         { status: 400 }
       );
     }

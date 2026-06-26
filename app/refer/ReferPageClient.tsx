@@ -103,7 +103,7 @@ function ReferDashboardContent() {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="08012345678"
+              placeholder="Your mobile number"
               required
               className="input-field"
             />

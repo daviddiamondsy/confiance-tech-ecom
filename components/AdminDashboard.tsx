@@ -808,7 +808,7 @@ export default function AdminDashboard() {
                 id="filterLabel"
                 type="text"
                 className="input-field"
-                placeholder="iPad"
+                placeholder="Filter label"
                 value={filterForm.label}
                 onChange={(event) =>
                   setFilterForm((prev) => ({ ...prev, label: event.target.value }))
@@ -824,7 +824,7 @@ export default function AdminDashboard() {
                 id="filterSlug"
                 type="text"
                 className="input-field"
-                placeholder="ipad"
+                placeholder="URL slug"
                 value={filterForm.slug}
                 onChange={(event) =>
                   setFilterForm((prev) => ({ ...prev, slug: event.target.value }))

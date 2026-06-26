@@ -104,7 +104,7 @@ export default function ProductFormFields({
           id={`${idPrefix}-name`}
           type="text"
           className="input-field"
-          placeholder="Apple iPhone 16 Pro Max 256GB"
+          placeholder="Product title for the storefront"
           value={form.name}
           onChange={(event) => onChange({ name: event.target.value })}
           required
@@ -255,7 +255,7 @@ export default function ProductFormFields({
           id={`${idPrefix}-storage`}
           type="text"
           className="input-field"
-          placeholder="256GB"
+          placeholder="Storage capacity label"
           value={form.storage}
           onChange={(event) => onChange({ storage: event.target.value })}
           disabled={usesStorageVariants}
@@ -276,7 +276,7 @@ export default function ProductFormFields({
             id={`${idPrefix}-image`}
             type="text"
             className="input-field flex-1"
-            placeholder="/product-images/iphone-16.png"
+            placeholder="Path under /public or full image URL"
             value={form.image}
             onChange={(event) => onChange({ image: event.target.value })}
             required
@@ -295,7 +295,7 @@ export default function ProductFormFields({
           )}
         </div>
         <p className="text-xs text-slate-500 mt-1">
-          Use a path under <code className="text-xs">/public</code> (e.g. /product-images/...) or a full URL.
+          Use a path under <code className="text-xs">/public</code> or a full URL.
         </p>
       </div>
 
@@ -323,7 +323,7 @@ export default function ProductFormFields({
           id={`${idPrefix}-badge`}
           type="text"
           className="input-field"
-          placeholder="New"
+          placeholder="Short badge label"
           value={form.badge}
           onChange={(event) => onChange({ badge: event.target.value })}
         />
@@ -337,7 +337,7 @@ export default function ProductFormFields({
           id={`${idPrefix}-colors`}
           type="text"
           className="input-field"
-          placeholder="Midnight, Starlight, Blue"
+          placeholder="Comma-separated color names"
           value={form.colors}
           onChange={(event) => onChange({ colors: event.target.value })}
         />
@@ -353,7 +353,7 @@ export default function ProductFormFields({
         <textarea
           id={`${idPrefix}-storageVariants`}
           className="input-field min-h-[80px]"
-          placeholder={"128GB:1400\n256GB:1500"}
+          placeholder="One storage:yuan pair per line"
           value={form.storageVariants}
           onChange={(event) => {
             const storageVariants = event.target.value;
@@ -366,7 +366,7 @@ export default function ProductFormFields({
           }}
         />
         <p className="text-xs text-slate-500 mt-1">
-          One per line or comma-separated. Each line needs storage:yuan (e.g. 128GB:1400).
+          One per line or comma-separated. Each line needs storage:yuan.
           Use this field for multiple sizes. Do not list sizes in the product name or storage label.
         </p>
       </div>
@@ -381,7 +381,7 @@ export default function ProductFormFields({
         <textarea
           id={`${idPrefix}-features`}
           className="input-field min-h-[100px]"
-          placeholder={"6.7-inch display\nA18 Pro chip"}
+          placeholder="One feature per line"
           value={form.features}
           onChange={(event) => onChange({ features: event.target.value })}
         />
@@ -397,7 +397,7 @@ export default function ProductFormFields({
         <textarea
           id={`${idPrefix}-specifications`}
           className="input-field min-h-[120px]"
-          placeholder={"Display: 6.7-inch Super Retina XDR\nProcessor: A18 Pro chip"}
+          placeholder="Label: value, one per line"
           value={form.specifications}
           onChange={(event) => onChange({ specifications: event.target.value })}
         />
