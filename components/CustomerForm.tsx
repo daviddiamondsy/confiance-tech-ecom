@@ -290,7 +290,7 @@ export default function CustomerForm({
           name="phone"
           value={formData.phone}
           onChange={handleChange}
-          placeholder="Phone number"
+          placeholder="Your mobile number"
           required
           className="input-field flex-1 min-w-[150px]"
         />
@@ -349,7 +349,7 @@ export default function CustomerForm({
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            placeholder="Phone number"
+            placeholder="Your mobile number"
             required
             className="input-field text-sm py-2.5"
           />
@@ -419,7 +419,7 @@ export default function CustomerForm({
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            placeholder="Phone number"
+            placeholder="Your mobile number"
             required
             className="input-field"
           />

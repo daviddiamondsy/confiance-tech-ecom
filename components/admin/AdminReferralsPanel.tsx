@@ -157,7 +157,7 @@ export default function AdminReferralsPanel() {
               id="referral-name"
               type="text"
               className="input-field"
-              placeholder="Cherish"
+              placeholder="Customer name"
               value={form.name}
               onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
             />
@@ -170,7 +170,7 @@ export default function AdminReferralsPanel() {
               id="referral-phone"
               type="tel"
               className="input-field"
-              placeholder="08012345678"
+              placeholder="Checkout mobile number"
               value={form.phone}
               onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))}
               required
@@ -184,7 +184,7 @@ export default function AdminReferralsPanel() {
               id="referral-code"
               type="text"
               className="input-field uppercase"
-              placeholder="CHERISH24"
+              placeholder="Custom referral code"
               value={form.customCode}
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, customCode: event.target.value.toUpperCase() }))
