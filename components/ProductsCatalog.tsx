@@ -20,7 +20,7 @@ import {
   type ProductSort,
   type ProductView,
 } from "@/lib/product-catalog-utils";
-import type { ProductFilterTag } from "@/lib/product-filters";
+import type { ProductFilterTag } from "@/lib/product-filter-tags";
 import { ChevronDown, Grid3X3, List, Search, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
