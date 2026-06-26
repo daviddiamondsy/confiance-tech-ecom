@@ -302,6 +302,25 @@ export default function ProductFormFields({
           onChange={(event) => onChange({ features: event.target.value })}
         />
       </div>
+
+      <div className="sm:col-span-2">
+        <label
+          htmlFor={`${idPrefix}-specifications`}
+          className="block text-sm font-medium text-slate-700 mb-2"
+        >
+          Specifications (optional, one per line)
+        </label>
+        <textarea
+          id={`${idPrefix}-specifications`}
+          className="input-field min-h-[120px]"
+          placeholder={"Display: 6.7-inch Super Retina XDR\nProcessor: A18 Pro chip"}
+          value={form.specifications}
+          onChange={(event) => onChange({ specifications: event.target.value })}
+        />
+        <p className="text-xs text-slate-500 mt-1">
+          Use label: value on each line. Storage comes from the storage label or variants above.
+        </p>
+      </div>
     </div>
   );
 }

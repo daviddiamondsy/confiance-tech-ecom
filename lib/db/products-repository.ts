@@ -1,6 +1,8 @@
 import {
   finalizeStorageVariantsForSave,
+  mergeSpecificationsWithStorage,
 } from "@/lib/admin-product-form";
+import { buildCatalogProducts } from "@/lib/catalog-seed";
 import { sql } from "@/lib/db/client";
 import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
 import { slugForProductId, slugifyProductName, catalogProductIdForSlug, CATALOG_SLUGS } from "@/lib/product-slug";
@@ -407,6 +409,7 @@ export async function fetchAdminProducts(): Promise<AdminProductRecord[]> {
       badge: row.badge,
       storage: row.specifications?.Storage ?? null,
       features: row.features ?? [],
+      specifications: row.specifications ?? {},
       chinaShippingYuan: shipping.chinaShippingYuan,
       internationalShippingNgn: shipping.internationalShippingNgn,
       storageVariants: options.map((option) => ({
@@ -451,6 +454,7 @@ export interface CreateProductInput {
   storage?: string;
   colors?: string[];
   features?: string[];
+  specifications?: Record<string, string>;
   storageVariants?: Array<{ storage: string; yuan: number }>;
   chinaShippingYuan?: ChinaShippingYuan;
   internationalShippingNgn?: InternationalShippingNgn;
@@ -469,6 +473,7 @@ export interface AdminProductRecord {
   badge: string | null;
   storage: string | null;
   features: string[];
+  specifications: Record<string, string>;
   chinaShippingYuan: number;
   internationalShippingNgn: number;
   storageVariants: Array<{ storage: string; yuan: number }>;
@@ -520,6 +525,23 @@ function buildProductSpecs(input: {
     ...(input.storage ? { Storage: input.storage } : {}),
     ...(isIphone ? { "Battery health": BATTERY_HEALTH_SPEC } : {}),
   };
+}
+
+function resolveProductSpecifications(input: {
+  specifications?: Record<string, string>;
+  storage?: string;
+  productName: string;
+  existing?: Record<string, string>;
+}): Record<string, string> {
+  if (input.specifications !== undefined) {
+    return mergeSpecificationsWithStorage(input.specifications, input.storage);
+  }
+
+  if (input.existing && Object.keys(input.existing).length > 0) {
+    return mergeSpecificationsWithStorage(input.existing, input.storage);
+  }
+
+  return buildProductSpecs({ storage: input.storage, productName: input.productName });
 }
 
 function resolveStorageVariants(input: {
@@ -684,7 +706,11 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
       : isIphone
         ? [BATTERY_HEALTH_FEATURE, "UK Grade A condition with accessories included", "Inspected, tested, and certified"]
         : ["UK Grade A condition with accessories included", "Inspected, tested, and certified"]);
-  const specifications = buildProductSpecs({ storage, productName: name });
+  const specifications = resolveProductSpecifications({
+    specifications: input.specifications,
+    storage,
+    productName: name,
+  });
 
   await sql.query(
     `INSERT INTO products (
@@ -824,9 +850,11 @@ export async function updateAdminProduct(
 
   const storage = storageInput;
   const price = priceFromYuan(yuanCost, config, shipping);
-  const specifications = buildProductSpecs({
+  const specifications = resolveProductSpecifications({
+    specifications: input.specifications,
     storage,
     productName: name,
+    existing: existing.specifications,
   });
 
   const previousBaseName = stripConditionSuffix(existing.name);
@@ -910,6 +938,41 @@ export async function updateAdminProduct(
   const updated = products.find((product) => product.id === productId);
   if (!updated) {
     throw new Error("NOT_FOUND");
+  }
+
+  return updated;
+}
+
+/** Restore full specifications from catalog-seed for known product ids. */
+export async function backfillCatalogSpecifications(): Promise<number> {
+  const catalog = buildCatalogProducts();
+  let updated = 0;
+
+  for (const seedProduct of catalog) {
+    const productId = seedProduct.id;
+    const { rows } = await sql<{ id: string }>`
+      SELECT id FROM products WHERE id = ${productId} LIMIT 1
+    `;
+    if (!rows[0]) continue;
+
+    const { rows: storageRows } = await sql<{ storage: string }>`
+      SELECT storage
+      FROM product_storage_options
+      WHERE product_id = ${productId}
+      ORDER BY sort_order ASC
+      LIMIT 1
+    `;
+
+    const specifications = mergeSpecificationsWithStorage(
+      seedProduct.specifications,
+      storageRows[0]?.storage ?? seedProduct.specifications.Storage
+    );
+
+    await sql.query(
+      `UPDATE products SET specifications = $1::jsonb, updated_at = NOW() WHERE id = $2`,
+      [JSON.stringify(specifications), productId]
+    );
+    updated += 1;
   }
 
   return updated;
