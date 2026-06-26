@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import CustomerForm from "@/components/CustomerForm";
+import ReferralDiscountBanner from "@/components/ReferralDiscountBanner";
 import ImageCarousel from "@/components/ImageCarousel";
 import ProductSpecifications from "@/components/ProductSpecifications";
 import TrustFeaturesGrid from "@/components/TrustFeaturesGrid";
@@ -102,6 +103,8 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                 </div>
               </div>
             )}
+
+            <ReferralDiscountBanner catalogPriceNgn={variant.price} />
 
             <div className="flex items-center gap-3 mb-6">
               <span className="text-3xl font-bold text-primary-600">

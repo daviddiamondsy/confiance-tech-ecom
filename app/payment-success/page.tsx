@@ -2,7 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Gift } from "lucide-react";
+import Link from "next/link";
 
 function PaymentSuccessContent() {
   const router = useRouter();
@@ -44,6 +45,21 @@ function PaymentSuccessContent() {
         <p className="text-slate-600 mb-8 leading-relaxed">
           Your payment has been secured. We will contact you shortly to confirm delivery details.
         </p>
+        <div className="bg-primary-50 border border-primary-100 rounded-xl p-5 mb-8 text-left">
+          <div className="flex items-start gap-3">
+            <Gift className="h-5 w-5 text-primary-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-slate-900 mb-1">Love your new phone?</p>
+              <p className="text-sm text-slate-600 leading-relaxed mb-3">
+                Refer a friend and earn store credit when their order completes. They save on their
+                first purchase too.
+              </p>
+              <Link href="/refer" className="text-sm font-semibold text-primary-600 hover:text-primary-700">
+                Get your referral link
+              </Link>
+            </div>
+          </div>
+        </div>
         <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 mb-8">
           <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Deal ID</p>
           <p className="text-sm font-mono font-medium text-slate-900">{dealId}</p>

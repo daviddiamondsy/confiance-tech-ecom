@@ -4,6 +4,9 @@ import { sendOrderEmail } from "@/lib/order-email";
 import { deliveryDueAtFromDays, resolveDeliveryDays } from "@/lib/delivery-deadline";
 import { mapHoldamDealCreateError } from "@/lib/checkout-errors";
 import { resolveCheckoutPrice } from "@/lib/resolve-checkout-price";
+import { isPostgresConfigured } from "@/lib/db/client";
+import { computeCheckoutAmount, recordReferralOnDealCreated } from "@/lib/referral/service";
+import { getStoreCreditBalance, getReferralCodeByCode } from "@/lib/db/referral-repository";
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
@@ -17,6 +20,8 @@ export async function POST(req: NextRequest) {
       productColor,
       deliveryDays,
       customerData,
+      referralCode,
+      applyStoreCredit,
     } = await req.json();
 
     console.log("[API][create-holdam-deal] ===== START =====");
@@ -113,6 +118,32 @@ export async function POST(req: NextRequest) {
     const orderStorage = productStorage ? String(productStorage).trim() : undefined;
     const orderColor = productColor ? String(productColor).trim() : undefined;
 
+    let checkoutAmountNgn = amountNgn;
+    let referralAdjustment:
+      | Awaited<ReturnType<typeof computeCheckoutAmount>>["adjustment"]
+      | undefined;
+    let storeCreditBalanceNgn = 0;
+
+    if (isPostgresConfigured()) {
+      if (applyStoreCredit) {
+        storeCreditBalanceNgn = await getStoreCreditBalance(customerData.phone);
+      }
+
+      const pricing = await computeCheckoutAmount({
+        catalogPriceNgn: amountNgn,
+        buyerPhone: customerData.phone,
+        referralCode: referralCode ? String(referralCode) : undefined,
+        applyStoreCredit: Boolean(applyStoreCredit),
+      });
+
+      if (pricing.error) {
+        return NextResponse.json({ error: pricing.error }, { status: 400 });
+      }
+
+      checkoutAmountNgn = pricing.adjustment.finalAmountNgn;
+      referralAdjustment = pricing.adjustment;
+    }
+
     const clientPrice = Number(productPrice);
     if (
       Number.isFinite(clientPrice) &&
@@ -135,7 +166,7 @@ export async function POST(req: NextRequest) {
     const cancelProductPath = resolvedProductSlug || resolvedProductId;
 
     const dealRequest = {
-      amount: amountNgn,
+      amount: checkoutAmountNgn,
       currency: "NGN",
       seller: sellerId,
       buyerFirstName,
@@ -148,6 +179,8 @@ export async function POST(req: NextRequest) {
         productId: resolvedProductId,
         productName: resolvedProductName,
         productPrice: amountNgn,
+        catalogPriceNgn: amountNgn,
+        checkoutAmountNgn,
         productStorage: orderStorage,
         productColor: orderColor,
         deliveryDays: deliverWithinDays,
@@ -156,6 +189,10 @@ export async function POST(req: NextRequest) {
         customerAddress: customerData.address,
         customerState: customerData.state,
         buyerPhone: customerData.phone,
+        referralCode: referralAdjustment?.referralCode,
+        refereeDiscountNgn: referralAdjustment?.refereeDiscountNgn ?? 0,
+        storeCreditAppliedNgn: referralAdjustment?.storeCreditAppliedNgn ?? 0,
+        referrerCreditNgn: referralAdjustment?.referrerCreditNgn ?? 0,
       },
     };
 
@@ -163,6 +200,19 @@ export async function POST(req: NextRequest) {
     const sdkCallStart = Date.now();
 
     const deal = await holdam.deals.create(dealRequest);
+
+    if (isPostgresConfigured() && referralAdjustment) {
+      try {
+        await recordReferralOnDealCreated({
+          dealId: deal.data.id,
+          adjustment: referralAdjustment,
+          catalogPriceNgn: amountNgn,
+          buyerPhone: customerData.phone,
+        });
+      } catch (referralError) {
+        console.error("[API][create-holdam-deal] Referral record failed", referralError);
+      }
+    }
 
     const sdkCallDuration = Date.now() - sdkCallStart;
     console.log("[API][create-holdam-deal] Holdam SDK call completed", {
@@ -173,6 +223,12 @@ export async function POST(req: NextRequest) {
     console.log("[API][create-holdam-deal] Deal keys:", Object.keys(deal));
 
     // Do not block redirect to checkout — email runs in background
+    let referrerName: string | null | undefined;
+    if (referralAdjustment?.referralCode && isPostgresConfigured()) {
+      const codeRow = await getReferralCodeByCode(referralAdjustment.referralCode);
+      referrerName = codeRow?.referrer_name;
+    }
+
     void sendOrderEmail({
       productId: resolvedProductId,
       productName: resolvedProductName,
@@ -184,6 +240,21 @@ export async function POST(req: NextRequest) {
       customerAddress: customerData.address,
       customerState: customerData.state,
       paymentStatus: "pending",
+      referral:
+        referralAdjustment &&
+        (referralAdjustment.referralCode ||
+          referralAdjustment.refereeDiscountNgn > 0 ||
+          referralAdjustment.storeCreditAppliedNgn > 0 ||
+          checkoutAmountNgn !== amountNgn)
+          ? {
+              referralCode: referralAdjustment.referralCode,
+              referrerName,
+              catalogPriceNgn: amountNgn,
+              checkoutAmountNgn,
+              refereeDiscountNgn: referralAdjustment.refereeDiscountNgn,
+              storeCreditAppliedNgn: referralAdjustment.storeCreditAppliedNgn,
+            }
+          : undefined,
     }).catch((err) => {
       console.error("[API][create-holdam-deal] Order email failed:", err);
     });
@@ -203,6 +274,15 @@ export async function POST(req: NextRequest) {
       dealId: dealData.id,
       deal: dealData,
       checkoutUrl,
+      pricing: referralAdjustment
+        ? {
+            catalogPriceNgn: amountNgn,
+            checkoutAmountNgn,
+            refereeDiscountNgn: referralAdjustment.refereeDiscountNgn,
+            storeCreditAppliedNgn: referralAdjustment.storeCreditAppliedNgn,
+            storeCreditBalanceNgn,
+          }
+        : undefined,
     });
   } catch (error) {
     const errorDuration = Date.now() - startTime;

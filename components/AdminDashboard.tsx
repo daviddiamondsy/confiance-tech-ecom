@@ -12,6 +12,7 @@ import {
 import AdminShell, { type AdminTab } from "@/components/admin/AdminShell";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import ProductEditModal from "@/components/admin/ProductEditModal";
+import AdminReferralsPanel from "@/components/admin/AdminReferralsPanel";
 import ProductFormFields from "@/components/admin/ProductFormFields";
 import {
   adminProductToForm,
@@ -625,6 +626,9 @@ export default function AdminDashboard() {
               <button type="button" className="btn-outline text-sm py-2 px-4" onClick={() => setActiveTab("filters")}>
                 Edit filter tags
               </button>
+              <button type="button" className="btn-outline text-sm py-2 px-4" onClick={() => setActiveTab("referrals")}>
+                Referral links
+              </button>
               <button
                 type="button"
                 className="btn-outline text-sm py-2 px-4"
@@ -1043,6 +1047,8 @@ export default function AdminDashboard() {
           </section>
         </div>
       )}
+
+      {activeTab === "referrals" && <AdminReferralsPanel />}
 
       {editingProduct && editForms[editingProduct.id] && (
         <ProductEditModal

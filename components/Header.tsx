@@ -11,6 +11,7 @@ export default function Header() {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/products", label: "Products" },
+    { href: "/refer", label: "Refer & Earn" },
     { href: "/#faq", label: "FAQ" },
   ];
 
