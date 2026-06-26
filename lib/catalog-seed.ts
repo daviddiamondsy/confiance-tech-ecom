@@ -238,7 +238,7 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Connectivity: "Wi-Fi 6E, Bluetooth 5.3, Thunderbolt 4",
       },
       storageOptions: [
-        { storage: "512GBSSD", price: catalogPrice("Apple MacBook Pro M4 24GB 512GB (New)", 10500) },
+        { storage: "512GB", price: catalogPrice("Apple MacBook Pro M4 24GB 512GB (New)", 10500) },
       ],
     },
     {
