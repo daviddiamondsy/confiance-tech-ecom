@@ -8,6 +8,7 @@ import {
   appendLedgerEntry,
   codeExists,
   countReferrerEarnedThisMonth,
+  deleteReferralCodeById,
   getReferralCodeByCode,
   getReferralCodeByPhone,
   getReferralEventByDealId,
@@ -389,6 +390,13 @@ export async function processReferralWebhook(params: {
       }
     }
     await markWebhookEventProcessed(eventKey);
+  }
+}
+
+export async function adminDeleteReferral(id: number): Promise<void> {
+  const deleted = await deleteReferralCodeById(id);
+  if (!deleted) {
+    throw new Error("Referral link not found.");
   }
 }
 

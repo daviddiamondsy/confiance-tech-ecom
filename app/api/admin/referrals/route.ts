@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { getPostgresErrorMessage } from "@/lib/db/postgres-errors";
-import { adminCreateOrGetReferralCode, listAdminReferrals } from "@/lib/referral/service";
+import { adminCreateOrGetReferralCode, adminDeleteReferral, listAdminReferrals } from "@/lib/referral/service";
 
 function postgresRequired() {
   return NextResponse.json(
@@ -55,5 +55,33 @@ export async function POST(req: NextRequest) {
     const message = error instanceof Error ? error.message : "Could not create referral link.";
     console.error("[admin/referrals] create failed", error);
     return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!isPostgresConfigured()) {
+    return postgresRequired();
+  }
+
+  const idParam = req.nextUrl.searchParams.get("id")?.trim();
+  const id = idParam ? Number(idParam) : NaN;
+  if (!Number.isFinite(id) || id <= 0) {
+    return NextResponse.json({ error: "id query param is required" }, { status: 400 });
+  }
+
+  try {
+    await adminDeleteReferral(id);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not delete referral link.";
+    const status = message === "Referral link not found." ? 404 : 500;
+    console.error("[admin/referrals] delete failed", error);
+    return NextResponse.json(
+      { error: message, detail: status === 500 ? getPostgresErrorMessage(error) : undefined },
+      { status }
+    );
   }
 }
