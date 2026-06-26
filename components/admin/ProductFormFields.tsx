@@ -1,5 +1,12 @@
+"use client";
+
+import { useState } from "react";
+import { Sparkles } from "lucide-react";
 import type { ProductFormState } from "@/lib/admin-product-form";
-import { usesStorageVariantsField } from "@/lib/admin-product-form";
+import {
+  applyGeneratedProductCopyToForm,
+  usesStorageVariantsField,
+} from "@/lib/admin-product-form";
 import {
   CHINA_SHIPPING_YUAN_OPTIONS,
   INTERNATIONAL_SHIPPING_NGN_OPTIONS,
@@ -28,6 +35,64 @@ export default function ProductFormFields({
   onChange,
 }: ProductFormFieldsProps) {
   const usesStorageVariants = usesStorageVariantsField(form);
+  const [generatingCopy, setGeneratingCopy] = useState(false);
+  const [generateCopyError, setGenerateCopyError] = useState("");
+
+  async function handleGenerateCopy() {
+    const productName = form.name.trim();
+    if (!productName) {
+      setGenerateCopyError("Enter a product name first.");
+      return;
+    }
+
+    setGeneratingCopy(true);
+    setGenerateCopyError("");
+
+    try {
+      const response = await fetch("/api/admin/generate-product-copy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productName,
+          filterSlugs: form.filterSlugs,
+          storage: usesStorageVariants ? undefined : form.storage.trim() || undefined,
+        }),
+      });
+
+      const payload = (await response.json()) as {
+        error?: string;
+        description?: string;
+        features?: string[];
+        specifications?: Record<string, string>;
+      };
+
+      if (!response.ok) {
+        setGenerateCopyError(payload.error ?? "Could not generate copy.");
+        return;
+      }
+
+      if (
+        !payload.description ||
+        !payload.features?.length ||
+        !payload.specifications
+      ) {
+        setGenerateCopyError("AI returned incomplete copy. Try again.");
+        return;
+      }
+
+      onChange(
+        applyGeneratedProductCopyToForm({
+          description: payload.description,
+          features: payload.features,
+          specifications: payload.specifications,
+        })
+      );
+    } catch {
+      setGenerateCopyError("Could not generate copy. Check your connection and try again.");
+    } finally {
+      setGeneratingCopy(false);
+    }
+  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -47,6 +112,25 @@ export default function ProductFormFields({
         <p className="text-xs text-slate-500 mt-1">
           “(Clean)” or “(New)” is added from the filter tag (New vs Clean).
         </p>
+        <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2">
+          <button
+            type="button"
+            className="btn-outline inline-flex items-center justify-center gap-2 text-sm"
+            onClick={handleGenerateCopy}
+            disabled={generatingCopy || !form.name.trim()}
+          >
+            <Sparkles className="h-4 w-4" aria-hidden />
+            {generatingCopy ? "Generating..." : "Generate description and specs"}
+          </button>
+          <p className="text-xs text-slate-500">
+            Uses OpenAI from ADMIN_OPENAI_API_KEY. Fills description, features, and specifications.
+          </p>
+        </div>
+        {generateCopyError ? (
+          <p className="text-xs text-red-600 mt-2" role="alert">
+            {generateCopyError}
+          </p>
+        ) : null}
       </div>
 
       <div>

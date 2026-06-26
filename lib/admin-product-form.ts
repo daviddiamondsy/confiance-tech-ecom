@@ -247,6 +247,18 @@ export function formatSpecificationsInput(
     .join("\n");
 }
 
+export function applyGeneratedProductCopyToForm(copy: {
+  description: string;
+  features: string[];
+  specifications: Record<string, string>;
+}): Pick<ProductFormState, "description" | "features" | "specifications"> {
+  return {
+    description: copy.description,
+    features: copy.features.join("\n"),
+    specifications: formatSpecificationsInput(copy.specifications),
+  };
+}
+
 export function mergeSpecificationsWithStorage(
   specs: Record<string, string> | undefined,
   storage: string | undefined
