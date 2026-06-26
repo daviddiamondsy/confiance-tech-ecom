@@ -18,6 +18,7 @@ export interface OrderEmailPayload {
   customerAddress: string;
   customerState: string;
   paymentStatus: "pending" | "paid";
+  dealId?: string;
   confirmationFee?: number;
   stripeSessionId?: string;
   referral?: OrderEmailReferralDetails;
@@ -64,6 +65,7 @@ const buildEmailHtml = (payload: OrderEmailPayload) => {
   const rows: [string, string][] = [
     ["Product", payload.productName || "N/A"],
     ["Product ID", payload.productId || "N/A"],
+    ["Deal ID", payload.dealId || "N/A"],
     ["Size", payload.productStorage || "N/A"],
     ["Color", payload.productColor || "N/A"],
     ["Product Price", formatCurrency(payload.productPrice)],
@@ -105,6 +107,7 @@ const buildEmailText = (payload: OrderEmailPayload) => {
     "",
     `Product: ${payload.productName || "N/A"}`,
     `Product ID: ${payload.productId || "N/A"}`,
+    `Deal ID: ${payload.dealId || "N/A"}`,
     `Size: ${payload.productStorage || "N/A"}`,
     `Color: ${payload.productColor || "N/A"}`,
     `Product Price: ${formatCurrency(payload.productPrice)}`,
@@ -121,18 +124,21 @@ const buildEmailText = (payload: OrderEmailPayload) => {
 
 export async function sendOrderEmail(payload: OrderEmailPayload) {
   const resendApiKey = process.env.RESEND_API_KEY;
-  const notificationEmail = process.env.ORDER_NOTIFICATION_EMAIL;
-  const fromEmail = process.env.ORDER_FROM_EMAIL || "onboarding@resend.dev";
+  const notificationEmail = process.env.ORDER_NOTIFICATION_EMAIL?.trim();
+  const fromEmail = process.env.ORDER_FROM_EMAIL?.trim() || "onboarding@resend.dev";
+  const fromName = process.env.ORDER_FROM_NAME?.trim() || "Confiance Tech";
+  const from = `${fromName} <${fromEmail}>`;
 
   console.log("[Email][sendOrderEmail] Preparing order email", {
     productId: payload.productId,
     productName: payload.productName,
+    dealId: payload.dealId,
     paymentStatus: payload.paymentStatus,
     customerName: payload.customerName,
     referralCode: payload.referral?.referralCode,
     hasResendApiKey: Boolean(resendApiKey),
     notificationEmail,
-    fromEmail,
+    from,
   });
 
   if (!resendApiKey) {
@@ -145,10 +151,13 @@ export async function sendOrderEmail(payload: OrderEmailPayload) {
     throw new Error("Missing ORDER_NOTIFICATION_EMAIL environment variable.");
   }
 
+  const subjectProduct = payload.productName ? ` - ${payload.productName}` : "";
+  const subject = `New Order${subjectProduct}`;
+
   console.log("[Email][sendOrderEmail] Sending request to Resend", {
     to: notificationEmail,
-    from: fromEmail,
-    subject: `New Order${payload.productName ? ` - ${payload.productName}` : ""}`,
+    from,
+    subject,
   });
 
   const response = await fetch("https://api.resend.com/emails", {
@@ -158,9 +167,9 @@ export async function sendOrderEmail(payload: OrderEmailPayload) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: fromEmail,
+      from,
       to: [notificationEmail],
-      subject: `New Order${payload.productName ? ` - ${payload.productName}` : ""}`,
+      subject,
       html: buildEmailHtml(payload),
       text: buildEmailText(payload),
       reply_to: notificationEmail,
@@ -169,14 +178,39 @@ export async function sendOrderEmail(payload: OrderEmailPayload) {
 
   if (!response.ok) {
     const errorText = await response.text();
+    let resendMessage = errorText;
+    try {
+      const parsed = JSON.parse(errorText) as { message?: string };
+      if (parsed.message) resendMessage = parsed.message;
+    } catch {
+      /* use raw body */
+    }
+
     console.error("[Email][sendOrderEmail] Resend request failed", {
       status: response.status,
+      to: notificationEmail,
+      from,
+      resendMessage,
       errorText,
     });
-    throw new Error(`Resend request failed: ${response.status} ${errorText}`);
+
+    if (
+      fromEmail === "onboarding@resend.dev" &&
+      (response.status === 403 || /only send testing emails to your own email/i.test(resendMessage))
+    ) {
+      throw new Error(
+        `Resend rejected the send: ${resendMessage}. With onboarding@resend.dev, ORDER_NOTIFICATION_EMAIL must be the email on your Resend account, or verify a domain and set ORDER_FROM_EMAIL to that domain.`
+      );
+    }
+
+    throw new Error(`Resend request failed: ${response.status} ${resendMessage}`);
   }
 
-  console.log("[Email][sendOrderEmail] Resend request succeeded");
+  const result = await response.json();
+  console.log("[Email][sendOrderEmail] Resend request succeeded", {
+    to: notificationEmail,
+    resendId: result?.id,
+  });
 
-  return response.json();
+  return result;
 }

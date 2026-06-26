@@ -229,35 +229,46 @@ export async function POST(req: NextRequest) {
       referrerName = codeRow?.referrer_name;
     }
 
-    void sendOrderEmail({
-      productId: resolvedProductId,
-      productName: resolvedProductName,
-      productPrice: amountNgn,
-      productStorage: orderStorage,
-      productColor: orderColor,
-      customerName: customerData.name,
-      customerPhone: customerData.phone,
-      customerAddress: customerData.address,
-      customerState: customerData.state,
-      paymentStatus: "pending",
-      referral:
-        referralAdjustment &&
-        (referralAdjustment.referralCode ||
-          referralAdjustment.refereeDiscountNgn > 0 ||
-          referralAdjustment.storeCreditAppliedNgn > 0 ||
-          checkoutAmountNgn !== amountNgn)
-          ? {
-              referralCode: referralAdjustment.referralCode,
-              referrerName,
-              catalogPriceNgn: amountNgn,
-              checkoutAmountNgn,
-              refereeDiscountNgn: referralAdjustment.refereeDiscountNgn,
-              storeCreditAppliedNgn: referralAdjustment.storeCreditAppliedNgn,
-            }
-          : undefined,
-    }).catch((err) => {
-      console.error("[API][create-holdam-deal] Order email failed:", err);
-    });
+    try {
+      await sendOrderEmail({
+        productId: resolvedProductId,
+        productName: resolvedProductName,
+        productPrice: amountNgn,
+        productStorage: orderStorage,
+        productColor: orderColor,
+        customerName: customerData.name,
+        customerPhone: customerData.phone,
+        customerAddress: customerData.address,
+        customerState: customerData.state,
+        paymentStatus: "pending",
+        dealId: deal.data.id,
+        referral:
+          referralAdjustment &&
+          (referralAdjustment.referralCode ||
+            referralAdjustment.refereeDiscountNgn > 0 ||
+            referralAdjustment.storeCreditAppliedNgn > 0 ||
+            checkoutAmountNgn !== amountNgn)
+            ? {
+                referralCode: referralAdjustment.referralCode,
+                referrerName,
+                catalogPriceNgn: amountNgn,
+                checkoutAmountNgn,
+                refereeDiscountNgn: referralAdjustment.refereeDiscountNgn,
+                storeCreditAppliedNgn: referralAdjustment.storeCreditAppliedNgn,
+              }
+            : undefined,
+      });
+      console.log("[API][create-holdam-deal] Order email sent", {
+        dealId: deal.data.id,
+        durationMs: Date.now() - startTime,
+      });
+    } catch (emailError) {
+      // Checkout must still proceed if Resend fails.
+      console.error("[API][create-holdam-deal] Order email failed (deal still created)", {
+        dealId: deal.data.id,
+        emailError,
+      });
+    }
 
     const dealData = deal.data;
     const checkoutUrl = dealData.checkoutUrl;
