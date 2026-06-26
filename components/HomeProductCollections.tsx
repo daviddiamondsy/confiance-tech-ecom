@@ -41,7 +41,7 @@ export default function HomeProductCollections({ products }: HomeProductCollecti
           <section key={tag.slug} aria-labelledby={`collection-${tag.slug}`}>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
               <div>
-                <span className="section-label">Collection</span>
+                {/* <span className="section-label">Collection</span> */}
                 <h2
                   id={`collection-${tag.slug}`}
                   className="font-display text-2xl md:text-3xl font-bold text-slate-900 mt-2 tracking-tight"
