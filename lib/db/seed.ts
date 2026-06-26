@@ -2,7 +2,7 @@ import { DEFAULT_PRODUCT_COLORS, CATALOG_YUAN, CATALOG_FILTERS } from "@/lib/cat
 import { buildCatalogProducts } from "@/lib/catalog-seed";
 import { seedDefaultColors } from "@/lib/db/colors-repository";
 import { seedDefaultProductFilters } from "@/lib/db/filters-repository";
-import { DEFAULT_PRODUCT_FILTER_TAGS } from "@/lib/product-filters";
+import { DEFAULT_PRODUCT_FILTER_TAGS } from "@/lib/product-filter-tags";
 import {
   upsertCatalogProducts,
   type SeedProductInput,

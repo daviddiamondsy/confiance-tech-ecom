@@ -3,7 +3,7 @@ import { sql, sqlDdl } from "@/lib/db/client";
 import { isPostgresErrorCode } from "@/lib/db/postgres-errors";
 import { slugifyProductName } from "@/lib/product-slug";
 import { normalizeProductName, stripConditionSuffix } from "@/lib/product-condition-suffix";
-import type { ProductFilterTag } from "@/lib/product-filters";
+import type { ProductFilterTag } from "@/lib/product-filter-tags";
 
 /** Idempotent DDL for filter tags on databases that predate product_filters. */
 export async function ensureProductFiltersSchema(): Promise<void> {

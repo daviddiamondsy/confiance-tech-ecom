@@ -1,19 +1,21 @@
 import { isPostgresConfigured } from "@/lib/db/client";
 import { fetchProductFiltersFromDb } from "@/lib/db/filters-repository";
+import {
+  CLEAN_PRODUCT_FILTER_SLUG,
+  DEFAULT_PRODUCT_FILTER_TAGS,
+  NEW_PRODUCT_FILTER_SLUG,
+  type ProductFilterTag,
+} from "@/lib/product-filter-tags";
 
-export interface ProductFilterTag {
-  slug: string;
-  label: string;
-}
+export type { ProductFilterTag } from "@/lib/product-filter-tags";
+export {
+  CLEAN_PRODUCT_FILTER_SLUG,
+  DEFAULT_PRODUCT_FILTER_TAGS,
+  NEW_PRODUCT_FILTER_SLUG,
+  filterTagLabel,
+} from "@/lib/product-filter-tags";
 
-export const NEW_PRODUCT_FILTER_SLUG = "new";
-export const CLEAN_PRODUCT_FILTER_SLUG = "clean";
-
-export const DEFAULT_PRODUCT_FILTER_TAGS: ProductFilterTag[] = [
-  { slug: NEW_PRODUCT_FILTER_SLUG, label: "New" },
-  { slug: CLEAN_PRODUCT_FILTER_SLUG, label: "Clean" },
-];
-
+/** Server-only: load filter tags from Postgres. */
 export async function getProductFilterTags(): Promise<ProductFilterTag[]> {
   if (!isPostgresConfigured()) {
     return DEFAULT_PRODUCT_FILTER_TAGS;
@@ -29,11 +31,4 @@ export async function getProductFilterTags(): Promise<ProductFilterTag[]> {
     console.error("[product-filters] fetch failed, using defaults", error);
     return DEFAULT_PRODUCT_FILTER_TAGS;
   }
-}
-
-export function filterTagLabel(
-  slug: string,
-  filterTags: ProductFilterTag[]
-): string {
-  return filterTags.find((tag) => tag.slug === slug)?.label ?? slug;
 }

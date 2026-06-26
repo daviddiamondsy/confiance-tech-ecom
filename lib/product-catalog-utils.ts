@@ -1,5 +1,5 @@
 import type { Product } from "@/lib/product-utils";
-import type { ProductFilterTag } from "@/lib/product-filters";
+import type { ProductFilterTag } from "@/lib/product-filter-tags";
 import {
   conditionSuffixInName,
   PRODUCT_CONDITION_SUFFIX,
@@ -7,7 +7,7 @@ import {
 import {
   CLEAN_PRODUCT_FILTER_SLUG,
   NEW_PRODUCT_FILTER_SLUG,
-} from "@/lib/product-filters";
+} from "@/lib/product-filter-tags";
 
 export type ProductSort = "featured" | "price-asc" | "price-desc" | "name-asc";
 export type ProductView = "grid" | "list";
