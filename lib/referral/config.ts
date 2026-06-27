@@ -17,7 +17,10 @@ export interface ReferralTier {
 /** Budget band starts at ₦0; reward sizing anchors here (~entry catalog). */
 const BUDGET_REWARD_FLOOR_NGN = 400_000;
 
-/** Friend discount: 5% of tier reward floor. Referrer credit: 6% (rounded to nearest ₦1,000). */
+/** Friend ~3.8% and referrer ~4.5% of tier floor (~8.3% combined at floor). Moderate vs 20%/15% markup. */
+const REFERRAL_FRIEND_RATE = 0.038;
+const REFERRAL_REFERRER_RATE = 0.045;
+
 function tierRewards(friendRate: number, referrerRate: number, floorNgn: number) {
   return {
     refereeDiscountNgn: Math.round((floorNgn * friendRate) / 1000) * 1000,
@@ -31,27 +34,27 @@ export const REFERRAL_TIERS: ReferralTier[] = [
     label: "Budget",
     minPriceNgn: 0,
     maxPriceNgn: 550_000,
-    ...tierRewards(0.05, 0.06, BUDGET_REWARD_FLOOR_NGN),
+    ...tierRewards(REFERRAL_FRIEND_RATE, REFERRAL_REFERRER_RATE, BUDGET_REWARD_FLOOR_NGN),
   },
   {
     id: "mid",
     label: "Mid",
     minPriceNgn: 550_000,
     maxPriceNgn: 850_000,
-    ...tierRewards(0.05, 0.06, 550_000),
+    ...tierRewards(REFERRAL_FRIEND_RATE, REFERRAL_REFERRER_RATE, 550_000),
   },
   {
     id: "premium",
     label: "Premium",
     minPriceNgn: 850_000,
     maxPriceNgn: 1_500_000,
-    ...tierRewards(0.05, 0.06, 850_000),
+    ...tierRewards(REFERRAL_FRIEND_RATE, REFERRAL_REFERRER_RATE, 850_000),
   },
   {
     id: "jumbo",
     label: "Jumbo",
     minPriceNgn: 1_500_000,
-    ...tierRewards(0.05, 0.06, 1_500_000),
+    ...tierRewards(REFERRAL_FRIEND_RATE, REFERRAL_REFERRER_RATE, 1_500_000),
   },
 ];
 
