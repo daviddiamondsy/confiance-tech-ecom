@@ -174,7 +174,7 @@ function ReferDashboardContent() {
               <h2 className="font-display text-xl font-bold text-slate-900">Reward tiers</h2>
             </div>
             <p className="text-sm text-slate-500 mb-4">
-              Percentages are shown at the top of each price band (lowest effective rate in that tier).
+              Percentages use each tier&apos;s price floor (friend ~5%, you ~6%).
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">

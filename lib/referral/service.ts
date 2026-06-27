@@ -1,13 +1,8 @@
-import {
-  REFERRAL_MIN_DEAL_NGN,
-  REFERRAL_MONTHLY_EARN_CAP,
-  referralTierForPrice,
-} from "@/lib/referral/config";
+import { REFERRAL_MIN_DEAL_NGN, referralTierForPrice } from "@/lib/referral/config";
 import { phonesMatch } from "@/lib/referral/phone";
 import {
   appendLedgerEntry,
   codeExists,
-  countReferrerEarnedThisMonth,
   deleteReferralCodeById,
   getReferralCodeByCode,
   getReferralCodeByPhone,
@@ -193,13 +188,6 @@ export async function previewReferralDiscount(params: {
   }
 
   const tier = referralTierForPrice(params.catalogPriceNgn);
-  const earnedThisMonth = await countReferrerEarnedThisMonth(codeRow.referrer_phone);
-  if (earnedThisMonth >= REFERRAL_MONTHLY_EARN_CAP) {
-    return {
-      valid: false,
-      reason: "This referral code has reached its monthly sharing limit. Try again next month.",
-    };
-  }
 
   return {
     valid: true,
