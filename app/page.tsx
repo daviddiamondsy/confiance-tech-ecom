@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HomeProductCollections from "@/components/HomeProductCollections";
+import HomeReferAndEarn from "@/components/HomeReferAndEarn";
 import FaqAccordion from "@/components/FaqAccordion";
 import TrustFeaturesGrid from "@/components/TrustFeaturesGrid";
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -67,6 +68,8 @@ export default async function Home() {
           <HomeProductCollections products={products} />
         </div>
       </section>
+
+      <HomeReferAndEarn />
 
       {/* FAQ Section */}
       <section id="faq" className="py-20 bg-white border-y border-slate-100">
