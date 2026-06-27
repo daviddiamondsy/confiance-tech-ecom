@@ -8,14 +8,9 @@ export const HOLDAM_DELIVERY_DAYS = (() => {
 })();
 
 /**
- * Seller delivery promise for Holdam checkout (maps to SDK deliveryDueAt).
- * Default 5 calendar days aligns with site copy ("3-5 business days").
+ * Resolve customer delivery window for Holdam checkout (SDK deliveryDays).
+ * Storefront uses HOLDAM_DELIVERY_DAYS from env at API request time (not the client).
  */
-export function deliveryDueAtFromDays(days: number, from = new Date()): string {
-  const d = Math.max(1, Math.floor(Number(days) || 5));
-  return new Date(from.getTime() + d * 24 * 60 * 60 * 1000).toISOString();
-}
-
 export function resolveDeliveryDays(
   productDeliveryDays?: number,
   envDays = process.env.HOLDAM_DELIVERY_DAYS

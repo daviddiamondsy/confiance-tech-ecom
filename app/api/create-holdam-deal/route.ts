@@ -18,7 +18,6 @@ export async function POST(req: NextRequest) {
       productPrice,
       productStorage,
       productColor,
-      deliveryDays,
       customerData,
       referralCode,
       applyStoreCredit,
@@ -143,7 +142,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const deliverWithinDays = resolveDeliveryDays(deliveryDays);
+    const deliverWithinDays = resolveDeliveryDays(undefined);
     const businessName =
       process.env.HOLDAM_BUSINESS_NAME?.trim() || "Confiance Tech";
 
