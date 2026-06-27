@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Gift, Share2, Sparkles, Wallet } from "lucide-react";
 import {
-  formatReferralRewardWithPercent,
+  formatNgn,
   formatReferralTierRange,
   REFERRAL_ATTRIBUTION_DAYS,
   REFERRAL_TIERS,
@@ -75,7 +75,7 @@ export default function HomeReferAndEarn() {
               <div className="rounded-2xl bg-white/5 border border-white/10 p-6 md:p-8">
                 <h3 className="font-display text-lg font-bold text-white mb-1">Reward tiers</h3>
                 <p className="text-sm text-slate-400 mb-6">
-                  Based on your friend&apos;s catalog price. Percentages use each tier&apos;s price floor.
+                  Based on your friend&apos;s catalog price. Amounts are fixed per tier.
                   Links stay active for {REFERRAL_ATTRIBUTION_DAYS} days.
                 </p>
                 <div className="overflow-x-auto">
@@ -97,10 +97,10 @@ export default function HomeReferAndEarn() {
                             </span>
                           </td>
                           <td className="py-3 pr-4 text-primary-200">
-                            {formatReferralRewardWithPercent(tier.refereeDiscountNgn, tier)}
+                            {formatNgn(tier.refereeDiscountNgn)}
                           </td>
                           <td className="py-3 text-white">
-                            {formatReferralRewardWithPercent(tier.referrerCreditNgn, tier)}
+                            {formatNgn(tier.referrerCreditNgn)}
                           </td>
                         </tr>
                       ))}
