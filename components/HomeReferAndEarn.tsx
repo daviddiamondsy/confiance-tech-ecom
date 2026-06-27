@@ -75,7 +75,7 @@ export default function HomeReferAndEarn() {
               <div className="rounded-2xl bg-white/5 border border-white/10 p-6 md:p-8">
                 <h3 className="font-display text-lg font-bold text-white mb-1">Reward tiers</h3>
                 <p className="text-sm text-slate-400 mb-6">
-                  Based on your friend&apos;s catalog price. Percentages are at the top of each band.
+                  Based on your friend&apos;s catalog price. Percentages use each tier&apos;s price floor.
                   Links stay active for {REFERRAL_ATTRIBUTION_DAYS} days.
                 </p>
                 <div className="overflow-x-auto">

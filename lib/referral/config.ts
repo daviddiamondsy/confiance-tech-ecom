@@ -14,45 +14,49 @@ export interface ReferralTier {
   referrerCreditNgn: number;
 }
 
+/** Budget band starts at ₦0; reward sizing anchors here (~entry catalog). */
+const BUDGET_REWARD_FLOOR_NGN = 400_000;
+
+/** Friend discount: 5% of tier reward floor. Referrer credit: 6% (rounded to nearest ₦1,000). */
+function tierRewards(friendRate: number, referrerRate: number, floorNgn: number) {
+  return {
+    refereeDiscountNgn: Math.round((floorNgn * friendRate) / 1000) * 1000,
+    referrerCreditNgn: Math.round((floorNgn * referrerRate) / 1000) * 1000,
+  };
+}
+
 export const REFERRAL_TIERS: ReferralTier[] = [
   {
     id: "budget",
     label: "Budget",
     minPriceNgn: 0,
     maxPriceNgn: 550_000,
-    refereeDiscountNgn: 15_000,
-    referrerCreditNgn: 18_000,
+    ...tierRewards(0.05, 0.06, BUDGET_REWARD_FLOOR_NGN),
   },
   {
     id: "mid",
     label: "Mid",
     minPriceNgn: 550_000,
     maxPriceNgn: 850_000,
-    refereeDiscountNgn: 25_000,
-    referrerCreditNgn: 30_000,
+    ...tierRewards(0.05, 0.06, 550_000),
   },
   {
     id: "premium",
     label: "Premium",
     minPriceNgn: 850_000,
     maxPriceNgn: 1_500_000,
-    refereeDiscountNgn: 40_000,
-    referrerCreditNgn: 50_000,
+    ...tierRewards(0.05, 0.06, 850_000),
   },
   {
     id: "jumbo",
     label: "Jumbo",
     minPriceNgn: 1_500_000,
-    refereeDiscountNgn: 60_000,
-    referrerCreditNgn: 75_000,
+    ...tierRewards(0.05, 0.06, 1_500_000),
   },
 ];
 
 /** Attribution window for referral links (days). */
-export const REFERRAL_ATTRIBUTION_DAYS = 30;
-
-/** Max successful referral credits a referrer can earn per calendar month. */
-export const REFERRAL_MONTHLY_EARN_CAP = 5;
+export const REFERRAL_ATTRIBUTION_DAYS = 60;
 
 /** Holdam minimum deal size fallback when env is unset. */
 export const REFERRAL_MIN_DEAL_NGN = Number(process.env.REFERRAL_MIN_DEAL_NGN) || 25_000;
@@ -84,12 +88,16 @@ export function formatReferralTierRange(tier: ReferralTier): string {
   return `${formatNgn(tier.minPriceNgn)} to ${formatNgn(tier.maxPriceNgn - 1)}`;
 }
 
-/** Top of a tier band (lowest effective % in that band). */
-export function referralTierPercentReferencePrice(tier: ReferralTier): number {
-  if (tier.maxPriceNgn != null) {
-    return tier.maxPriceNgn - 1;
+/** Tier floor for reward sizing and effective % display. */
+export function referralTierRewardFloor(tier: ReferralTier): number {
+  if (tier.minPriceNgn > 0) {
+    return tier.minPriceNgn;
   }
-  return tier.minPriceNgn;
+  return BUDGET_REWARD_FLOOR_NGN;
+}
+
+export function referralTierPercentReferencePrice(tier: ReferralTier): number {
+  return referralTierRewardFloor(tier);
 }
 
 export function referralEffectivePercent(amount: number, tier: ReferralTier): number {
