@@ -1,5 +1,6 @@
-import { REFERRAL_MIN_DEAL_NGN, referralTierForPrice } from "@/lib/referral/config";
+import { REFERRAL_MIN_DEAL_NGN, REFERRAL_TIERS, referralTierForPrice } from "@/lib/referral/config";
 import { phonesMatch } from "@/lib/referral/phone";
+import { maskRefereePhone, storeCreditExpiresAt } from "@/lib/referral/store-credit";
 import {
   appendLedgerEntry,
   codeExists,
@@ -13,6 +14,7 @@ import {
   insertReferralEvent,
   isWebhookEventProcessed,
   listReferralCodesForAdmin,
+  listReferralEventsForReferrer,
   markReferralEventEarned,
   markWebhookEventProcessed,
   refereeAlreadyUsedReferral,
@@ -156,17 +158,19 @@ export async function listAdminReferrals(limit = 100) {
   const rows = await listReferralCodesForAdmin(limit);
   const siteBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://confiance.tech";
 
-  return rows.map((row) => ({
-    id: row.id,
-    code: row.code,
-    referrerPhone: row.referrer_phone,
-    referrerName: row.referrer_name,
-    createdAt: row.created_at,
-    earnedCount: row.earned_count,
-    pendingCount: row.pending_count,
-    storeCreditBalanceNgn: row.store_credit_balance_ngn,
-    shareUrl: referralShareUrl(row.code, siteBaseUrl),
-  }));
+  return Promise.all(
+    rows.map(async (row) => ({
+      id: row.id,
+      code: row.code,
+      referrerPhone: row.referrer_phone,
+      referrerName: row.referrer_name,
+      createdAt: row.created_at,
+      earnedCount: row.earned_count,
+      pendingCount: row.pending_count,
+      storeCreditBalanceNgn: await getStoreCreditBalance(row.referrer_phone),
+      shareUrl: referralShareUrl(row.code, siteBaseUrl),
+    }))
+  );
 }
 
 export async function previewReferralDiscount(params: {
@@ -303,10 +307,15 @@ export async function getReferrerDashboard(phone: string) {
     return null;
   }
 
-  const [balance, stats] = await Promise.all([
+  const [balance, stats, events] = await Promise.all([
     getStoreCreditBalance(phone),
     getReferrerStats(phone),
+    listReferralEventsForReferrer(phone),
   ]);
+
+  const tierLabelById = new Map<string, string>(
+    REFERRAL_TIERS.map((tier) => [tier.id, tier.label])
+  );
 
   return {
     code: codeRow.code,
@@ -314,6 +323,19 @@ export async function getReferrerDashboard(phone: string) {
     referrerName: codeRow.referrer_name,
     storeCreditBalanceNgn: balance,
     stats,
+    referrals: events.map((event) => ({
+      id: event.id,
+      status: event.status as "pending" | "earned",
+      refereePhoneMasked: maskRefereePhone(event.referee_phone),
+      tierLabel: tierLabelById.get(event.tier) ?? event.tier,
+      referrerCreditNgn: event.referrer_credit_ngn,
+      orderedAt: event.created_at.toISOString(),
+      earnedAt: event.earned_at?.toISOString() ?? null,
+      creditExpiresAt:
+        event.status === "earned" && event.earned_at
+          ? storeCreditExpiresAt(event.earned_at).toISOString()
+          : null,
+    })),
   };
 }
 
@@ -333,6 +355,7 @@ export async function processReferralWebhook(params: {
     if (event && event.status === "pending") {
       const earned = await markReferralEventEarned(params.dealId);
       if (earned) {
+        const earnedAt = earned.earned_at ?? new Date();
         await appendLedgerEntry({
           phone: earned.referrer_phone,
           amountNgn: earned.referrer_credit_ngn,
@@ -340,6 +363,7 @@ export async function processReferralWebhook(params: {
           referralEventId: earned.id,
           dealId: params.dealId,
           note: `Referral reward for deal ${params.dealId}`,
+          expiresAt: storeCreditExpiresAt(earnedAt),
         });
       }
     }
@@ -362,6 +386,7 @@ export async function processReferralWebhook(params: {
           referralEventId: voided.id,
           dealId: params.dealId,
           note: `Restored after ${params.eventName}`,
+          expiresAt: storeCreditExpiresAt(new Date()),
         });
       }
 
