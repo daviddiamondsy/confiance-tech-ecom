@@ -3,6 +3,7 @@ import {
   mergeSpecificationsWithStorage,
 } from "@/lib/admin-product-form";
 import { buildCatalogProducts } from "@/lib/catalog-seed";
+import { CATALOG_YUAN } from "@/lib/catalog-yuan";
 import { sql } from "@/lib/db/client";
 import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
 import { slugForProductId, slugifyProductName, catalogProductIdForSlug, CATALOG_SLUGS } from "@/lib/product-slug";
@@ -163,6 +164,24 @@ function resolvePrice(
   return storedPrice;
 }
 
+function storageOptionYuanCost(
+  productId: string,
+  storage: string,
+  optionYuan: string | null,
+  baseYuan: number | null
+): number | null {
+  if (optionYuan != null && !Number.isNaN(Number(optionYuan))) {
+    return Number(optionYuan);
+  }
+
+  const catalogYuan = CATALOG_YUAN[productId]?.storageYuan?.[storage];
+  if (catalogYuan != null) {
+    return catalogYuan;
+  }
+
+  return baseYuan;
+}
+
 function mapRowToProduct(
   row: ProductRow,
   storageRows: StorageRow[],
@@ -183,7 +202,12 @@ function mapRowToProduct(
   const storageOptions: StorageOption[] | undefined =
     storageRows.length > 0
       ? storageRows.map((option) => {
-          const yuan = option.yuan_cost != null ? Number(option.yuan_cost) : baseYuan;
+          const yuan = storageOptionYuanCost(
+            row.id,
+            option.storage,
+            option.yuan_cost,
+            baseYuan
+          );
           return {
             storage: option.storage,
             price: resolvePrice(yuan, option.price, config, shipping),
@@ -414,7 +438,8 @@ export async function fetchAdminProducts(): Promise<AdminProductRecord[]> {
       internationalShippingNgn: shipping.internationalShippingNgn,
       storageVariants: options.map((option) => ({
         storage: option.storage,
-        yuan: option.yuan_cost != null ? Number(option.yuan_cost) : yuanCost ?? 0,
+        yuan:
+          storageOptionYuanCost(row.id, option.storage, option.yuan_cost, yuanCost) ?? yuanCost ?? 0,
       })),
       colors: colorsByProduct.get(row.id) ?? [],
     };
@@ -653,7 +678,8 @@ async function syncStorageOptionPrices(
 
   const variants = storageRows.map((option) => ({
     storage: option.storage,
-    yuan: option.yuan_cost != null ? Number(option.yuan_cost) : yuanCost,
+    yuan:
+      storageOptionYuanCost(productId, option.storage, option.yuan_cost, yuanCost) ?? yuanCost,
   }));
   await replaceProductStorageOptions(productId, variants, config, shipping);
 }
@@ -884,7 +910,8 @@ export async function updateAdminProduct(
     if (storageRows.length > 0) {
       const variants = storageRows.map((option) => ({
         storage: option.storage,
-        yuan: option.yuan_cost != null ? Number(option.yuan_cost) : yuanCost,
+        yuan:
+          storageOptionYuanCost(productId, option.storage, option.yuan_cost, yuanCost) ?? yuanCost,
       }));
       await replaceProductStorageOptions(productId, variants, config, shipping);
     }

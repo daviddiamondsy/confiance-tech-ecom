@@ -17,16 +17,13 @@ import ProductFormFields from "@/components/admin/ProductFormFields";
 import {
   adminProductToForm,
   emptyProductForm,
-  primaryYuanFromForm,
+  previewVariantPricesFromForm,
   productFormPayloadForSave,
   storageVariantsFieldError,
   type ProductFormState,
+  type VariantPricePreview,
 } from "@/lib/admin-product-form";
-import { priceFromYuan, sellingMarkupForYuan, type PricingConfig } from "@/lib/pricing";
-import {
-  parseChinaShippingYuan,
-  parseInternationalShippingNgn,
-} from "@/lib/product-shipping";
+import type { PricingConfig } from "@/lib/pricing";
 import type { AdminProductRecord } from "@/lib/db/products-repository";
 
 interface ProductFilterTag {
@@ -41,24 +38,21 @@ const emptyFilterForm = {
 
 const isDev = process.env.NODE_ENV === "development";
 
-function previewFromForm(form: ProductFormState, pricing: PricingConfig) {
-  const yuan = primaryYuanFromForm(form);
-  if (yuan == null) {
-    return { previewPrice: null, previewMarkup: null };
+function previewFromForm(form: ProductFormState, pricing: PricingConfig): {
+  previewPrice: number | null;
+  previewMarkup: number | null;
+  variantPreviews: VariantPricePreview[];
+} {
+  const variantPreviews = previewVariantPricesFromForm(form, pricing);
+  if (variantPreviews.length === 0) {
+    return { previewPrice: null, previewMarkup: null, variantPreviews: [] };
   }
 
-  try {
-    const shipping = {
-      chinaShippingYuan: parseChinaShippingYuan(form.chinaShippingYuan),
-      internationalShippingNgn: parseInternationalShippingNgn(form.internationalShippingNgn),
-    };
-    return {
-      previewPrice: priceFromYuan(yuan, pricing, shipping),
-      previewMarkup: sellingMarkupForYuan(yuan, pricing),
-    };
-  } catch {
-    return { previewPrice: null, previewMarkup: null };
-  }
+  return {
+    previewPrice: variantPreviews[0].price,
+    previewMarkup: variantPreviews[0].markup,
+    variantPreviews,
+  };
 }
 
 export default function AdminDashboard() {
@@ -123,7 +117,7 @@ export default function AdminDashboard() {
 
   const editingPreview = useMemo(() => {
     if (!editingProductId || !editForms[editingProductId]) {
-      return { previewPrice: null, previewMarkup: null };
+      return { previewPrice: null, previewMarkup: null, variantPreviews: [] };
     }
     return previewFromForm(editForms[editingProductId], pricing);
   }, [editingProductId, editForms, pricing]);
@@ -1025,6 +1019,7 @@ export default function AdminDashboard() {
                 filterTags={filterTags}
                 previewPrice={createPreview.previewPrice}
                 previewMarkup={createPreview.previewMarkup}
+                variantPreviews={createPreview.variantPreviews}
                 onChange={(updates) => setProductForm((prev) => ({ ...prev, ...updates }))}
               />
 
@@ -1057,6 +1052,7 @@ export default function AdminDashboard() {
           filterTags={filterTags}
           previewPrice={editingPreview.previewPrice}
           previewMarkup={editingPreview.previewMarkup}
+          variantPreviews={editingPreview.variantPreviews}
           saving={savingEditId === editingProduct.id}
           message={editMessages[editingProduct.id] ?? ""}
           onChange={(updates) =>

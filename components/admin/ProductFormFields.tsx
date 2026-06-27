@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
-import type { ProductFormState } from "@/lib/admin-product-form";
+import type { ProductFormState, VariantPricePreview } from "@/lib/admin-product-form";
 import {
   applyGeneratedProductCopyToForm,
   usesStorageVariantsField,
@@ -23,6 +23,7 @@ interface ProductFormFieldsProps {
   filterTags: ProductFilterTag[];
   previewPrice: number | null;
   previewMarkup: number | null;
+  variantPreviews?: VariantPricePreview[];
   onChange: (updates: Partial<ProductFormState>) => void;
 }
 
@@ -32,6 +33,7 @@ export default function ProductFormFields({
   filterTags,
   previewPrice,
   previewMarkup,
+  variantPreviews = [],
   onChange,
 }: ProductFormFieldsProps) {
   const usesStorageVariants = usesStorageVariantsField(form);
@@ -152,13 +154,12 @@ export default function ProductFormFields({
           <p className="text-xs text-slate-500 mt-1">
             Pricing comes from storage variants below. The first line sets the listing price.
           </p>
-        ) : null}
-        {previewPrice != null && (
+        ) : previewPrice != null ? (
           <p className="text-xs text-primary-700 mt-1">
             Estimated price: ₦{previewPrice.toLocaleString()}
             {previewMarkup != null && ` (markup x${previewMarkup})`}
           </p>
-        )}
+        ) : null}
       </div>
 
       <div>
@@ -369,6 +370,16 @@ export default function ProductFormFields({
           One per line or comma-separated. Each line needs storage:yuan.
           Use this field for multiple sizes. Do not list sizes in the product name or storage label.
         </p>
+        {variantPreviews.length > 0 && (
+          <ul className="text-xs text-primary-700 mt-2 space-y-1">
+            {variantPreviews.map((variant) => (
+              <li key={variant.storage}>
+                {variant.storage} ({variant.yuan}¥): ₦{variant.price.toLocaleString()} (markup x
+                {variant.markup})
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="sm:col-span-2">
