@@ -3,11 +3,14 @@ import { stripConditionSuffix } from "@/lib/product-condition-suffix";
 import {
   formatChinaShippingYuan,
   formatInternationalShippingNgn,
+  parseChinaShippingYuan,
+  parseInternationalShippingNgn,
   DEFAULT_CHINA_SHIPPING_YUAN,
   DEFAULT_INTERNATIONAL_SHIPPING_NGN,
   type ChinaShippingYuan,
   type InternationalShippingNgn,
 } from "@/lib/product-shipping";
+import { priceFromYuan, sellingMarkupForYuan, type PricingConfig } from "@/lib/pricing";
 
 export interface ProductFormState {
   name: string;
@@ -177,6 +180,53 @@ export function primaryYuanFromForm(form: Pick<ProductFormState, "yuanCost" | "s
   if (variants?.[0]?.yuan) return variants[0].yuan;
   const yuan = Number(form.yuanCost);
   return Number.isFinite(yuan) && yuan > 0 ? yuan : null;
+}
+
+export interface VariantPricePreview {
+  storage: string;
+  yuan: number;
+  price: number;
+  markup: number;
+}
+
+/** Live NGN estimates for each storage:yuan line (or single yuan cost). */
+export function previewVariantPricesFromForm(
+  form: ProductFormState,
+  pricing: PricingConfig
+): VariantPricePreview[] {
+  let shipping;
+  try {
+    shipping = {
+      chinaShippingYuan: parseChinaShippingYuan(form.chinaShippingYuan),
+      internationalShippingNgn: parseInternationalShippingNgn(form.internationalShippingNgn),
+    };
+  } catch {
+    return [];
+  }
+
+  const variants = parseStorageVariants(form.storageVariants);
+  if (variants?.length) {
+    return variants.map((variant) => ({
+      storage: variant.storage,
+      yuan: variant.yuan,
+      price: priceFromYuan(variant.yuan, pricing, shipping),
+      markup: sellingMarkupForYuan(variant.yuan, pricing),
+    }));
+  }
+
+  const yuan = Number(form.yuanCost);
+  if (!Number.isFinite(yuan) || yuan <= 0) {
+    return [];
+  }
+
+  return [
+    {
+      storage: form.storage.trim() || "Default",
+      yuan,
+      price: priceFromYuan(yuan, pricing, shipping),
+      markup: sellingMarkupForYuan(yuan, pricing),
+    },
+  ];
 }
 
 /** Strip single-price fields when storage variants drive pricing. */

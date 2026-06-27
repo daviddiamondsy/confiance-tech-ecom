@@ -3,7 +3,7 @@
 import { FormEvent } from "react";
 import { X } from "lucide-react";
 import ProductFormFields from "@/components/admin/ProductFormFields";
-import type { ProductFormState } from "@/lib/admin-product-form";
+import type { ProductFormState, VariantPricePreview } from "@/lib/admin-product-form";
 import type { AdminProductRecord } from "@/lib/db/products-repository";
 
 interface ProductFilterTag {
@@ -17,6 +17,7 @@ interface ProductEditModalProps {
   filterTags: ProductFilterTag[];
   previewPrice: number | null;
   previewMarkup: number | null;
+  variantPreviews?: VariantPricePreview[];
   saving: boolean;
   message: string;
   onChange: (updates: Partial<ProductFormState>) => void;
@@ -31,6 +32,7 @@ export default function ProductEditModal({
   filterTags,
   previewPrice,
   previewMarkup,
+  variantPreviews,
   saving,
   message,
   onChange,
@@ -77,6 +79,7 @@ export default function ProductEditModal({
             filterTags={filterTags}
             previewPrice={previewPrice}
             previewMarkup={previewMarkup}
+            variantPreviews={variantPreviews}
             onChange={onChange}
           />
 
