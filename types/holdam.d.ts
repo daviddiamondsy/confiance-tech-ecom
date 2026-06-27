@@ -6,11 +6,12 @@ declare module "@holdam/ts" {
   interface DealCreateParams {
     amount: number;
     currency: string;
-    seller: string;
+    seller?: string;
     successUrl: string;
     cancelUrl: string;
     title: string;
-    deliveryDueAt: string;
+    deliveryDays?: number;
+  deliveryDueAt?: string;
     buyerFirstName: string;
     buyerLastName?: string;
     metadata?: Record<string, unknown>;

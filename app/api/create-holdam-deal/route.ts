@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Holdam from "@holdam/ts";
 import { sendOrderEmail } from "@/lib/order-email";
-import { deliveryDueAtFromDays, resolveDeliveryDays } from "@/lib/delivery-deadline";
 import { mapHoldamDealCreateError } from "@/lib/checkout-errors";
+import { resolveDeliveryDays } from "@/lib/delivery-deadline";
 import { resolveCheckoutPrice } from "@/lib/resolve-checkout-price";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { computeCheckoutAmount, recordReferralOnDealCreated } from "@/lib/referral/service";
@@ -69,24 +69,9 @@ export async function POST(req: NextRequest) {
 
     const siteBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://confiance.tech";
 
-    const sellerId = process.env.HOLDAM_SELLER_PHONE;
-    console.log("[API][create-holdam-deal] Seller configuration", {
-      sellerId,
-      hasSellerId: !!sellerId,
-    });
-
-    if (!sellerId) {
-      console.error("[API][create-holdam-deal] Missing HOLDAM_SELLER_PHONE");
-      return NextResponse.json(
-        { error: "Payment service not configured", details: "Missing HOLDAM_SELLER_PHONE" },
-        { status: 500 }
-      );
-    }
-
     console.log("[API][create-holdam-deal] Holdam SDK params:", {
       totalAmount: productPrice,
       currency: "NGN",
-      sellerId,
       buyerPhone: customerData.phone,
     });
 
@@ -159,7 +144,6 @@ export async function POST(req: NextRequest) {
     }
 
     const deliverWithinDays = resolveDeliveryDays(deliveryDays);
-    const deliveryDueAt = deliveryDueAtFromDays(deliverWithinDays);
     const businessName =
       process.env.HOLDAM_BUSINESS_NAME?.trim() || "Confiance Tech";
 
@@ -168,11 +152,10 @@ export async function POST(req: NextRequest) {
     const dealRequest = {
       amount: checkoutAmountNgn,
       currency: "NGN",
-      seller: sellerId,
       buyerFirstName,
       buyerLastName,
       title: `${resolvedProductName}, Order for ${customerData.name}`,
-      deliveryDueAt,
+      deliveryDays: deliverWithinDays,
       successUrl: `${siteBaseUrl}/payment-success?deal_id={DEAL_ID}`,
       cancelUrl: `${siteBaseUrl}/products/${cancelProductPath}`,
       metadata: {
@@ -184,7 +167,6 @@ export async function POST(req: NextRequest) {
         productStorage: orderStorage,
         productColor: orderColor,
         deliveryDays: deliverWithinDays,
-        deliveryDueAt,
         businessName,
         customerAddress: customerData.address,
         customerState: customerData.state,
