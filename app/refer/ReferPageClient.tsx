@@ -6,7 +6,6 @@ import Footer from "@/components/Footer";
 import { Copy, Gift, Share2, Users } from "lucide-react";
 import {
   formatNgn,
-  formatReferralRewardWithPercent,
   formatReferralTierRange,
   REFERRAL_TIERS,
 } from "@/lib/referral/config";
@@ -174,7 +173,7 @@ function ReferDashboardContent() {
               <h2 className="font-display text-xl font-bold text-slate-900">Reward tiers</h2>
             </div>
             <p className="text-sm text-slate-500 mb-4">
-              Percentages use each tier&apos;s price floor (friend ~3.8%, you ~4.5%).
+              Fixed store credit amounts by your friend&apos;s catalog price band.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
@@ -195,10 +194,10 @@ function ReferDashboardContent() {
                         </span>
                       </td>
                       <td className="py-3 pr-4">
-                        {formatReferralRewardWithPercent(tier.refereeDiscountNgn, tier)}
+                        {formatNgn(tier.refereeDiscountNgn)}
                       </td>
                       <td className="py-3">
-                        {formatReferralRewardWithPercent(tier.referrerCreditNgn, tier)}
+                        {formatNgn(tier.referrerCreditNgn)}
                       </td>
                     </tr>
                   ))}
