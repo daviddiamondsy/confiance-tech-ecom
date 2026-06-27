@@ -4,7 +4,12 @@ import { Suspense, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Copy, Gift, Share2, Users } from "lucide-react";
-import { formatNgn, REFERRAL_TIERS } from "@/lib/referral/config";
+import {
+  formatNgn,
+  formatReferralRewardWithPercent,
+  formatReferralTierRange,
+  REFERRAL_TIERS,
+} from "@/lib/referral/config";
 
 interface ReferralDashboardData {
   code: string;
@@ -168,6 +173,9 @@ function ReferDashboardContent() {
               <Users className="h-5 w-5 text-primary-600" />
               <h2 className="font-display text-xl font-bold text-slate-900">Reward tiers</h2>
             </div>
+            <p className="text-sm text-slate-500 mb-4">
+              Percentages are shown at the top of each price band (lowest effective rate in that tier).
+            </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead>
@@ -180,9 +188,18 @@ function ReferDashboardContent() {
                 <tbody className="text-slate-700">
                   {REFERRAL_TIERS.map((tier) => (
                     <tr key={tier.id} className="border-b border-slate-100 last:border-0">
-                      <td className="py-3 pr-4">{tier.label}</td>
-                      <td className="py-3 pr-4">{formatNgn(tier.refereeDiscountNgn)}</td>
-                      <td className="py-3">{formatNgn(tier.referrerCreditNgn)}</td>
+                      <td className="py-3 pr-4">
+                        <span className="block font-medium text-slate-900">{tier.label}</span>
+                        <span className="block text-xs text-slate-500 mt-0.5">
+                          {formatReferralTierRange(tier)}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-4">
+                        {formatReferralRewardWithPercent(tier.refereeDiscountNgn, tier)}
+                      </td>
+                      <td className="py-3">
+                        {formatReferralRewardWithPercent(tier.referrerCreditNgn, tier)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
