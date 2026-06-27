@@ -41,9 +41,12 @@ export async function ensureReferralSchema(): Promise<void> {
       referral_event_id INTEGER REFERENCES referral_events(id),
       deal_id TEXT,
       note TEXT,
+      expires_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
+
+  await sqlDdl`ALTER TABLE store_credit_ledger ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ`;
 
   await sqlDdl`
     CREATE TABLE IF NOT EXISTS webhook_events_processed (

@@ -5,6 +5,7 @@ import {
   formatReferralTierRange,
   REFERRAL_ATTRIBUTION_DAYS,
   REFERRAL_TIERS,
+  STORE_CREDIT_EXPIRY_MONTHS,
 } from "@/lib/referral/config";
 
 const STEPS = [
@@ -46,7 +47,8 @@ export default function HomeReferAndEarn() {
                 </h2>
                 <p className="text-slate-300 leading-relaxed mb-8 max-w-xl">
                   Past buyers get a personal referral link. Friends save on their first order. You earn
-                  store credit to use on your next purchase. Rewards are store credit, not cash.
+                  store credit to use on your next purchase within {STORE_CREDIT_EXPIRY_MONTHS} months.
+                  Rewards are store credit, not cash.
                 </p>
 
                 <div className="space-y-4 mb-8">

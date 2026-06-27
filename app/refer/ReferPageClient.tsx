@@ -8,7 +8,19 @@ import {
   formatNgn,
   formatReferralTierRange,
   REFERRAL_TIERS,
+  STORE_CREDIT_EXPIRY_MONTHS,
 } from "@/lib/referral/config";
+
+interface ReferralHistoryItem {
+  id: number;
+  status: "pending" | "earned";
+  refereePhoneMasked: string;
+  tierLabel: string;
+  referrerCreditNgn: number;
+  orderedAt: string;
+  earnedAt: string | null;
+  creditExpiresAt: string | null;
+}
 
 interface ReferralDashboardData {
   code: string;
@@ -21,6 +33,15 @@ interface ReferralDashboardData {
     earnedThisMonth: number;
     totalCreditEarnedNgn: number;
   };
+  referrals: ReferralHistoryItem[];
+}
+
+function formatReferralDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function ReferDashboardContent() {
@@ -139,9 +160,12 @@ function ReferDashboardContent() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card-elevated p-5">
-              <p className="text-sm text-slate-500 mb-1">Store credit balance</p>
+              <p className="text-sm text-slate-500 mb-1">Available store credit</p>
               <p className="text-2xl font-bold text-primary-600">
                 {formatNgn(dashboard.storeCreditBalanceNgn)}
+              </p>
+              <p className="mt-2 text-xs text-slate-500">
+                Store credit expires {STORE_CREDIT_EXPIRY_MONTHS} months after each reward is earned.
               </p>
             </div>
             <div className="card-elevated p-5">
@@ -149,10 +173,56 @@ function ReferDashboardContent() {
               <p className="text-2xl font-bold text-slate-900">{dashboard.stats.earnedCount}</p>
             </div>
             <div className="card-elevated p-5">
-              <p className="text-sm text-slate-500 mb-1">Pending this month</p>
-              <p className="text-2xl font-bold text-slate-900">{dashboard.stats.earnedThisMonth}</p>
+              <p className="text-sm text-slate-500 mb-1">Pending referrals</p>
+              <p className="text-2xl font-bold text-slate-900">{dashboard.stats.pendingCount}</p>
             </div>
           </div>
+
+          {dashboard.referrals.length > 0 && (
+            <div className="card-elevated p-8">
+              <h2 className="font-display text-xl font-bold text-slate-900 mb-2">Your referrals</h2>
+              <p className="text-sm text-slate-500 mb-4">
+                Credit appears here after each friend&apos;s order completes. Pending orders show the amount
+                you will earn.
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500">
+                      <th className="py-2 pr-4 font-medium">Friend</th>
+                      <th className="py-2 pr-4 font-medium">Tier</th>
+                      <th className="py-2 pr-4 font-medium">Status</th>
+                      <th className="py-2 pr-4 font-medium">You earn</th>
+                      <th className="py-2 font-medium">Expires</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-slate-700">
+                    {dashboard.referrals.map((referral) => (
+                      <tr key={referral.id} className="border-b border-slate-100 last:border-0">
+                        <td className="py-3 pr-4 font-medium text-slate-900">
+                          {referral.refereePhoneMasked}
+                        </td>
+                        <td className="py-3 pr-4">{referral.tierLabel}</td>
+                        <td className="py-3 pr-4 capitalize">
+                          {referral.status === "pending" ? "Pending" : "Earned"}
+                        </td>
+                        <td className="py-3 pr-4 font-medium text-slate-900">
+                          {formatNgn(referral.referrerCreditNgn)}
+                        </td>
+                        <td className="py-3 text-slate-600">
+                          {referral.creditExpiresAt
+                            ? formatReferralDate(referral.creditExpiresAt)
+                            : referral.status === "pending"
+                              ? "After order completes"
+                              : "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           <div className="card-elevated p-8">
             <div className="flex items-center gap-2 mb-4">
@@ -163,7 +233,7 @@ function ReferDashboardContent() {
               <li>Send your link to a friend buying their first device from us.</li>
               <li>They get an automatic discount at checkout.</li>
               <li>You receive store credit after their order completes (not returned or disputed).</li>
-              <li>Use store credit on your next order from this store.</li>
+              <li>Use store credit on your next order from this store within {STORE_CREDIT_EXPIRY_MONTHS} months.</li>
             </ol>
           </div>
 

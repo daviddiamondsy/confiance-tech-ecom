@@ -61,6 +61,9 @@ export const REFERRAL_TIERS: ReferralTier[] = [
 /** Attribution window for referral links (days). */
 export const REFERRAL_ATTRIBUTION_DAYS = 60;
 
+/** Store credit from referral rewards expires this many months after it is earned. */
+export const STORE_CREDIT_EXPIRY_MONTHS = 12;
+
 /** Holdam minimum deal size fallback when env is unset. */
 export const REFERRAL_MIN_DEAL_NGN = Number(process.env.REFERRAL_MIN_DEAL_NGN) || 25_000;
 

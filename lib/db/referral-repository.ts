@@ -1,5 +1,10 @@
 import { sql } from "@/lib/db/client";
 import { normalizeNigerianPhone } from "@/lib/referral/phone";
+import {
+  computeAvailableStoreCreditBalance,
+  storeCreditExpiresAt,
+  type StoreCreditLedgerEntry,
+} from "@/lib/referral/store-credit";
 
 export interface ReferralCodeRow {
   id: number;
@@ -7,6 +12,31 @@ export interface ReferralCodeRow {
   referrer_phone: string;
   referrer_name: string | null;
   created_at: Date;
+}
+
+export interface StoreCreditLedgerRow {
+  id: number;
+  phone: string;
+  amount_ngn: number;
+  balance_after_ngn: number;
+  source: string;
+  referral_event_id: number | null;
+  deal_id: string | null;
+  note: string | null;
+  expires_at: Date | null;
+  created_at: Date;
+}
+
+export interface ReferrerReferralEventListItem {
+  id: number;
+  deal_id: string;
+  referee_phone: string;
+  catalog_price_ngn: number;
+  referrer_credit_ngn: number;
+  tier: string;
+  status: string;
+  created_at: Date;
+  earned_at: Date | null;
 }
 
 export interface ReferralEventRow {
@@ -108,14 +138,25 @@ export async function countReferrerEarnedThisMonth(referrerPhone: string): Promi
   return Number(rows[0]?.count ?? 0);
 }
 
-export async function getStoreCreditBalance(phone: string): Promise<number> {
+export async function getStoreCreditLedgerEntries(phone: string): Promise<StoreCreditLedgerEntry[]> {
   const normalized = normalizeNigerianPhone(phone);
-  const { rows } = await sql<{ balance: number | null }>`
-    SELECT COALESCE(SUM(amount_ngn), 0)::int AS balance
+  const { rows } = await sql<Pick<StoreCreditLedgerRow, "amount_ngn" | "expires_at" | "created_at">>`
+    SELECT amount_ngn, expires_at, created_at
     FROM store_credit_ledger
     WHERE phone = ${normalized}
+    ORDER BY created_at ASC, id ASC
   `;
-  return Number(rows[0]?.balance ?? 0);
+
+  return rows.map((row) => ({
+    amountNgn: row.amount_ngn,
+    expiresAt: row.expires_at,
+    createdAt: row.created_at,
+  }));
+}
+
+export async function getStoreCreditBalance(phone: string): Promise<number> {
+  const entries = await getStoreCreditLedgerEntries(phone);
+  return computeAvailableStoreCreditBalance(entries);
 }
 
 export async function appendLedgerEntry(params: {
@@ -125,14 +166,21 @@ export async function appendLedgerEntry(params: {
   referralEventId?: number | null;
   dealId?: string | null;
   note?: string | null;
+  expiresAt?: Date | null;
 }): Promise<number> {
   const phone = normalizeNigerianPhone(params.phone);
   const current = await getStoreCreditBalance(phone);
   const balanceAfter = current + params.amountNgn;
+  const expiresAt =
+    params.amountNgn > 0
+      ? params.expiresAt === undefined
+        ? storeCreditExpiresAt(new Date())
+        : params.expiresAt
+      : null;
 
   await sql`
     INSERT INTO store_credit_ledger (
-      phone, amount_ngn, balance_after_ngn, source, referral_event_id, deal_id, note
+      phone, amount_ngn, balance_after_ngn, source, referral_event_id, deal_id, note, expires_at
     )
     VALUES (
       ${phone},
@@ -141,7 +189,8 @@ export async function appendLedgerEntry(params: {
       ${params.source},
       ${params.referralEventId ?? null},
       ${params.dealId ?? null},
-      ${params.note ?? null}
+      ${params.note ?? null},
+      ${expiresAt ? expiresAt.toISOString() : null}
     )
   `;
 
@@ -285,6 +334,32 @@ export interface AdminReferralCodeListItem {
   store_credit_balance_ngn: number;
 }
 
+export async function listReferralEventsForReferrer(
+  referrerPhone: string,
+  limit = 50
+): Promise<ReferrerReferralEventListItem[]> {
+  const phone = normalizeNigerianPhone(referrerPhone);
+  const safeLimit = Math.min(Math.max(limit, 1), 100);
+  const { rows } = await sql<ReferrerReferralEventListItem>`
+    SELECT
+      id,
+      deal_id,
+      referee_phone,
+      catalog_price_ngn,
+      referrer_credit_ngn,
+      tier,
+      status,
+      created_at,
+      earned_at
+    FROM referral_events
+    WHERE referrer_phone = ${phone}
+      AND status IN ('pending', 'earned')
+    ORDER BY COALESCE(earned_at, created_at) DESC
+    LIMIT ${safeLimit}
+  `;
+  return rows;
+}
+
 export async function listReferralCodesForAdmin(limit = 100): Promise<AdminReferralCodeListItem[]> {
   const safeLimit = Math.min(Math.max(limit, 1), 500);
   const { rows } = await sql<AdminReferralCodeListItem>`
@@ -296,7 +371,7 @@ export async function listReferralCodesForAdmin(limit = 100): Promise<AdminRefer
       rc.created_at,
       COALESCE(ev.earned_count, 0)::int AS earned_count,
       COALESCE(ev.pending_count, 0)::int AS pending_count,
-      COALESCE(sc.balance, 0)::int AS store_credit_balance_ngn
+      0::int AS store_credit_balance_ngn
     FROM referral_codes rc
     LEFT JOIN LATERAL (
       SELECT
@@ -305,11 +380,6 @@ export async function listReferralCodesForAdmin(limit = 100): Promise<AdminRefer
       FROM referral_events re
       WHERE re.referrer_phone = rc.referrer_phone
     ) ev ON TRUE
-    LEFT JOIN LATERAL (
-      SELECT COALESCE(SUM(amount_ngn), 0)::int AS balance
-      FROM store_credit_ledger scl
-      WHERE scl.phone = rc.referrer_phone
-    ) sc ON TRUE
     ORDER BY rc.created_at DESC
     LIMIT ${safeLimit}
   `;
