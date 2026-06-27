@@ -18,6 +18,7 @@ const PRODUCT_IMAGES = {
   iphone13ProMax: "/product-images/iphone-13-pro-max.png",
   iphone14Pro: "/product-images/iphone-14-pro.png",
   iphone15ProMax: "/product-images/iphone-15-pro-max.jpg",
+  iphone12: "/product-images/iphone-12.png",
   iphone12ProMax: "/product-images/iphone-12-pro-max.png",
   iphone14ProMax: "/product-images/iphone-14-pro-max.png",
   macbookPro: "/product-images/macbook-pro-m4.png",
@@ -116,6 +117,40 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
       storageOptions: [
         { storage: "256GB", price: catalogPrice("Apple iPhone 15 Pro Max (Clean)", 4600) },
         { storage: "512GB", price: catalogPrice("Apple iPhone 15 Pro Max (Clean)", 5100) },
+      ],
+    },
+    {
+      id: "15",
+      name: "Apple iPhone 12 (Clean)",
+      price: catalogPrice("Apple iPhone 12 (Clean)", 1200),
+      image: PRODUCT_IMAGES.iphone12,
+      description:
+        "The iPhone 12 features a 6.1-inch Super Retina XDR display, A14 Bionic chip, and a dual 12MP camera system with Night mode and Dolby Vision recording. Ceramic Shield front cover, 5G, and MagSafe support in a flat-edge design. " +
+        IPHONE_QUALITY_TAIL,
+      features: [
+        BATTERY_HEALTH_FEATURE,
+        "6.1-inch Super Retina XDR Display",
+        "A14 Bionic Chip",
+        "5G Capable",
+        "Dual 12MP Camera (Wide + Ultra Wide)",
+        "Night Mode and Deep Fusion",
+        "MagSafe Compatible",
+        "Ceramic Shield Front Cover",
+        "Face ID Security",
+      ],
+      specifications: {
+        Display: "6.1-inch Super Retina XDR",
+        Processor: "A14 Bionic chip",
+        Storage: "128GB",
+        Camera: "Dual 12MP Wide + Ultra Wide",
+        Battery: "Up to 17 hours video playback",
+        "Battery health": BATTERY_HEALTH_SPEC,
+        Connectivity: "5G, Wi-Fi 6, Bluetooth 5.0",
+        "Water resistance": "IP68",
+      },
+      storageOptions: [
+        { storage: "128GB", price: catalogPrice("Apple iPhone 12 (Clean)", 1200) },
+        { storage: "256GB", price: catalogPrice("Apple iPhone 12 (Clean)", 1400) },
       ],
     },
     {

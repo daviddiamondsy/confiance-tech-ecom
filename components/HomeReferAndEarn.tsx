@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, Gift, Share2, Sparkles, Wallet } from "lucide-react";
 import {
-  formatNgn,
+  formatReferralRewardWithPercent,
+  formatReferralTierRange,
   REFERRAL_ATTRIBUTION_DAYS,
   REFERRAL_TIERS,
 } from "@/lib/referral/config";
@@ -74,8 +75,8 @@ export default function HomeReferAndEarn() {
               <div className="rounded-2xl bg-white/5 border border-white/10 p-6 md:p-8">
                 <h3 className="font-display text-lg font-bold text-white mb-1">Reward tiers</h3>
                 <p className="text-sm text-slate-400 mb-6">
-                  Based on your friend&apos;s order value. Links stay active for {REFERRAL_ATTRIBUTION_DAYS}{" "}
-                  days.
+                  Based on your friend&apos;s catalog price. Percentages are at the top of each band.
+                  Links stay active for {REFERRAL_ATTRIBUTION_DAYS} days.
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
@@ -89,11 +90,18 @@ export default function HomeReferAndEarn() {
                     <tbody>
                       {REFERRAL_TIERS.map((tier) => (
                         <tr key={tier.id} className="border-b border-white/5 last:border-0">
-                          <td className="py-3 pr-4 text-white">{tier.label}</td>
-                          <td className="py-3 pr-4 text-primary-200">
-                            {formatNgn(tier.refereeDiscountNgn)}
+                          <td className="py-3 pr-4">
+                            <span className="block text-white">{tier.label}</span>
+                            <span className="block text-xs text-slate-400 mt-0.5">
+                              {formatReferralTierRange(tier)}
+                            </span>
                           </td>
-                          <td className="py-3 text-white">{formatNgn(tier.referrerCreditNgn)}</td>
+                          <td className="py-3 pr-4 text-primary-200">
+                            {formatReferralRewardWithPercent(tier.refereeDiscountNgn, tier)}
+                          </td>
+                          <td className="py-3 text-white">
+                            {formatReferralRewardWithPercent(tier.referrerCreditNgn, tier)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
