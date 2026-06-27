@@ -11,7 +11,6 @@ declare module "@holdam/ts" {
     cancelUrl: string;
     title: string;
     deliveryDays?: number;
-  deliveryDueAt?: string;
     buyerFirstName: string;
     buyerLastName?: string;
     metadata?: Record<string, unknown>;

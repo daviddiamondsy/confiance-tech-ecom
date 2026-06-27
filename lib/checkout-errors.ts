@@ -27,47 +27,79 @@ export function resolveStorefrontCheckoutError(payload: CheckoutErrorPayload | n
   return "We could not start checkout. Please try again.";
 }
 
-type HoldamApiError = {
+type HoldamApiErrorBody = {
+  error?: string;
+  code?: string;
+  reason?: string;
+};
+
+type HoldamApiError = Error & {
+  status?: number;
+  code?: string;
+  raw?: HoldamApiErrorBody;
   response?: {
     status?: number;
-    data?: {
-      error?: string;
-      code?: string;
-      reason?: string;
-    };
+    data?: HoldamApiErrorBody;
   };
-  message?: string;
 };
+
+function extractHoldamErrorPayload(error: unknown): {
+  status: number;
+  data: HoldamApiErrorBody | undefined;
+  code: string | undefined;
+  message: string | undefined;
+} {
+  const err = error as HoldamApiError;
+
+  if (err?.raw && typeof err.raw === "object") {
+    return {
+      status: err.status ?? 500,
+      data: err.raw,
+      code: err.raw.code ?? err.code,
+      message:
+        typeof err.raw.error === "string"
+          ? err.raw.error
+          : err.message,
+    };
+  }
+
+  const data = err?.response?.data;
+  const status = err?.response?.status ?? err?.status ?? 500;
+
+  return {
+    status,
+    data,
+    code: data?.code ?? err?.code,
+    message:
+      data?.error ||
+      (error instanceof Error ? error.message : undefined),
+  };
+}
 
 export function mapHoldamDealCreateError(error: unknown): {
   status: number;
   body: Record<string, string>;
 } {
-  const axiosError = error as HoldamApiError;
-  const status = axiosError?.response?.status ?? 500;
-  const data = axiosError?.response?.data;
+  const { status, data, code, message } = extractHoldamErrorPayload(error);
 
-  if (data?.code === CHECKOUT_BLOCKED_CODE) {
+  if (code === CHECKOUT_BLOCKED_CODE) {
     return {
       status: 403,
       body: {
-        error: data.error || "Checkout unavailable for this seller.",
+        error: message || "Checkout unavailable for this seller.",
         code: CHECKOUT_BLOCKED_CODE,
         buyerMessage: CHECKOUT_BLOCKED_BUYER_MESSAGE,
       },
     };
   }
 
-  const message =
-    data?.error ||
-    (error instanceof Error ? error.message : undefined) ||
-    "Failed to create checkout";
+  const fallbackMessage = message || "Failed to create checkout";
 
   return {
     status: status >= 400 && status < 600 ? status : 500,
     body: {
-      error: message,
-      details: data?.reason || message,
+      error: fallbackMessage,
+      details: data?.reason || fallbackMessage,
     },
   };
 }

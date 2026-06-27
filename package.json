@@ -20,7 +20,7 @@
     "*.{ts,tsx}": "tsc-files --noEmit"
   },
   "dependencies": {
-    "@holdam/ts": "^2.0.1",
+    "@holdam/ts": "file:../escrow-sdk",
     "@vercel/analytics": "^2.0.1",
     "@vercel/postgres": "^0.10.0",
     "@vercel/speed-insights": "^2.0.0",
