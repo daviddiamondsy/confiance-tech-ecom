@@ -10,6 +10,7 @@ import {
   clearPersistedReferralCode,
 } from "@/components/ReferralDiscountBanner";
 import { formatNgn } from "@/lib/referral/config";
+import { persistLastOrderPhone, readLastOrderPhone } from "@/lib/customer-phone-storage";
 
 function checkoutStorageKey(productId?: string) {
   return productId ? `holdam_checkout_${productId}` : "holdam_checkout";
@@ -83,6 +84,10 @@ export default function CustomerForm({
 
   useEffect(() => {
     setReferralCode(readPersistedReferralCode());
+    const savedPhone = readLastOrderPhone();
+    if (savedPhone) {
+      setFormData((prev) => ({ ...prev, phone: savedPhone }));
+    }
   }, []);
 
   const resetCheckoutUiState = useCallback(() => {
@@ -177,6 +182,10 @@ export default function CustomerForm({
       console.log("[Order] Holdam deal created successfully", { dealId: deal?.id, checkoutUrl });
 
       trackLead();
+
+      if (formData.phone?.trim()) {
+        persistLastOrderPhone(formData.phone);
+      }
 
       if (referralCode) {
         clearPersistedReferralCode();

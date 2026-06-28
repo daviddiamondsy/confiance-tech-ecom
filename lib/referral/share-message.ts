@@ -1,7 +1,8 @@
 import {
   formatNgn,
+  formatRefereeDiscountRange,
+  refereeDiscountRangeNgn,
   REFERRAL_ATTRIBUTION_DAYS,
-  REFERRAL_TIERS,
 } from "@/lib/referral/config";
 
 export interface ReferralShareMessageInput {
@@ -9,21 +10,7 @@ export interface ReferralShareMessageInput {
   referrerName?: string | null;
 }
 
-export function refereeDiscountRangeNgn(): { min: number; max: number } {
-  const amounts = REFERRAL_TIERS.map((tier) => tier.refereeDiscountNgn);
-  return {
-    min: Math.min(...amounts),
-    max: Math.max(...amounts),
-  };
-}
-
-export function formatRefereeDiscountRange(): string {
-  const { min, max } = refereeDiscountRangeNgn();
-  if (min === max) {
-    return formatNgn(min);
-  }
-  return `${formatNgn(min)} to ${formatNgn(max)}`;
-}
+export { formatRefereeDiscountRange, refereeDiscountRangeNgn } from "@/lib/referral/config";
 
 /** Ready-to-paste message for WhatsApp, SMS, or email. */
 export function buildReferralShareMessage(input: ReferralShareMessageInput): string {
@@ -31,13 +18,13 @@ export function buildReferralShareMessage(input: ReferralShareMessageInput): str
     ? `Hey! ${input.referrerName} here. I bought from Confiance Tech and wanted to share a discount with you.`
     : "Hey! I bought from Confiance Tech and wanted to share a discount with you.";
 
-  const { max } = refereeDiscountRangeNgn();
   const discountSummary = formatRefereeDiscountRange();
+  const { max: maxFriendDiscountNgn } = refereeDiscountRangeNgn();
 
   return [
     intro,
     "",
-    `Save up to ${formatNgn(max)} on your first device order (${discountSummary} depending on the device you pick). The discount applies automatically when you checkout through my link.`,
+    `Save up to ${formatNgn(maxFriendDiscountNgn)} on your first device order (${discountSummary} depending on the device you pick). The discount applies automatically when you checkout through my link.`,
     "",
     `Open: ${input.shareUrl}`,
     "",
