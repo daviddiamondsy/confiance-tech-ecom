@@ -161,12 +161,12 @@ function ReferDashboardContent() {
       {dashboard && (
         <div className="space-y-6">
           <div className="card-elevated p-8">
-            <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">
-              Share with friends
+            <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-6">
+              Your referral link
             </p>
 
             <p className="text-sm font-medium text-slate-700 mb-2">Your referral code</p>
-            <div className="flex items-stretch gap-3 mb-4">
+            <div className="flex items-stretch gap-3 mb-6">
               <div className="flex flex-1 items-center justify-between rounded-xl bg-slate-50 border border-slate-200 px-4 py-3">
                 <span className="font-display text-lg font-bold tracking-wide text-slate-900">
                   {dashboard.code}
@@ -182,17 +182,13 @@ function ReferDashboardContent() {
               </div>
             </div>
             {copiedCode && (
-              <p className="-mt-2 mb-4 text-xs font-medium text-emerald-600">Code copied</p>
+              <p className="-mt-4 mb-4 text-xs font-medium text-emerald-600">Code copied</p>
             )}
 
             <button type="button" onClick={copyShareMessage} className="btn-primary w-full sm:w-auto">
               <Share2 className="h-4 w-4" />
               {copiedShare ? "Message copied" : "Share"}
             </button>
-            <p className="mt-3 text-sm text-slate-500 leading-relaxed">
-              Share copies a ready-to-send message with your link and what your friend saves on their first
-              order.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

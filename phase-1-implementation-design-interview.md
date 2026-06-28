@@ -1,56 +1,63 @@
 # Phase 1 design interview
 
-Reusable prompt for walking the Phase 1 design tree until decisions are shared and documented for **confiance chatbot** (fiat-on-ramp escrow, not voting).
+Reusable prompt for walking the **Confiance Tech WhatsApp bot** (`confiance_chatbot`) design tree until decisions are shared and documented. Scope is the chatbot service and its store integration, not Holdam escrow core or on-chain lifecycle.
+
+**Target architecture:** single intent-resolution pipeline (see routing refactor plan). Interview both **current live behavior** and **agreed target modules** so docs and code converge.
 
 ## Quick copy
 
 Paste this into a new chat:
 
 ```
-Interview me relentlessly about every aspect of Holdam Phase 1 (current live MVP) until we reach a shared understanding.
+Interview me relentlessly about every aspect of the Confiance Tech WhatsApp bot (current live MVP + agreed routing refactor) until we reach a shared understanding.
 
 Walk down each branch of the design tree, resolving dependencies between decisions one by one.
 
-Update the documentation as we go. Create new docs in docs/system-design/phase-1/ when a topic needs its own spec.
+Update documentation as we go. Create new docs under confiance_chatbot/docs/ when a topic needs its own spec.
 
 Read first (in order):
-1. docs/README.md
-2. docs/system-design/README.md
-3. docs/system-design/phase-1/trust-model.md
-4. docs/system-design/phase-1/escrow-lifecycle.md
-5. docs/domain-model.md and docs/domain-glossary.md
-6. docs/system-design/phase-1/phase-1-mvp.md
-7. Every file in docs/system-design/phase-1/
-8. docs/open-questions.md
+1. confiance_chatbot/README.md
+2. confiance_chatbot/docs/SYSTEM_DESIGN.md
+3. confiance_chatbot/docs/BOT_FLOWS.md
+4. confiance_chatbot/docs/tests/acceptance-criteria/chatbot.md
+5. confiance_chatbot/docs/WHATSAPP_SETUP.md
+6. confiance_chatbot/docs/tests/README.md and bot-improvement-workflow.md
+7. confiance-tech-ecom/app/api/create-holdam-deal/route.ts and app/api/bot/catalog (store contracts the bot calls)
 
 Use this dependency order when choosing what to decide next:
-1. Trust boundaries and security invariants (Zone 1/2/3, pool-only disputes, Model 4 timeline)
-2. Money flow (Paystack → reserve → Escrow.sol → payout provider → seller bank)
-3. Smart contracts (EscrowFactory, Escrow clone, ArbitrationPool, deployment invariants)
-4. Domain model and business invariants (escrow, checkout_deals, milestones, disputes)
-5. Wallet and auth (KDF v1, JWT, OTP on critical actions, three auth domains)
-6. escrow-service API modules and data flows (consumer vs SDK/checkout paths)
-7. arbitration-service integration (sync, commit-reveal, execute, no EOA release)
-8. Reserve, circuit breaker, and proof-of-reserves
-9. Compliance and KYC tiers
-10. Client surfaces (escrow-ui, checkout-ui, merchant-ui, control-ui, arbitration-ui)
-11. Background jobs and event indexer
-12. Verifiability APIs and honest product copy
-13. BDD alignment (docs/tests/acceptance-criteria/)
-14. Exit criteria (PoC metrics) and open questions
-15. Explicit deferrals to Phase 2/3 (do not blur live vs roadmap)
+1. Routing invariants and hybrid policy (INV-ROUTE-*, keyword + LLM + fallback, not LLM-only)
+2. Conversation modes and RouteDecision shape (SupportMode, OrderMode, InputMode)
+3. Intent resolver layer precedence (controls → structured input → matchers → LLM → fallback)
+4. Session model (Redis keys, dedupe, lock, orderDraft preservation, 24h TTL)
+5. Declarative support flow (confiance-tech-main.ts nodes, intents, buttons, handoff)
+6. Imperative order flow (orderDraft steps, collector, catalog validation, confirm)
+7. Store integration (GET /api/bot/catalog, POST /api/create-holdam-deal; bot never calls Holdam directly)
+8. LLM router (tools, confidence gate, skip rules, mid-order context)
+9. WhatsApp platform (webhook verify, HMAC, outbound types, fast ACK)
+10. Security and commerce safety (no LLM prices/deals; buyer-safe checkout errors)
+11. Eval and test harness (Pass 1/2, headless agent, traced Vitest suites)
+12. Ops and env pairing (CONFIANCE_STORE_URL, store HOLDAM_API_KEY alignment)
+13. BDD alignment (docs/tests/acceptance-criteria/chatbot.md)
+14. Exit criteria (eval thresholds, critical journeys green)
+15. Explicit deferrals (vision on images, LLM-only routing, declarative order flow)
 
 At each decision:
 - State what is being decided and what it depends on
-- Ask one focused question at a time; push back if an answer conflicts with trust boundaries or Model 4
-- Record the decision in the right doc (phase-1-mvp.md or a phase-1/*.md subdoc)
-- Mark resolved vs still open in docs/open-questions.md
-- Defer out-of-scope items explicitly to docs/system-design/phase-2/ or phase-3/ with a link
+- Ask one focused question at a time; push back if an answer conflicts with INV-ROUTE-07 (hybrid routing) or INV-COMMERCE-*
+- Record the decision in the right doc (SYSTEM_DESIGN.md, BOT_FLOWS.md, or a new docs/*.md subdoc)
+- Track resolved vs open questions in a short open-questions section at the bottom of SYSTEM_DESIGN.md or a dedicated docs/open-questions.md
+- Defer out-of-scope items explicitly with a link (do not blur live MVP vs roadmap)
 - Do not implement code until we agree on the design for that branch (unless I say otherwise)
 
-When UI or behavior is agreed, check docs/tests/acceptance-criteria/ and update scenarios if needed (depth-first by screen and flow per .cursor/rules/bdd-depth-first.mdc).
+When behavior is agreed, update confiance_chatbot/docs/tests/acceptance-criteria/chatbot.md and traced tests in confiance_chatbot/tests/ (cite // BDD: chatbot.md › …).
 
 Follow project copy style: no em dashes or en dashes in user-facing text.
+
+Routing refactor context (authoritative target):
+- One intent-resolver.ts pipeline; orchestrator picks mode only
+- route-decision.ts types shared by resolver, action-handlers, telemetry
+- Deprecate split-brain inbound-router.ts + support-signal.ts duplicate detectors
+- Mid-order support: preserve orderDraft + resume banner in one place (action-handlers.ts)
 ```
 
 ## Design tree (reference)
@@ -59,62 +66,146 @@ Use this map to ensure no branch is skipped:
 
 | Branch | Primary doc |
 |--------|-------------|
-| Scope, stack, PoC exit criteria | [phase-1-mvp.md](../../system-design/phase-1/phase-1-mvp.md) |
-| Trust zones 1/2/3 | [trust-model.md](../../system-design/phase-1/trust-model.md) |
-| Services, stores, deployment | [architecture.md](../../system-design/phase-1/architecture.md) |
-| Entities and invariants | [domain-model.md](../../domain-model.md) |
-| Model 4 lifecycle | [escrow-lifecycle.md](../../system-design/phase-1/escrow-lifecycle.md) |
-| Zone 1 on-ramp | [fiat-on-ramp.md](../../system-design/phase-1/fiat-on-ramp.md) |
-| Zone 3 off-ramp | [fiat-off-ramp.md](../../system-design/phase-1/fiat-off-ramp.md) |
-| On-chain custody | [smart-contracts.md](../../system-design/phase-1/smart-contracts.md) |
-| Wallet and auth | [wallet-and-auth.md](../../system-design/phase-1/wallet-and-auth.md) |
-| Disputes and pool | [arbitration.md](../../system-design/phase-1/arbitration.md) |
-| Merchant SDK and checkout | [merchant-and-checkout.md](../../system-design/phase-1/merchant-and-checkout.md) |
-| KYC and AML | [compliance-and-kyc.md](../../system-design/phase-1/compliance-and-kyc.md) |
-| Reserve and PoR | [reserve-management.md](../../system-design/phase-1/reserve-management.md) |
-| Cron and indexer | [background-jobs.md](../../system-design/phase-1/background-jobs.md) |
-| API conventions | [api-contracts.md](../../system-design/phase-1/api-contracts.md) |
-| Client apps | [client-applications.md](../../system-design/phase-1/client-applications.md) |
-| Third-party integrations | [integrations.md](../../system-design/phase-1/integrations.md) |
-| Ops and deploy | [deployment-and-ops.md](../../system-design/phase-1/deployment-and-ops.md) |
-| Public verify APIs | [verifiability-apis.md](../../system-design/phase-1/verifiability-apis.md) |
-| Acceptance tests | [acceptance-criteria/README.md](../../tests/acceptance-criteria/README.md) and surface files |
-| Roadmap deferrals | [phase-2/](../../system-design/phase-2/), [phase-3/](../../system-design/phase-3/) |
+| Purpose, context, containers | [SYSTEM_DESIGN.md](../../confiance_chatbot/docs/SYSTEM_DESIGN.md) §1–3 |
+| Inbound pipeline and orchestrator | [SYSTEM_DESIGN.md](../../confiance_chatbot/docs/SYSTEM_DESIGN.md) §5 |
+| Conversation models (support, order, LLM) | [SYSTEM_DESIGN.md](../../confiance_chatbot/docs/SYSTEM_DESIGN.md) §6 |
+| Session and Redis keys | [SYSTEM_DESIGN.md](../../confiance_chatbot/docs/SYSTEM_DESIGN.md) §7 |
+| Store and Meta API contracts | [SYSTEM_DESIGN.md](../../confiance_chatbot/docs/SYSTEM_DESIGN.md) §8 |
+| Security | [SYSTEM_DESIGN.md](../../confiance_chatbot/docs/SYSTEM_DESIGN.md) §9 |
+| Routing paths and button IDs | [BOT_FLOWS.md](../../confiance_chatbot/docs/BOT_FLOWS.md) |
+| Support flow content (source of truth) | `confiance_chatbot/src/flows/confiance-tech-main.ts` |
+| Live order state machine | `confiance_chatbot/src/orders/order-flow.ts` |
+| **Target:** intent resolver and RouteDecision | `confiance_chatbot/src/routing/intent-resolver.ts`, `route-decision.ts` (planned) |
+| **Target:** matcher modules | `confiance_chatbot/src/routing/matchers/` (planned) |
+| **Target:** action execution (no matching) | `confiance_chatbot/src/routing/action-handlers.ts` (planned) |
+| WhatsApp ops and env | [WHATSAPP_SETUP.md](../../confiance_chatbot/docs/WHATSAPP_SETUP.md) |
+| Store catalog API | `confiance-tech-ecom/app/api/bot/catalog` |
+| Store deal creation | `confiance-tech-ecom/app/api/create-holdam-deal/route.ts` |
+| Global routing invariants | [chatbot.md](../../confiance_chatbot/docs/tests/acceptance-criteria/chatbot.md) (INV-*) |
+| Eval workflow and thresholds | [bot-improvement-workflow.md](../../confiance_chatbot/docs/tests/bot-improvement-workflow.md) |
+| Executable tests | `confiance_chatbot/tests/**/*.test.ts` |
+
+## Routing architecture (target state)
+
+Replace split-brain routing with **one resolver, three modes**:
+
+```mermaid
+flowchart TD
+  Inbound[InboundMessage] --> Orch[orchestrator.ts]
+  Orch --> Mode{ConversationMode}
+  Mode -->|NoOrderDraft| SupportMode[SupportMode]
+  Mode -->|OrderDraft| OrderMode[OrderMode]
+  Mode -->|AwaitingInput| InputMode[InputMode]
+
+  SupportMode --> Resolver[intent-resolver.ts]
+  OrderMode --> Resolver
+  InputMode --> Validator[input-validator.ts]
+
+  Resolver --> Layers[Deterministic layers]
+  Layers --> L1[Controls: buttons cancel order triggers]
+  Layers --> L2[Matchers: keyword button multiTopic advisory]
+  Layers --> L3[LLM router when no bypass]
+  Layers --> L4[Fallback]
+
+  Resolver --> Decision[RouteDecision]
+  Decision --> Actions[action-handlers.ts]
+```
+
+### RouteDecision (shared output)
+
+```typescript
+type RouteDecision =
+  | { kind: "order_control"; handler: "cancel" | "resume" | "slot" | "confirm" }
+  | { kind: "support"; nodeId: string; source: "button" | "keyword" | "advisory" | "llm" | "fallback" }
+  | { kind: "order_start" }
+  | { kind: "llm_tool"; tool: LlmToolName; confidence: number }
+  | { kind: "clarify" | "fallback" | "noop" };
+```
+
+### Resolver layer order (authoritative)
+
+Document once, test once:
+
+1. **Hard controls** — `order_*` buttons, `cancel`, exact order triggers (no draft)
+2. **Structured input** — `awaitingInput` validation (no LLM)
+3. **Deterministic matchers** — button, keyword (≥ 0.85), mid-order advisory, multi-topic, handoff, malicious, menu
+4. **LLM router** — only if `shouldUseLlm()` and no bypass; mid-order context includes `orderDraftSummary`
+5. **Fallback** — weak keyword → main menu + copy
+
+**Mid-order rule:** when `orderDraft` exists and decision is `support`, always preserve draft + send resume banner in `action-handlers.ts` (one place, not scattered branches).
+
+### Known pain (current → target)
+
+| Pain | Fix in refactor |
+|------|-----------------|
+| Duplicate detectors in `support-signal.ts` and `inbound-router.ts` | Single matcher pipeline in `intent-resolver.ts` |
+| Mid-order FAQ stuck on slot picker | Advisory matchers before slot collection; unified mid-order escape |
+| God module `inbound-router.ts` | Split: resolver (match) + action-handlers (act) |
+| Misleading eval telemetry | Log `RouteDecision` separately from `orderDraft.step` |
+
+## Implementation phases (code refactor)
+
+Align interview decisions with these delivery phases:
+
+| Phase | Goal | Exit criteria |
+|-------|------|---------------|
+| **1 — Unify resolution** | Fix split brain without changing buyer-visible behavior | `route-decision.ts` + `intent-resolver.ts` + `action-handlers.ts`; all existing tests green; eval M-001, S-005, S-006 pass |
+| **2 — Order mode clarity** | Slot vs FAQ classifier; buyer-safe checkout errors | Friendly copy for `Key not found` / inactive API key; WHATSAPP_SETUP ops checklist; BDD row in chatbot.md |
+| **3 — Observability** | Debuggable routing in dev and eval | `conversation-log` logs RouteDecision; eval uses `decision.source` + layer; delete deprecated shims |
+
+**Separate from routing:** terminal `Key not found` on confirm is a **store env mismatch** (`HOLDAM_API_KEY` in confiance-tech-ecom vs escrow-service `api_keys`). Fix env first; improve buyer copy in Phase 2.
 
 ## Exit criteria (north star)
 
-From [poc-accelerator-plan.md](../../business/funding/poc-accelerator-plan.md) and [phase-1-mvp.md](../../system-design/phase-1/phase-1-mvp.md):
+From [bot-improvement-workflow.md](../../confiance_chatbot/docs/tests/bot-improvement-workflow.md) and [chatbot.md](../../confiance_chatbot/docs/tests/acceptance-criteria/chatbot.md):
 
-- End-to-end: invite → accept → Paystack fund → delivery → confirm or auto-release → bank payout
-- Funds in Escrow.sol before "protected" UX; post-Paystack deploy requires buyerSig
-- Disputed funds release only via ArbitrationPool after juror tally
-- Model 4: single anchor deliveryDueAt; deliveredAt evidence-only
-- PoC metrics: ≥95% fund-and-release; 100+ deals M2; 5+ disputes M3; 2–3 merchant pilots M4
-- All agreed Phase 1 BDD scenarios pass (when automated harness exists)
-- Critical/High smart contract audit items closed before mainnet
+- End-to-end in chat: welcome → FAQ or order → slot fill → confirm → Holdam checkout URL
+- Every inbound message yields a reply (`INV-RESP-01`); webhook fast ACK (`INV-RESP-02`)
+- Hybrid routing preserved: keywords, buttons, and fallbacks work with LLM off (`INV-ROUTE-07`, `INV-FALLBACK-03`)
+- Mid-order support detour preserves `orderDraft` and shows resume banner (`INV-ROUTE-05`)
+- Prices and checkout URLs from store APIs only (`INV-COMMERCE-*`)
+- Pass 1 + Pass 2 eval meet release thresholds on blind cases
+- Critical Vitest suites green: `mid-order-routing`, `invariants-intents`, `support-orchestrator`, webhook integration
+- Doc cascade complete for resolver modules (SYSTEM_DESIGN §3 container + resolver section, BOT_FLOWS routing diagram)
 
-## Trust boundaries (check every decision)
+## Routing boundaries (check every decision)
 
-- Zone 2: no admin, staff key, or single arbitrator EOA moves active escrow cNGN
-- Disputes: only ArbitrationPool.execute() after on-chain tally
-- Zones 1 and 3: trust + verifiable (Paystack ref, on-chain transfer, partner payout ref)
-- Model 4: deliveredAt never shifts auto-release or dispute window
-- User keys: KDF v1 on-device; server never stores W
-- Honest copy: not "fully trustless" end-to-end; fiat ramps involve Holdam/partners
+- **Hybrid, not LLM-only:** deterministic layers first; LLM for ambiguity only (`INV-ROUTE-07`)
+- **Commerce safety:** LLM picks tools; never invents prices, deal IDs, or checkout URLs
+- **Bot → store → Holdam:** bot never holds `HOLDAM_API_KEY`; deal creation via store route only
+- **Mid-order:** support detours never clear `orderDraft` unless cancel, confirm success, or explicit start over
+- **Session integrity:** dedupe by `messageId`; per-phone lock; 24h TTL
+- **Honest copy:** checkout failures show buyer-safe messages; raw API errors stay server-side
+- **Single resolver:** no parallel `detectSupportSignal` + `matchIntentDetailed` paths after Phase 1
 
-## Phase 2 / 3 pointers (do not implement in Phase 1 interview unless scoped)
+## Explicit non-goals (do not implement unless scoped)
 
-| Topic | Doc |
-|-------|-----|
-| Convexity issueToAddress, payment pre-spec, QR invite | [trust-minimization-roadmap.md](../../system-design/phase-2/trust-minimization-roadmap.md), [payment-prespec-and-qr-invite.md](../../system-design/phase-2/payment-prespec-and-qr-invite.md) |
-| Merchant GA, mainnet VRF | [phase-2-production-launch.md](../../business/operations/phase-2-production-launch.md), [decentralized-arbitration.md](../../system-design/phase-2/decentralized-arbitration.md) |
-| Cross-currency, microservices, DAO params | [phase-3/](../../system-design/phase-3/) |
+| Topic | Reason |
+|-------|--------|
+| LLM-only routing | Contradicts INV-ROUTE-07 and production reliability |
+| Merge order flow into declarative flow JSON | Order stays imperative with catalog validation |
+| LLM-generated checkout URLs or prices | Commerce stays API-driven |
+| Bot calling Holdam directly | INV-COMMERCE-02 |
+| Image vision / media understanding | Deferred; static hint today |
+| Multi-language beyond `en-NG` | Deferred |
+
+## Doc cascade (when behavior or architecture changes)
+
+| Change | Update |
+|--------|--------|
+| New resolver modules | SYSTEM_DESIGN.md §3 container + resolver section |
+| Layer precedence | BOT_FLOWS.md routing diagram |
+| Mid-order + checkout errors | chatbot.md acceptance criteria |
+| Eval layer mapping | eval-scoring-key.json `routingPolicy` |
+| Store API contract | SYSTEM_DESIGN.md §8 + confiance-tech-ecom route handlers |
+| Ops env pairing | WHATSAPP_SETUP.md |
 
 ## Related prompts
 
-| Goal | Prompt |
-|------|--------|
-| Audit codebase vs design (live paths; design fidelity) | [phase-1-design-codebase-live-path-audit.md](phase-1-design-codebase-live-path-audit.md) |
-| Generate test specs from Phase 1 design | [phase-1-test-docs-from-design.md](phase-1-test-docs-from-design.md) |
-| Audit test spec coverage | [phase-1-test-docs-coverage-audit.md](phase-1-test-docs-coverage-audit.md) |
-| Decide testing strategy | [tests/README.md](../../tests/README.md) |
+| Goal | Where to start |
+|------|----------------|
+| Audit codebase vs design (live paths) | Read SYSTEM_DESIGN.md + trace `orchestrator.ts` → resolver/handlers |
+| Run eval improvement loop | [bot-improvement-workflow.md](../../confiance_chatbot/docs/tests/bot-improvement-workflow.md) |
+| Add BDD scenario | [chatbot.md](../../confiance_chatbot/docs/tests/acceptance-criteria/chatbot.md) + `tests/` with `// BDD:` cite |
+| Store deal creation debugging | WHATSAPP_SETUP.md + create-holdam-deal route + escrow-service api_keys |
+| Holdam escrow Phase 1 (separate product) | escrow monorepo `docs/.cursor/prompts/phase-1-implementation-design-interview.md` |
