@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { getStoreCreditBalance } from "@/lib/db/referral-repository";
+import { ensureReferralReady } from "@/lib/referral/db-ready";
 import { isCompleteNigerianPhone } from "@/lib/referral/phone";
 
 /** Read store credit balance only. Never creates referral codes. */
@@ -10,6 +11,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    await ensureReferralReady();
+
     const { phone } = await req.json();
     if (!phone?.trim() || !isCompleteNigerianPhone(String(phone))) {
       return NextResponse.json({ storeCreditBalanceNgn: 0 });

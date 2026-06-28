@@ -10,6 +10,7 @@ import {
   REFERRAL_TIERS,
   STORE_CREDIT_EXPIRY_MONTHS,
 } from "@/lib/referral/config";
+import { buildReferralShareMessage } from "@/lib/referral/share-message";
 
 interface ReferralHistoryItem {
   id: number;
@@ -50,7 +51,8 @@ function ReferDashboardContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dashboard, setDashboard] = useState<ReferralDashboardData | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedShare, setCopiedShare] = useState(false);
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,14 +80,30 @@ function ReferDashboardContent() {
     }
   };
 
-  const copyLink = async () => {
-    if (!dashboard?.shareUrl) return;
+  const copyReferralCode = async () => {
+    if (!dashboard?.code) return;
     try {
-      await navigator.clipboard.writeText(dashboard.shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(dashboard.code);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
     } catch {
-      setError("Could not copy link.");
+      setError("Could not copy referral code.");
+    }
+  };
+
+  const copyShareMessage = async () => {
+    if (!dashboard?.shareUrl || !dashboard.code) return;
+    try {
+      const message = buildReferralShareMessage({
+        code: dashboard.code,
+        shareUrl: dashboard.shareUrl,
+        referrerName: dashboard.referrerName,
+      });
+      await navigator.clipboard.writeText(message);
+      setCopiedShare(true);
+      setTimeout(() => setCopiedShare(false), 2000);
+    } catch {
+      setError("Could not copy share message.");
     }
   };
 
@@ -143,18 +161,37 @@ function ReferDashboardContent() {
       {dashboard && (
         <div className="space-y-6">
           <div className="card-elevated p-8">
-            <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">Your link</p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <code className="flex-1 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-800 break-all">
-                {dashboard.shareUrl}
-              </code>
-              <button type="button" onClick={copyLink} className="btn-primary whitespace-nowrap">
-                <Copy className="h-4 w-4" />
-                {copied ? "Copied" : "Copy link"}
-              </button>
+            <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">
+              Share with friends
+            </p>
+
+            <p className="text-sm font-medium text-slate-700 mb-2">Your referral code</p>
+            <div className="flex items-stretch gap-3 mb-4">
+              <div className="flex flex-1 items-center justify-between rounded-xl bg-slate-50 border border-slate-200 px-4 py-3">
+                <span className="font-display text-lg font-bold tracking-wide text-slate-900">
+                  {dashboard.code}
+                </span>
+                <button
+                  type="button"
+                  onClick={copyReferralCode}
+                  className="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900 transition-colors"
+                  aria-label={copiedCode ? "Referral code copied" : "Copy referral code"}
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
             </div>
-            <p className="mt-3 text-sm text-slate-600">
-              Your code: <span className="font-semibold text-slate-900">{dashboard.code}</span>
+            {copiedCode && (
+              <p className="-mt-2 mb-4 text-xs font-medium text-emerald-600">Code copied</p>
+            )}
+
+            <button type="button" onClick={copyShareMessage} className="btn-primary w-full sm:w-auto">
+              <Share2 className="h-4 w-4" />
+              {copiedShare ? "Message copied" : "Share"}
+            </button>
+            <p className="mt-3 text-sm text-slate-500 leading-relaxed">
+              Share copies a ready-to-send message with your link and what your friend saves on their first
+              order.
             </p>
           </div>
 

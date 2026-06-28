@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isPostgresConfigured } from "@/lib/db/client";
+import { getPostgresErrorMessage } from "@/lib/db/postgres-errors";
+import { ensureReferralReady } from "@/lib/referral/db-ready";
 import { getOrCreateReferralCode, getReferrerDashboard, referralShareUrl } from "@/lib/referral/service";
 import { isCompleteNigerianPhone } from "@/lib/referral/phone";
 
@@ -12,6 +14,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    await ensureReferralReady();
+
     const { phone, name } = await req.json();
     if (!phone?.trim()) {
       return NextResponse.json({ error: "Phone number is required." }, { status: 400 });
@@ -42,6 +46,12 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("[API][referral/lookup]", error);
-    return NextResponse.json({ error: "Could not load referral details." }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Could not load referral details.",
+        detail: getPostgresErrorMessage(error),
+      },
+      { status: 500 }
+    );
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { getPostgresErrorMessage } from "@/lib/db/postgres-errors";
+import { ensureReferralReady } from "@/lib/referral/db-ready";
 import { adminCreateOrGetReferralCode, adminDeleteReferral, listAdminReferrals } from "@/lib/referral/service";
 import { isCompleteNigerianPhone } from "@/lib/referral/phone";
 
@@ -21,6 +22,7 @@ export async function GET() {
   }
 
   try {
+    await ensureReferralReady();
     const referrals = await listAdminReferrals();
     return NextResponse.json({ referrals });
   } catch (error) {
@@ -41,6 +43,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    await ensureReferralReady();
+
     const body = await req.json();
     const phone = String(body.phone ?? "").trim();
     const name = body.name ? String(body.name).trim() : undefined;
@@ -81,6 +85,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
+    await ensureReferralReady();
     await adminDeleteReferral(id);
     return NextResponse.json({ ok: true });
   } catch (error) {

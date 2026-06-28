@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { getReferralCodeByCode } from "@/lib/db/referral-repository";
 import { REFERRAL_ATTRIBUTION_DAYS, REFERRAL_COOKIE_NAME } from "@/lib/referral/config";
+import { ensureReferralReady } from "@/lib/referral/db-ready";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ export async function GET(request: NextRequest, context: ReferralRouteContext) {
   }
 
   try {
+    await ensureReferralReady();
     const referral = await getReferralCodeByCode(code);
     if (!referral) {
       return new NextResponse("Referral link not found.", { status: 404 });

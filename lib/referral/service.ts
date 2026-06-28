@@ -1,4 +1,5 @@
 import { REFERRAL_MIN_DEAL_NGN, REFERRAL_TIERS, referralTierForPrice } from "@/lib/referral/config";
+import { coerceDate, coerceDateIso } from "@/lib/referral/dates";
 import { phonesMatch } from "@/lib/referral/phone";
 import { maskRefereePhone, storeCreditExpiresAt } from "@/lib/referral/store-credit";
 import {
@@ -323,19 +324,22 @@ export async function getReferrerDashboard(phone: string) {
     referrerName: codeRow.referrer_name,
     storeCreditBalanceNgn: balance,
     stats,
-    referrals: events.map((event) => ({
-      id: event.id,
-      status: event.status as "pending" | "earned",
-      refereePhoneMasked: maskRefereePhone(event.referee_phone),
-      tierLabel: tierLabelById.get(event.tier) ?? event.tier,
-      referrerCreditNgn: event.referrer_credit_ngn,
-      orderedAt: event.created_at.toISOString(),
-      earnedAt: event.earned_at?.toISOString() ?? null,
-      creditExpiresAt:
-        event.status === "earned" && event.earned_at
-          ? storeCreditExpiresAt(event.earned_at).toISOString()
-          : null,
-    })),
+    referrals: events.map((event) => {
+      const earnedAt = coerceDate(event.earned_at);
+      return {
+        id: event.id,
+        status: event.status as "pending" | "earned",
+        refereePhoneMasked: maskRefereePhone(event.referee_phone),
+        tierLabel: tierLabelById.get(event.tier) ?? event.tier,
+        referrerCreditNgn: event.referrer_credit_ngn,
+        orderedAt: coerceDateIso(event.created_at) ?? new Date().toISOString(),
+        earnedAt: coerceDateIso(event.earned_at),
+        creditExpiresAt:
+          event.status === "earned" && earnedAt
+            ? storeCreditExpiresAt(earnedAt).toISOString()
+            : null,
+      };
+    }),
   };
 }
 

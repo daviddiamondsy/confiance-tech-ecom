@@ -1,4 +1,5 @@
 import { sql } from "@/lib/db/client";
+import { coerceDate } from "@/lib/referral/dates";
 import { normalizeNigerianPhone } from "@/lib/referral/phone";
 import {
   computeAvailableStoreCreditBalance,
@@ -149,8 +150,8 @@ export async function getStoreCreditLedgerEntries(phone: string): Promise<StoreC
 
   return rows.map((row) => ({
     amountNgn: row.amount_ngn,
-    expiresAt: row.expires_at,
-    createdAt: row.created_at,
+    expiresAt: coerceDate(row.expires_at),
+    createdAt: coerceDate(row.created_at) ?? new Date(),
   }));
 }
 
