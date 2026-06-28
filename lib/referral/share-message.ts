@@ -5,7 +5,6 @@ import {
 } from "@/lib/referral/config";
 
 export interface ReferralShareMessageInput {
-  code: string;
   shareUrl: string;
   referrerName?: string | null;
 }
@@ -41,7 +40,6 @@ export function buildReferralShareMessage(input: ReferralShareMessageInput): str
     `Save up to ${formatNgn(max)} on your first device order (${discountSummary} depending on the device you pick). The discount applies automatically when you checkout through my link.`,
     "",
     `Open: ${input.shareUrl}`,
-    `Or use code: ${input.code}`,
     "",
     `One referral discount per phone number. Link valid for ${REFERRAL_ATTRIBUTION_DAYS} days.`,
   ].join("\n");

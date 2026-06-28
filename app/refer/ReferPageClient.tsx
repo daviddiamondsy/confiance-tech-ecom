@@ -51,7 +51,7 @@ function ReferDashboardContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dashboard, setDashboard] = useState<ReferralDashboardData | null>(null);
-  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
 
   const handleLookup = async (e: React.FormEvent) => {
@@ -80,22 +80,21 @@ function ReferDashboardContent() {
     }
   };
 
-  const copyReferralCode = async () => {
-    if (!dashboard?.code) return;
+  const copyReferralLink = async () => {
+    if (!dashboard?.shareUrl) return;
     try {
-      await navigator.clipboard.writeText(dashboard.code);
-      setCopiedCode(true);
-      setTimeout(() => setCopiedCode(false), 2000);
+      await navigator.clipboard.writeText(dashboard.shareUrl);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
     } catch {
-      setError("Could not copy referral code.");
+      setError("Could not copy referral link.");
     }
   };
 
   const copyShareMessage = async () => {
-    if (!dashboard?.shareUrl || !dashboard.code) return;
+    if (!dashboard?.shareUrl) return;
     try {
       const message = buildReferralShareMessage({
-        code: dashboard.code,
         shareUrl: dashboard.shareUrl,
         referrerName: dashboard.referrerName,
       });
@@ -165,24 +164,21 @@ function ReferDashboardContent() {
               Your referral link
             </p>
 
-            <p className="text-sm font-medium text-slate-700 mb-2">Your referral code</p>
             <div className="flex items-stretch gap-3 mb-6">
-              <div className="flex flex-1 items-center justify-between rounded-xl bg-slate-50 border border-slate-200 px-4 py-3">
-                <span className="font-display text-lg font-bold tracking-wide text-slate-900">
-                  {dashboard.code}
-                </span>
+              <div className="flex flex-1 items-center justify-between rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 gap-3">
+                <span className="text-sm font-medium text-slate-900 break-all">{dashboard.shareUrl}</span>
                 <button
                   type="button"
-                  onClick={copyReferralCode}
-                  className="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900 transition-colors"
-                  aria-label={copiedCode ? "Referral code copied" : "Copy referral code"}
+                  onClick={copyReferralLink}
+                  className="inline-flex flex-shrink-0 items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900 transition-colors"
+                  aria-label={copiedLink ? "Referral link copied" : "Copy referral link"}
                 >
                   <Copy className="h-4 w-4" />
                 </button>
               </div>
             </div>
-            {copiedCode && (
-              <p className="-mt-4 mb-4 text-xs font-medium text-emerald-600">Code copied</p>
+            {copiedLink && (
+              <p className="-mt-4 mb-4 text-xs font-medium text-emerald-600">Link copied</p>
             )}
 
             <button type="button" onClick={copyShareMessage} className="btn-primary w-full sm:w-auto">
