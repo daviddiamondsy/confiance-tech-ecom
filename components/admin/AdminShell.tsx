@@ -9,10 +9,11 @@ import {
   Package,
   Tags,
   Gift,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type AdminTab = "overview" | "pricing" | "filters" | "products" | "referrals";
+export type AdminTab = "overview" | "pricing" | "filters" | "products" | "referrals" | "orders";
 
 interface AdminShellProps {
   activeTab: AdminTab;
@@ -26,6 +27,7 @@ const NAV_ITEMS: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[]
   { id: "pricing", label: "Pricing", icon: DollarSign },
   { id: "filters", label: "Filter tags", icon: Tags },
   { id: "products", label: "Products", icon: Package },
+  { id: "orders", label: "Orders", icon: ClipboardList },
   { id: "referrals", label: "Referrals", icon: Gift },
 ];
 
@@ -43,7 +45,7 @@ export default function AdminShell({
             <p className="text-xs font-semibold uppercase tracking-widest text-primary-600 mb-0.5">
               Confiance Tech
             </p>
-            <h1 className="font-display text-xl font-bold text-slate-900">Catalog admin</h1>
+            <h1 className="font-display text-xl font-bold text-slate-900">Store admin</h1>
           </div>
           <div className="flex items-center gap-2">
             <Link

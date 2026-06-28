@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "next lint && npm run typecheck",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:seed": "tsx scripts/db-seed.ts",
     "db:backfill-specifications": "tsx scripts/db-backfill-specifications.ts",
@@ -45,6 +47,7 @@
     "tailwindcss": "^3.4.1",
     "tsc-files": "^1.1.4",
     "tsx": "^4.19.3",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^3.2.6"
   }
 }

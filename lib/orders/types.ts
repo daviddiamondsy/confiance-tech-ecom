@@ -1,0 +1,125 @@
+export type OrderSource = "holdam" | "manual";
+
+export type OrderFulfillmentStatus =
+  | "pending_payment"
+  | "secured"
+  | "shipped"
+  | "complete"
+  | "disputed"
+  | "cancelled"
+  | "refunded";
+
+export const ORDER_FULFILLMENT_STATUSES: OrderFulfillmentStatus[] = [
+  "pending_payment",
+  "secured",
+  "shipped",
+  "complete",
+  "disputed",
+  "cancelled",
+  "refunded",
+];
+
+export const MANUAL_ORDER_STATUSES: OrderFulfillmentStatus[] = [
+  "pending_payment",
+  "secured",
+  "shipped",
+  "complete",
+  "cancelled",
+  "refunded",
+];
+
+export const HOLDAM_OPS_STATUSES: OrderFulfillmentStatus[] = ["shipped"];
+
+export interface StoreOrderRecord {
+  id: number;
+  deal_id: string | null;
+  source: OrderSource;
+  fulfillment_status: OrderFulfillmentStatus;
+  product_id: string | null;
+  product_name: string;
+  product_price_ngn: number | null;
+  product_storage: string | null;
+  product_color: string | null;
+  catalog_price_ngn: number | null;
+  checkout_amount_ngn: number | null;
+  customer_name: string;
+  customer_phone: string;
+  customer_address: string;
+  customer_state: string;
+  referral_code: string | null;
+  referee_discount_ngn: number;
+  store_credit_applied_ngn: number;
+  notes: string | null;
+  admin_note: string | null;
+  holdam_event: string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+  secured_at: Date | string | null;
+  completed_at: Date | string | null;
+}
+
+export interface AdminOrderRow {
+  id: number;
+  dealId: string | null;
+  source: OrderSource;
+  fulfillmentStatus: OrderFulfillmentStatus;
+  productId: string | null;
+  productName: string;
+  productPriceNgn: number | null;
+  productStorage: string | null;
+  productColor: string | null;
+  catalogPriceNgn: number | null;
+  checkoutAmountNgn: number | null;
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  customerState: string;
+  referralCode: string | null;
+  refereeDiscountNgn: number;
+  storeCreditAppliedNgn: number;
+  notes: string | null;
+  adminNote: string | null;
+  holdamEvent: string | null;
+  createdAt: string;
+  updatedAt: string;
+  securedAt: string | null;
+  completedAt: string | null;
+  merchantDealUrl: string | null;
+}
+
+export interface CreateHoldamOrderParams {
+  dealId: string;
+  productId?: string;
+  productName: string;
+  catalogPriceNgn: number;
+  checkoutAmountNgn: number;
+  productStorage?: string;
+  productColor?: string;
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  customerState: string;
+  referralCode?: string;
+  refereeDiscountNgn?: number;
+  storeCreditAppliedNgn?: number;
+}
+
+export interface CreateManualOrderParams {
+  productName: string;
+  productPriceNgn?: number;
+  productStorage?: string;
+  productColor?: string;
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  customerState: string;
+  fulfillmentStatus?: OrderFulfillmentStatus;
+  notes?: string;
+  adminNote?: string;
+  sendNotificationEmail?: boolean;
+}
+
+export interface UpdateOrderParams {
+  fulfillmentStatus?: OrderFulfillmentStatus;
+  adminNote?: string;
+}

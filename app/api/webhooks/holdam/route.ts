@@ -3,6 +3,8 @@ import Holdam from "@holdam/ts";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { processReferralWebhook } from "@/lib/referral/service";
 import { ensureReferralReady } from "@/lib/referral/db-ready";
+import { processOrderWebhook } from "@/lib/orders/service";
+import { ensureOrdersReady } from "@/lib/orders/db-ready";
 
 export async function POST(req: NextRequest) {
   try {
@@ -74,6 +76,17 @@ export async function POST(req: NextRequest) {
         )
         .catch((referralError) => {
           console.error("[Webhook][holdam] Referral processing failed", { dealId, referralError });
+        });
+
+      void ensureOrdersReady()
+        .then(() =>
+          processOrderWebhook({
+            eventName: event.event,
+            dealId: String(dealId),
+          })
+        )
+        .catch((orderError) => {
+          console.error("[Webhook][holdam] Order processing failed", { dealId, orderError });
         });
     }
 
