@@ -84,6 +84,9 @@ Use this map to ensure no branch is skipped:
 | Global routing invariants | [chatbot.md](../../confiance_chatbot/docs/tests/acceptance-criteria/chatbot.md) (INV-*) |
 | Eval workflow and thresholds | [bot-improvement-workflow.md](../../confiance_chatbot/docs/tests/bot-improvement-workflow.md) |
 | Executable tests | `confiance_chatbot/tests/**/*.test.ts` |
+| **Tiered support (L0-L3)** | [support-tier-spec.md](../../confiance_chatbot/docs/support-tier-spec.md) |
+
+Add to dependency order item **16:** Tiered support ladder (embeddings, helpful escalation, RAG, handoff) after LLM router (item 8) and before eval harness (item 11).
 
 ## Routing architecture (target state)
 

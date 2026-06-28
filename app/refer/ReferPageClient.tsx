@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Copy, Gift, Share2, Users } from "lucide-react";
@@ -11,6 +11,7 @@ import {
   STORE_CREDIT_EXPIRY_MONTHS,
 } from "@/lib/referral/config";
 import { buildReferralShareMessage } from "@/lib/referral/share-message";
+import { readLastOrderPhone } from "@/lib/customer-phone-storage";
 
 interface ReferralHistoryItem {
   id: number;
@@ -53,6 +54,13 @@ function ReferDashboardContent() {
   const [dashboard, setDashboard] = useState<ReferralDashboardData | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
+
+  useEffect(() => {
+    const savedPhone = readLastOrderPhone();
+    if (savedPhone) {
+      setPhone(savedPhone);
+    }
+  }, []);
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();

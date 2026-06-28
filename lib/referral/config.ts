@@ -83,6 +83,32 @@ export function formatNgn(amount: number): string {
   return `₦${amount.toLocaleString("en-NG")}`;
 }
 
+export function refereeDiscountRangeNgn(): { min: number; max: number } {
+  const amounts = REFERRAL_TIERS.map((tier) => tier.refereeDiscountNgn);
+  return { min: Math.min(...amounts), max: Math.max(...amounts) };
+}
+
+export function referrerCreditRangeNgn(): { min: number; max: number } {
+  const amounts = REFERRAL_TIERS.map((tier) => tier.referrerCreditNgn);
+  return { min: Math.min(...amounts), max: Math.max(...amounts) };
+}
+
+export function formatRefereeDiscountRange(): string {
+  const { min, max } = refereeDiscountRangeNgn();
+  if (min === max) return formatNgn(min);
+  return `${formatNgn(min)} to ${formatNgn(max)}`;
+}
+
+export function formatReferrerCreditRange(): string {
+  const { min, max } = referrerCreditRangeNgn();
+  if (min === max) return formatNgn(min);
+  return `${formatNgn(min)} to ${formatNgn(max)}`;
+}
+
+export function maxReferrerCreditNgn(): number {
+  return referrerCreditRangeNgn().max;
+}
+
 /** Human-readable catalog price band for a referral tier. */
 export function formatReferralTierRange(tier: ReferralTier): string {
   if (tier.maxPriceNgn == null) {

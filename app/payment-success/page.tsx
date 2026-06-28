@@ -4,6 +4,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { CheckCircle, Gift } from "lucide-react";
 import Link from "next/link";
+import {
+  formatNgn,
+  formatRefereeDiscountRange,
+  formatReferrerCreditRange,
+  maxReferrerCreditNgn,
+  STORE_CREDIT_EXPIRY_MONTHS,
+} from "@/lib/referral/config";
 
 function PaymentSuccessContent() {
   const router = useRouter();
@@ -49,10 +56,14 @@ function PaymentSuccessContent() {
           <div className="flex items-start gap-3">
             <Gift className="h-5 w-5 text-primary-600 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="font-semibold text-slate-900 mb-1">Happy with your purchase?</p>
+              <p className="font-semibold text-slate-900 mb-1">
+                Earn up to {formatNgn(maxReferrerCreditNgn())} in store credit
+              </p>
               <p className="text-sm text-slate-600 leading-relaxed mb-3">
-                Refer a friend and earn store credit when their order completes. They save on their
-                first purchase too.
+                Share your personal link. When a friend completes their first order, you get{" "}
+                {formatReferrerCreditRange()} in store credit (based on what they buy). They save{" "}
+                {formatRefereeDiscountRange()} at checkout. Build your credit to spend on your next
+                purchase within {STORE_CREDIT_EXPIRY_MONTHS} months.
               </p>
               <Link href="/refer" className="text-sm font-semibold text-primary-600 hover:text-primary-700">
                 Get your referral link
