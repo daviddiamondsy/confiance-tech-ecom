@@ -13,6 +13,7 @@ import AdminShell, { type AdminTab } from "@/components/admin/AdminShell";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import ProductEditModal from "@/components/admin/ProductEditModal";
 import AdminReferralsPanel from "@/components/admin/AdminReferralsPanel";
+import AdminOrdersPanel from "@/components/admin/AdminOrdersPanel";
 import ProductFormFields from "@/components/admin/ProductFormFields";
 import {
   adminProductToForm,
@@ -565,7 +566,7 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-slate-600 bg-surface-muted">
         <div className="h-8 w-8 rounded-full border-2 border-primary-200 border-t-primary-600 animate-spin" />
-        <p>Loading catalog admin...</p>
+        <p>Loading store admin...</p>
       </div>
     );
   }
@@ -1044,6 +1045,8 @@ export default function AdminDashboard() {
       )}
 
       {activeTab === "referrals" && <AdminReferralsPanel />}
+
+      {activeTab === "orders" && <AdminOrdersPanel />}
 
       {editingProduct && editForms[editingProduct.id] && (
         <ProductEditModal

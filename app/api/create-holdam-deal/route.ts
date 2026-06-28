@@ -8,6 +8,7 @@ import { isPostgresConfigured } from "@/lib/db/client";
 import { computeCheckoutAmount, recordReferralOnDealCreated } from "@/lib/referral/service";
 import { getStoreCreditBalance, getReferralCodeByCode } from "@/lib/db/referral-repository";
 import { ensureReferralReady } from "@/lib/referral/db-ready";
+import { recordHoldamOrder } from "@/lib/orders/service";
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
@@ -184,6 +185,29 @@ export async function POST(req: NextRequest) {
     const sdkCallStart = Date.now();
 
     const deal = await holdam.deals.create(dealRequest);
+
+    if (isPostgresConfigured()) {
+      try {
+        await recordHoldamOrder({
+          dealId: deal.data.id,
+          productId: resolvedProductId,
+          productName: resolvedProductName,
+          catalogPriceNgn: amountNgn,
+          checkoutAmountNgn,
+          productStorage: orderStorage,
+          productColor: orderColor,
+          customerName: customerData.name,
+          customerPhone: customerData.phone,
+          customerAddress: customerData.address,
+          customerState: customerData.state,
+          referralCode: referralAdjustment?.referralCode,
+          refereeDiscountNgn: referralAdjustment?.refereeDiscountNgn,
+          storeCreditAppliedNgn: referralAdjustment?.storeCreditAppliedNgn,
+        });
+      } catch (orderError) {
+        console.error("[API][create-holdam-deal] Store order record failed", orderError);
+      }
+    }
 
     if (isPostgresConfigured() && referralAdjustment) {
       try {
