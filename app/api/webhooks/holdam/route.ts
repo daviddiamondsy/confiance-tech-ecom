@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Holdam from "@holdam/ts";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { processReferralWebhook } from "@/lib/referral/service";
+import { ensureReferralReady } from "@/lib/referral/db-ready";
 
 export async function POST(req: NextRequest) {
   try {
@@ -63,13 +64,17 @@ export async function POST(req: NextRequest) {
     }
 
     if (isPostgresConfigured() && dealId && event.event) {
-      void processReferralWebhook({
-        eventName: event.event,
-        dealId: String(dealId),
-        metadata: metadata ?? null,
-      }).catch((referralError) => {
-        console.error("[Webhook][holdam] Referral processing failed", { dealId, referralError });
-      });
+      void ensureReferralReady()
+        .then(() =>
+          processReferralWebhook({
+            eventName: event.event,
+            dealId: String(dealId),
+            metadata: metadata ?? null,
+          })
+        )
+        .catch((referralError) => {
+          console.error("[Webhook][holdam] Referral processing failed", { dealId, referralError });
+        });
     }
 
     return NextResponse.json({ received: true });

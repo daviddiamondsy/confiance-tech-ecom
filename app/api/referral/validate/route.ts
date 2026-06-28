@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isPostgresConfigured } from "@/lib/db/client";
+import { ensureReferralReady } from "@/lib/referral/db-ready";
 import { previewReferralDiscount } from "@/lib/referral/service";
 
 export async function POST(req: NextRequest) {
@@ -11,6 +12,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    await ensureReferralReady();
+
     const { referralCode, catalogPriceNgn, refereePhone } = await req.json();
 
     if (!referralCode || !catalogPriceNgn) {

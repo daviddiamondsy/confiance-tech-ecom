@@ -7,6 +7,7 @@ import { resolveCheckoutPrice } from "@/lib/resolve-checkout-price";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { computeCheckoutAmount, recordReferralOnDealCreated } from "@/lib/referral/service";
 import { getStoreCreditBalance, getReferralCodeByCode } from "@/lib/db/referral-repository";
+import { ensureReferralReady } from "@/lib/referral/db-ready";
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
@@ -109,6 +110,8 @@ export async function POST(req: NextRequest) {
     let storeCreditBalanceNgn = 0;
 
     if (isPostgresConfigured()) {
+      await ensureReferralReady();
+
       if (applyStoreCredit) {
         storeCreditBalanceNgn = await getStoreCreditBalance(customerData.phone);
       }
