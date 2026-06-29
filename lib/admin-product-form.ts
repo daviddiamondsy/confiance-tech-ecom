@@ -3,12 +3,16 @@ import { stripConditionSuffix } from "@/lib/product-condition-suffix";
 import {
   formatChinaShippingYuan,
   formatInternationalShippingNgn,
+  formatLocalDeliveryNgn,
   parseChinaShippingYuan,
   parseInternationalShippingNgn,
+  parseLocalDeliveryNgn,
   DEFAULT_CHINA_SHIPPING_YUAN,
   DEFAULT_INTERNATIONAL_SHIPPING_NGN,
+  DEFAULT_LOCAL_DELIVERY_NGN,
   type ChinaShippingYuan,
   type InternationalShippingNgn,
+  type LocalDeliveryNgn,
 } from "@/lib/product-shipping";
 import { priceFromYuan, sellingMarkupForYuan, type PricingConfig } from "@/lib/pricing";
 
@@ -26,6 +30,7 @@ export interface ProductFormState {
   specifications: string;
   chinaShippingYuan: string;
   internationalShippingNgn: string;
+  localDeliveryNgn: string;
 }
 
 export function parseFilterSlugsInput(raw: unknown, legacyFilterSlug?: unknown): string[] {
@@ -199,6 +204,7 @@ export function previewVariantPricesFromForm(
     shipping = {
       chinaShippingYuan: parseChinaShippingYuan(form.chinaShippingYuan),
       internationalShippingNgn: parseInternationalShippingNgn(form.internationalShippingNgn),
+      localDeliveryNgn: parseLocalDeliveryNgn(form.localDeliveryNgn),
     };
   } catch {
     return [];
@@ -335,6 +341,7 @@ export function adminProductToForm(product: {
   specifications: Record<string, string>;
   chinaShippingYuan: number;
   internationalShippingNgn: number;
+  localDeliveryNgn: number;
 }): ProductFormState {
   const hasVariants = product.storageVariants.length > 0;
 
@@ -360,6 +367,7 @@ export function adminProductToForm(product: {
     internationalShippingNgn: formatInternationalShippingNgn(
       product.internationalShippingNgn as InternationalShippingNgn
     ),
+    localDeliveryNgn: formatLocalDeliveryNgn(product.localDeliveryNgn as LocalDeliveryNgn),
   };
 }
 
@@ -377,4 +385,5 @@ export const emptyProductForm: ProductFormState = {
   specifications: "",
   chinaShippingYuan: String(DEFAULT_CHINA_SHIPPING_YUAN),
   internationalShippingNgn: String(DEFAULT_INTERNATIONAL_SHIPPING_NGN),
+  localDeliveryNgn: String(DEFAULT_LOCAL_DELIVERY_NGN),
 };

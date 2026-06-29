@@ -96,8 +96,9 @@ export async function recalculateAllPrices(config: PricingConfig): Promise<void>
     yuan_cost: string | null;
     china_shipping_yuan: number;
     international_shipping_ngn: number;
+    local_delivery_ngn: number;
   }>`
-    SELECT id, name, yuan_cost, china_shipping_yuan, international_shipping_ngn
+    SELECT id, name, yuan_cost, china_shipping_yuan, international_shipping_ngn, local_delivery_ngn
     FROM products
     WHERE yuan_cost IS NOT NULL
   `;
@@ -120,6 +121,7 @@ export async function recalculateAllPrices(config: PricingConfig): Promise<void>
     product_yuan_cost: string | null;
     china_shipping_yuan: number;
     international_shipping_ngn: number;
+    local_delivery_ngn: number;
     name: string;
   }>`
     SELECT
@@ -130,6 +132,7 @@ export async function recalculateAllPrices(config: PricingConfig): Promise<void>
       p.yuan_cost AS product_yuan_cost,
       p.china_shipping_yuan,
       p.international_shipping_ngn,
+      p.local_delivery_ngn,
       p.name
     FROM product_storage_options o
     JOIN products p ON p.id = o.product_id

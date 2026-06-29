@@ -21,21 +21,29 @@ import {
   defaultShippingForProductName,
   parseChinaShippingYuan,
   parseInternationalShippingNgn,
+  parseLocalDeliveryNgn,
   type ChinaShippingYuan,
   type InternationalShippingNgn,
+  type LocalDeliveryNgn,
 } from "@/lib/product-shipping";
 
 function parseProductShippingInput(
   body: Record<string, unknown>,
   productName: string
-): { chinaShippingYuan: ChinaShippingYuan; internationalShippingNgn: InternationalShippingNgn } {
+): {
+  chinaShippingYuan: ChinaShippingYuan;
+  internationalShippingNgn: InternationalShippingNgn;
+  localDeliveryNgn: LocalDeliveryNgn;
+} {
   const defaults = defaultShippingForProductName(productName);
   const chinaRaw = body.chinaShippingYuan ?? defaults.chinaShippingYuan;
   const internationalRaw = body.internationalShippingNgn ?? defaults.internationalShippingNgn;
+  const localDeliveryRaw = body.localDeliveryNgn ?? defaults.localDeliveryNgn;
 
   return {
     chinaShippingYuan: parseChinaShippingYuan(chinaRaw),
     internationalShippingNgn: parseInternationalShippingNgn(internationalRaw),
+    localDeliveryNgn: parseLocalDeliveryNgn(localDeliveryRaw),
   };
 }
 
@@ -117,6 +125,7 @@ export async function POST(req: NextRequest) {
   let shipping: {
     chinaShippingYuan: ChinaShippingYuan;
     internationalShippingNgn: InternationalShippingNgn;
+    localDeliveryNgn: LocalDeliveryNgn;
   };
 
   try {
@@ -125,7 +134,8 @@ export async function POST(req: NextRequest) {
     if (
       error instanceof Error &&
       (error.message === "INVALID_CHINA_SHIPPING" ||
-        error.message === "INVALID_INTERNATIONAL_SHIPPING")
+        error.message === "INVALID_INTERNATIONAL_SHIPPING" ||
+        error.message === "INVALID_LOCAL_DELIVERY")
     ) {
       return NextResponse.json({ error: "Invalid shipping option selected" }, { status: 400 });
     }
@@ -164,7 +174,8 @@ export async function POST(req: NextRequest) {
       }
       if (
         error.message === "INVALID_CHINA_SHIPPING" ||
-        error.message === "INVALID_INTERNATIONAL_SHIPPING"
+        error.message === "INVALID_INTERNATIONAL_SHIPPING" ||
+        error.message === "INVALID_LOCAL_DELIVERY"
       ) {
         return NextResponse.json({ error: "Invalid shipping option selected" }, { status: 400 });
       }
@@ -245,6 +256,9 @@ function buildUpdateInput(body: Record<string, unknown>): UpdateProductInput {
   if (body.internationalShippingNgn !== undefined) {
     input.internationalShippingNgn = parseInternationalShippingNgn(body.internationalShippingNgn);
   }
+  if (body.localDeliveryNgn !== undefined) {
+    input.localDeliveryNgn = parseLocalDeliveryNgn(body.localDeliveryNgn);
+  }
 
   return input;
 }
@@ -283,7 +297,8 @@ export async function PUT(req: NextRequest) {
       }
       if (
         error.message === "INVALID_CHINA_SHIPPING" ||
-        error.message === "INVALID_INTERNATIONAL_SHIPPING"
+        error.message === "INVALID_INTERNATIONAL_SHIPPING" ||
+        error.message === "INVALID_LOCAL_DELIVERY"
       ) {
         return NextResponse.json({ error: "Invalid shipping option selected" }, { status: 400 });
       }
@@ -327,7 +342,8 @@ export async function PUT(req: NextRequest) {
       }
       if (
         error.message === "INVALID_CHINA_SHIPPING" ||
-        error.message === "INVALID_INTERNATIONAL_SHIPPING"
+        error.message === "INVALID_INTERNATIONAL_SHIPPING" ||
+        error.message === "INVALID_LOCAL_DELIVERY"
       ) {
         return NextResponse.json({ error: "Invalid shipping option selected" }, { status: 400 });
       }

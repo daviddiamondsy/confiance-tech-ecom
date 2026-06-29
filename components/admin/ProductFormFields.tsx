@@ -10,6 +10,7 @@ import {
 import {
   CHINA_SHIPPING_YUAN_OPTIONS,
   INTERNATIONAL_SHIPPING_NGN_OPTIONS,
+  LOCAL_DELIVERY_NGN_OPTIONS,
 } from "@/lib/product-shipping";
 
 interface ProductFilterTag {
@@ -183,7 +184,7 @@ export default function ProductFormFields({
           ))}
         </select>
         <p className="text-xs text-slate-500 mt-1">
-          Added to international shipping below to get total shipping cost.
+          Added to international and local delivery below to get total shipping cost.
         </p>
       </div>
 
@@ -202,6 +203,28 @@ export default function ProductFormFields({
           required
         >
           {INTERNATIONAL_SHIPPING_NGN_OPTIONS.map((amount) => (
+            <option key={amount} value={amount}>
+              ₦{amount.toLocaleString()}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label
+          htmlFor={`${idPrefix}-local-delivery`}
+          className="block text-sm font-medium text-slate-700 mb-2"
+        >
+          Local delivery (NGN)
+        </label>
+        <select
+          id={`${idPrefix}-local-delivery`}
+          className="input-field"
+          value={form.localDeliveryNgn}
+          onChange={(event) => onChange({ localDeliveryNgn: event.target.value })}
+          required
+        >
+          {LOCAL_DELIVERY_NGN_OPTIONS.map((amount) => (
             <option key={amount} value={amount}>
               ₦{amount.toLocaleString()}
             </option>
