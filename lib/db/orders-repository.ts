@@ -19,6 +19,7 @@ function sqlTimestamp(value: Date | string | null | undefined): string | null {
 
 export async function insertHoldamOrder(params: CreateHoldamOrderParams): Promise<StoreOrderRecord> {
   const customerPhone = normalizeNigerianPhone(params.customerPhone) || params.customerPhone.trim();
+  const source = params.source ?? "website";
 
   const { rows } = await sql<StoreOrderRecord>`
     INSERT INTO store_orders (
@@ -41,7 +42,7 @@ export async function insertHoldamOrder(params: CreateHoldamOrderParams): Promis
       store_credit_applied_ngn
     ) VALUES (
       ${params.dealId},
-      'holdam',
+      ${source},
       'pending_payment',
       ${params.productId ?? null},
       ${params.productName},
@@ -140,7 +141,7 @@ export async function getStoreOrderByDealId(dealId: string): Promise<StoreOrderR
   return rows[0] ? mapRow(rows[0]) : null;
 }
 
-export async function getPendingHoldamOrderByPhone(phone: string): Promise<StoreOrderRecord | null> {
+export async function getPendingCheckoutOrderByPhone(phone: string): Promise<StoreOrderRecord | null> {
   const customerPhone = normalizeNigerianPhone(phone);
   if (!customerPhone) return null;
 
@@ -148,12 +149,17 @@ export async function getPendingHoldamOrderByPhone(phone: string): Promise<Store
     SELECT *
     FROM store_orders
     WHERE customer_phone = ${customerPhone}
-      AND source = 'holdam'
+      AND source IN ('website', 'chatbot', 'holdam')
       AND fulfillment_status = 'pending_payment'
     ORDER BY created_at DESC
     LIMIT 1
   `;
   return rows[0] ? mapRow(rows[0]) : null;
+}
+
+/** @deprecated Use getPendingCheckoutOrderByPhone */
+export async function getPendingHoldamOrderByPhone(phone: string): Promise<StoreOrderRecord | null> {
+  return getPendingCheckoutOrderByPhone(phone);
 }
 
 export async function linkHoldamEscrowId(params: {

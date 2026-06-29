@@ -12,7 +12,9 @@ interface OrderAccountingSummary {
   completeCount: number;
   pendingPaymentNgn: number;
   securedGmvNgn: number;
-  holdamOrderCount: number;
+  websiteOrderCount: number;
+  chatbotOrderCount: number;
+  manualOrderCount: number;
 }
 
 interface ReferralAccountingSummary {
@@ -80,7 +82,7 @@ export default function AdminAccountingOverview() {
       <div>
         <h3 className="font-display text-lg font-bold text-slate-900">Orders and payments</h3>
         <p className="text-sm text-slate-600 mt-1">
-          Holdam checkout and manual orders tracked in the store database.
+          Website checkout, chatbot, and manual orders tracked in the store database.
         </p>
       </div>
 
@@ -88,7 +90,7 @@ export default function AdminAccountingOverview() {
         <AdminStatCard
           label="Total orders"
           value={String(orders.totalOrders)}
-          hint={`${orders.holdamOrderCount} Holdam · ${orders.totalOrders - orders.holdamOrderCount} manual`}
+          hint={`${orders.websiteOrderCount} website · ${orders.chatbotOrderCount} chatbot · ${orders.manualOrderCount} manual`}
           icon={ClipboardList}
         />
         <AdminStatCard

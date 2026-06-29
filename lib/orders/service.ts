@@ -11,7 +11,7 @@ import { ensureHoldamDealLinked } from "@/lib/holdam/deal-link";
 import { sendOrderEmail } from "@/lib/order-email";
 import { ensureOrdersReady } from "@/lib/orders/db-ready";
 import {
-  isValidManualStatus,
+  isValidAdminOrderStatus,
   mapWebhookEventToStatus,
   resolveStatusAfterWebhook,
 } from "@/lib/orders/status";
@@ -23,7 +23,7 @@ import type {
   StoreOrderRecord,
   UpdateOrderParams,
 } from "@/lib/orders/types";
-import { HOLDAM_OPS_STATUSES } from "@/lib/orders/types";
+import { normalizeOrderSource } from "@/lib/orders/types";
 import { isCompleteNigerianPhone } from "@/lib/referral/phone";
 
 function merchantDealUrl(dealId: string | null): string | null {
@@ -44,7 +44,7 @@ export function toAdminOrderRow(row: StoreOrderRecord): AdminOrderRow {
   return {
     id: row.id,
     dealId: row.deal_id,
-    source: row.source,
+    source: normalizeOrderSource(row.source),
     fulfillmentStatus: row.fulfillment_status,
     productId: row.product_id,
     productName: row.product_name,
@@ -133,8 +133,8 @@ export async function createManualOrder(params: CreateManualOrderParams): Promis
   }
 
   const status = params.fulfillmentStatus ?? "pending_payment";
-  if (!isValidManualStatus(status)) {
-    throw new Error("Invalid status for a manual order.");
+  if (!isValidAdminOrderStatus(status)) {
+    throw new Error("Invalid order status.");
   }
 
   if (
@@ -183,21 +183,8 @@ export async function updateAdminOrder(id: number, params: UpdateOrderParams): P
     throw new Error("No changes to save.");
   }
 
-  if (params.fulfillmentStatus) {
-    if (existing.source === "manual") {
-      if (!isValidManualStatus(params.fulfillmentStatus)) {
-        throw new Error("Invalid status for a manual order.");
-      }
-    } else if (!HOLDAM_OPS_STATUSES.includes(params.fulfillmentStatus)) {
-      throw new Error(
-        "Holdam checkout orders can only be marked shipped from admin. Payment status updates from webhooks."
-      );
-    } else if (
-      params.fulfillmentStatus === "shipped" &&
-      !["secured", "shipped", "complete"].includes(existing.fulfillment_status)
-    ) {
-      throw new Error("Mark payment secured before shipping a Holdam order.");
-    }
+  if (params.fulfillmentStatus && !isValidAdminOrderStatus(params.fulfillmentStatus)) {
+    throw new Error("Invalid order status.");
   }
 
   const updated = await patchStoreOrder({

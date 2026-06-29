@@ -1,4 +1,30 @@
-export type OrderSource = "holdam" | "manual";
+export type OrderSource = "website" | "manual" | "chatbot";
+
+export const ORDER_SOURCES: OrderSource[] = ["website", "manual", "chatbot"];
+
+/** Legacy rows may still store holdam until schema migration runs. */
+export type StoredOrderSource = OrderSource | "holdam";
+
+export function normalizeOrderSource(source: string): OrderSource {
+  if (source === "holdam") return "website";
+  if (source === "website" || source === "manual" || source === "chatbot") {
+    return source;
+  }
+  return "website";
+}
+
+export function sourceLabel(source: StoredOrderSource): string {
+  switch (normalizeOrderSource(source)) {
+    case "website":
+      return "Website";
+    case "manual":
+      return "Manual";
+    case "chatbot":
+      return "Chatbot";
+    default:
+      return "Website";
+  }
+}
 
 export type OrderFulfillmentStatus =
   | "pending_payment"
@@ -19,16 +45,11 @@ export const ORDER_FULFILLMENT_STATUSES: OrderFulfillmentStatus[] = [
   "refunded",
 ];
 
-export const MANUAL_ORDER_STATUSES: OrderFulfillmentStatus[] = [
-  "pending_payment",
-  "secured",
-  "shipped",
-  "complete",
-  "cancelled",
-  "refunded",
-];
+/** Statuses ops can set from the admin orders panel. */
+export const ADMIN_EDITABLE_ORDER_STATUSES: OrderFulfillmentStatus[] = ORDER_FULFILLMENT_STATUSES;
 
-export const HOLDAM_OPS_STATUSES: OrderFulfillmentStatus[] = ["shipped"];
+/** @deprecated Use ADMIN_EDITABLE_ORDER_STATUSES */
+export const MANUAL_ORDER_STATUSES = ADMIN_EDITABLE_ORDER_STATUSES;
 
 export interface StoreOrderRecord {
   id: number;
@@ -90,6 +111,8 @@ export interface AdminOrderRow {
 
 export interface CreateHoldamOrderParams {
   dealId: string;
+  /** Checkout channel; defaults to website. */
+  source?: Extract<OrderSource, "website" | "chatbot">;
   productId?: string;
   productName: string;
   catalogPriceNgn: number;

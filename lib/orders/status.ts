@@ -1,4 +1,5 @@
 import type { OrderFulfillmentStatus } from "@/lib/orders/types";
+import { ORDER_FULFILLMENT_STATUSES } from "@/lib/orders/types";
 
 const TERMINAL_STATUSES: OrderFulfillmentStatus[] = ["disputed", "cancelled", "refunded"];
 
@@ -42,8 +43,13 @@ export function resolveStatusAfterWebhook(
   return current;
 }
 
+export function isValidAdminOrderStatus(status: OrderFulfillmentStatus): boolean {
+  return ORDER_FULFILLMENT_STATUSES.includes(status);
+}
+
+/** @deprecated Use isValidAdminOrderStatus */
 export function isValidManualStatus(status: OrderFulfillmentStatus): boolean {
-  return status !== "disputed";
+  return isValidAdminOrderStatus(status);
 }
 
 export function statusLabel(status: OrderFulfillmentStatus): string {
