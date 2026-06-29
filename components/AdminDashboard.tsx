@@ -576,18 +576,15 @@ export default function AdminDashboard() {
     <AdminShell activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout}>
       {activeTab === "overview" && (
         <div className="space-y-8">
-          <div>
-            <h2 className="font-display text-2xl font-bold text-slate-900">Overview</h2>
-            <p className="text-sm text-slate-600 mt-1">
-              Snapshot of your catalog, pricing, and store accounting.
-            </p>
-          </div>
+          <p className="text-sm text-slate-500">
+            Snapshot of your catalog, pricing, and store accounting.
+          </p>
 
           <AdminAccountingOverview />
 
           <div>
-            <h3 className="font-display text-lg font-bold text-slate-900">Catalog</h3>
-            <p className="text-sm text-slate-600 mt-1">Products and pricing settings.</p>
+            <h3 className="font-display text-base font-bold text-slate-900">Catalog</h3>
+            <p className="text-sm text-slate-500 mt-0.5">Live products and pricing configuration.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -596,52 +593,65 @@ export default function AdminDashboard() {
               value={String(products.length)}
               hint="In the live catalog"
               icon={Package}
+              variant="indigo"
             />
             <AdminStatCard
               label="Filter tags"
               value={String(filterTags.length)}
               hint="Used on the All Products page"
               icon={Tags}
+              variant="indigo"
             />
             <AdminStatCard
               label="Yuan rate"
               value={`₦${pricing.yuanToNaira}`}
               hint="Per yuan converted to naira"
               icon={TrendingUp}
+              variant="amber"
             />
             <AdminStatCard
               label="Standard markup"
               value={`${Math.round((pricing.sellingMarkup - 1) * 100)}%`}
               hint={`Expensive items: ${pricing.expensiveSellingMarkup != null ? `${Math.round((pricing.expensiveSellingMarkup - 1) * 100)}%` : "disabled"} above ${pricing.expensiveYuanThreshold ?? "—"}¥`}
               icon={DollarSign}
+              variant="emerald"
             />
           </div>
 
-          <div className="card-elevated p-6">
-            <h3 className="font-display text-lg font-bold text-slate-900 mb-4">Quick actions</h3>
-            <div className="flex flex-wrap gap-3">
-              <button type="button" className="btn-primary text-sm py-2 px-4" onClick={() => setActiveTab("products")}>
-                Manage products
-              </button>
-              <button type="button" className="btn-outline text-sm py-2 px-4" onClick={() => setActiveTab("pricing")}>
-                Update pricing
-              </button>
-              <button type="button" className="btn-outline text-sm py-2 px-4" onClick={() => setActiveTab("filters")}>
-                Edit filter tags
-              </button>
-              <button type="button" className="btn-outline text-sm py-2 px-4" onClick={() => setActiveTab("orders")}>
-                View orders
-              </button>
-              <button type="button" className="btn-outline text-sm py-2 px-4" onClick={() => setActiveTab("referrals")}>
-                Referral links
-              </button>
+          <div>
+            <h3 className="font-display text-base font-bold text-slate-900 mb-3">Quick actions</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {(
+                [
+                  { tab: "products" as AdminTab, label: "Products", icon: Package, color: "bg-primary-50 text-primary-700 hover:bg-primary-100" },
+                  { tab: "orders" as AdminTab, label: "Orders", icon: Search, color: "bg-slate-50 text-slate-700 hover:bg-slate-100" },
+                  { tab: "pricing" as AdminTab, label: "Pricing", icon: DollarSign, color: "bg-amber-50 text-amber-700 hover:bg-amber-100" },
+                  { tab: "filters" as AdminTab, label: "Filters", icon: Tags, color: "bg-slate-50 text-slate-700 hover:bg-slate-100" },
+                  { tab: "referrals" as AdminTab, label: "Referrals", icon: TrendingUp, color: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" },
+                ] as { tab: AdminTab; label: string; icon: typeof Package; color: string }[]
+              ).map(({ tab, label, icon: Icon, color }) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex flex-col items-center gap-2 rounded-2xl p-4 transition-all duration-150 border border-transparent hover:border-slate-100 hover:shadow-sm ${color}`}
+                >
+                  <Icon className="h-5 w-5" aria-hidden />
+                  <span className="text-xs font-semibold">{label}</span>
+                </button>
+              ))}
               <button
                 type="button"
-                className="btn-outline text-sm py-2 px-4"
                 disabled={applyingSchema}
                 onClick={handleApplySchema}
+                className="flex flex-col items-center gap-2 rounded-2xl p-4 transition-all duration-150 border border-transparent hover:border-slate-100 hover:shadow-sm bg-slate-50 text-slate-500 hover:bg-slate-100 disabled:opacity-50"
               >
-                {applyingSchema ? "Applying schema..." : "Apply database schema"}
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 12h16M4 17h16" />
+                </svg>
+                <span className="text-xs font-semibold text-center leading-tight">
+                  {applyingSchema ? "Applying…" : "Apply schema"}
+                </span>
               </button>
             </div>
           </div>
@@ -911,9 +921,15 @@ export default function AdminDashboard() {
           <section className="card-elevated p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <div>
-                <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Products</h2>
-                <p className="text-sm text-slate-600">
-                  {filteredProducts.length} of {products.length} products shown. Price recalculates from yuan on save.
+                <div className="flex items-center gap-2">
+                  <h2 className="font-display text-lg font-bold text-slate-900">Products</h2>
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+                    {filteredProducts.length}
+                    {filteredProducts.length !== products.length && ` / ${products.length}`}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  Price recalculates from yuan on save.
                 </p>
               </div>
               <div className="relative w-full sm:w-72">
@@ -942,19 +958,22 @@ export default function AdminDashboard() {
             ) : (
               <div className="overflow-x-auto rounded-xl border border-slate-100">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-slate-50 text-left text-slate-600">
+                  <thead className="bg-slate-50 text-left border-b border-slate-100">
                     <tr>
-                      <th className="px-4 py-3 font-medium">Product</th>
-                      <th className="px-4 py-3 font-medium">Filter</th>
-                      <th className="px-4 py-3 font-medium hidden md:table-cell">Storage</th>
-                      <th className="px-4 py-3 font-medium">Yuan</th>
-                      <th className="px-4 py-3 font-medium">Price</th>
-                      <th className="px-4 py-3 font-medium">Actions</th>
+                      <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Product</th>
+                      <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Filter</th>
+                      <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400 hidden md:table-cell">Storage</th>
+                      <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Yuan</th>
+                      <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Price</th>
+                      <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredProducts.map((product) => (
-                      <tr key={product.id} className="bg-white hover:bg-slate-50/50 transition-colors">
+                  <tbody>
+                    {filteredProducts.map((product, idx) => (
+                      <tr
+                        key={product.id}
+                        className={`border-t border-slate-50 transition-colors hover:bg-primary-50/30 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/40"}`}
+                      >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <img
@@ -963,37 +982,37 @@ export default function AdminDashboard() {
                               className="h-10 w-10 rounded-lg object-contain bg-slate-50 border border-slate-100 shrink-0"
                             />
                             <div className="min-w-0">
-                              <p className="font-medium text-slate-900 truncate">{product.name}</p>
-                              <p className="text-xs text-slate-500 truncate">{product.slug}</p>
+                              <p className="font-semibold text-slate-900 truncate">{product.name}</p>
+                              <p className="text-xs text-slate-400 truncate">{product.slug}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-slate-700">{filterLabelsForProduct(product)}</td>
-                        <td className="px-4 py-3 text-slate-700 text-xs hidden md:table-cell max-w-[180px] truncate">
+                        <td className="px-4 py-3 text-slate-600 text-xs">{filterLabelsForProduct(product)}</td>
+                        <td className="px-4 py-3 text-slate-500 text-xs hidden md:table-cell max-w-[180px] truncate">
                           {formatStorageVariantSummary(product.storageVariants)}
                         </td>
-                        <td className="px-4 py-3 text-slate-700 whitespace-nowrap">
+                        <td className="px-4 py-3 text-slate-600 whitespace-nowrap text-xs">
                           {product.yuanCost != null ? `${product.yuanCost}¥` : "—"}
                         </td>
-                        <td className="px-4 py-3 text-slate-700 whitespace-nowrap font-medium">
+                        <td className="px-4 py-3 whitespace-nowrap font-semibold text-slate-900">
                           ₦{product.price.toLocaleString()}
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-1.5">
                             <button
                               type="button"
-                              className="btn-outline text-sm py-2 px-3"
+                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                               onClick={() => setEditingProductId(product.id)}
                             >
                               Edit
                             </button>
                             <button
                               type="button"
-                              className="btn-outline text-sm py-2 px-3 text-red-600 border-red-200 hover:bg-red-50"
+                              className="inline-flex items-center gap-1 rounded-lg border border-red-100 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
                               disabled={deletingProductId === product.id}
                               onClick={() => handleDeleteProduct(product)}
                             >
-                              {deletingProductId === product.id ? "Deleting..." : "Delete"}
+                              {deletingProductId === product.id ? "Deleting…" : "Delete"}
                             </button>
                           </div>
                           {editMessages[product.id] && !editingProductId && (
