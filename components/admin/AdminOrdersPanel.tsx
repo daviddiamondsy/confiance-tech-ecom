@@ -329,20 +329,25 @@ export default function AdminOrdersPanel() {
       </section>
 
       <section className="card-elevated p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <ClipboardList className="h-5 w-5 text-primary-600" />
-          <h3 className="font-display text-lg font-bold text-slate-900">Order list</h3>
-        </div>
-
-        <div className="flex flex-wrap gap-3 mb-4">
-          <label className="text-sm text-slate-600 flex items-center gap-2">
-            Status
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-primary-600" />
+            <h3 className="font-display text-lg font-bold text-slate-900">Order list</h3>
+            {!loading && (
+              <span className="ml-1 inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+                {filteredOrders.length}
+                {filteredOrders.length !== orders.length && ` / ${orders.length}`}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
             <select
-              className="input-field py-1.5 text-sm"
+              className="input-field py-1.5 text-xs rounded-lg"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
+              aria-label="Filter by status"
             >
-              <option value="all">All</option>
+              <option value="all">All statuses</option>
               <option value="pending_payment">Pending payment</option>
               <option value="secured">Payment secured</option>
               <option value="shipped">Shipped</option>
@@ -351,52 +356,69 @@ export default function AdminOrdersPanel() {
               <option value="cancelled">Cancelled</option>
               <option value="refunded">Refunded</option>
             </select>
-          </label>
-          <label className="text-sm text-slate-600 flex items-center gap-2">
-            Source
             <select
-              className="input-field py-1.5 text-sm"
+              className="input-field py-1.5 text-xs rounded-lg"
               value={sourceFilter}
               onChange={(e) => setSourceFilter(e.target.value)}
+              aria-label="Filter by source"
             >
-              <option value="all">All</option>
+              <option value="all">All sources</option>
               {ORDER_SOURCES.map((source) => (
                 <option key={source} value={source}>
                   {sourceLabel(source)}
                 </option>
               ))}
             </select>
-          </label>
+          </div>
         </div>
 
         {loading ? (
-          <p className="text-sm text-slate-500">Loading orders...</p>
+          <div className="space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-16 bg-slate-50 rounded-xl animate-pulse" />
+            ))}
+          </div>
         ) : filteredOrders.length === 0 ? (
-          <p className="text-sm text-slate-500">No orders match these filters.</p>
+          <div className="flex flex-col items-center gap-3 py-16 text-slate-400">
+            <ClipboardList className="h-10 w-10 opacity-40" />
+            <p className="text-sm font-medium">No orders match these filters.</p>
+            {(statusFilter !== "all" || sourceFilter !== "all") && (
+              <button
+                type="button"
+                className="text-xs text-primary-600 hover:underline"
+                onClick={() => { setStatusFilter("all"); setSourceFilter("all"); }}
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-slate-100">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 text-left text-slate-500">
+              <thead className="bg-slate-50 text-left text-slate-500 border-b border-slate-100">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Date</th>
-                  <th className="px-4 py-3 font-medium">Customer</th>
-                  <th className="px-4 py-3 font-medium">Product</th>
-                  <th className="px-4 py-3 font-medium">Amount</th>
-                  <th className="px-4 py-3 font-medium">Source</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Actions</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">Date</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">Customer</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">Product</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">Amount</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">Source</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">Status</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.map((order) => (
-                    <tr key={order.id} className="border-t border-slate-100 align-top">
-                      <td className="px-4 py-3 whitespace-nowrap text-slate-600">
+                {filteredOrders.map((order, idx) => (
+                    <tr
+                      key={order.id}
+                      className={`border-t border-slate-50 align-top transition-colors hover:bg-primary-50/30 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/40"}`}
+                    >
+                      <td className="px-4 py-3 whitespace-nowrap text-slate-500 text-xs">
                         {formatDate(order.createdAt)}
                       </td>
                       <td className="px-4 py-3">
-                        <p className="font-medium text-slate-900">{order.customerName}</p>
-                        <p className="text-slate-500">{order.customerPhone}</p>
-                        <p className="text-slate-500 text-xs mt-1">
+                        <p className="font-semibold text-slate-900">{order.customerName}</p>
+                        <p className="text-slate-500 text-xs">{order.customerPhone}</p>
+                        <p className="text-slate-400 text-xs mt-0.5">
                           {order.customerAddress}, {order.customerState}
                         </p>
                       </td>
@@ -404,14 +426,18 @@ export default function AdminOrdersPanel() {
                         <p className="font-medium text-slate-900">{order.productName}</p>
                         <p className="text-slate-500 text-xs">{variantLabel(order)}</p>
                         {order.notes && (
-                          <p className="text-slate-500 text-xs mt-1">{order.notes}</p>
+                          <p className="text-slate-400 text-xs mt-1 italic">{order.notes}</p>
                         )}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">{amountLabel(order)}</td>
-                      <td className="px-4 py-3">{sourceLabel(order.source)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap font-semibold text-slate-900">{amountLabel(order)}</td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                          {sourceLabel(order.source)}
+                        </span>
+                      </td>
                       <td className="px-4 py-3">
                         <span
-                          className={`inline-flex rounded-lg border px-2 py-1 text-xs font-medium ${statusBadgeClass(order.fulfillmentStatus)}`}
+                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusBadgeClass(order.fulfillmentStatus)}`}
                         >
                           {statusLabel(order.fulfillmentStatus)}
                         </span>
@@ -421,7 +447,7 @@ export default function AdminOrdersPanel() {
                       </td>
                       <td className="px-4 py-3 min-w-[220px]">
                         <select
-                          className="input-field w-full text-xs mb-2"
+                          className="input-field w-full text-xs mb-2 py-1.5"
                           value={draftStatuses[order.id] ?? order.fulfillmentStatus}
                           onChange={(e) =>
                             setDraftStatuses((prev) => ({
@@ -438,7 +464,7 @@ export default function AdminOrdersPanel() {
                         </select>
 
                         <textarea
-                          className="input-field w-full text-xs min-h-[56px] mb-2"
+                          className="input-field w-full text-xs min-h-[52px] mb-2 py-1.5"
                           value={draftNotes[order.id] ?? ""}
                           onChange={(e) =>
                             setDraftNotes((prev) => ({ ...prev, [order.id]: e.target.value }))
@@ -446,21 +472,21 @@ export default function AdminOrdersPanel() {
                           placeholder="Internal ops note"
                         />
 
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5">
                           <button
                             type="button"
-                            className="btn-outline text-xs py-1.5 px-2"
+                            className="inline-flex items-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700 transition-colors disabled:opacity-50"
                             disabled={savingId === order.id}
                             onClick={() => void saveOrderUpdate(order)}
                           >
-                            {savingId === order.id ? "Saving..." : "Save"}
+                            {savingId === order.id ? "Saving…" : "Save"}
                           </button>
                           {order.merchantDealUrl && (
                             <a
                               href={order.merchantDealUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="btn-outline text-xs py-1.5 px-2 inline-flex items-center gap-1"
+                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                             >
                               <ExternalLink className="h-3 w-3" aria-hidden />
                               Deal

@@ -238,56 +238,94 @@ export default function AdminReferralsPanel() {
       </section>
 
       <section className="card-elevated p-6">
-        <h3 className="font-display text-lg font-bold text-slate-900 mb-4">Existing referral links</h3>
+        <div className="flex items-center gap-2 mb-5">
+          <h3 className="font-display text-lg font-bold text-slate-900">Existing referral links</h3>
+          {!loading && (
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+              {referrals.length}
+            </span>
+          )}
+        </div>
 
         {loading ? (
-          <p className="text-sm text-slate-600">Loading referrals...</p>
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-12 bg-slate-50 rounded-xl animate-pulse" />
+            ))}
+          </div>
         ) : referrals.length === 0 ? (
-          <p className="text-sm text-slate-600">No referral links yet.</p>
+          <div className="flex flex-col items-center gap-3 py-12 text-slate-400">
+            <Gift className="h-9 w-9 opacity-40" />
+            <p className="text-sm font-medium">No referral links yet.</p>
+            <p className="text-xs text-center max-w-xs">
+              Generate a link above for a past buyer and their share URL will appear here.
+            </p>
+          </div>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-slate-100">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 text-left text-slate-600">
+              <thead className="bg-slate-50 text-left border-b border-slate-100">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Customer</th>
-                  <th className="px-4 py-3 font-medium">Code</th>
-                  <th className="px-4 py-3 font-medium hidden lg:table-cell">Link</th>
-                  <th className="px-4 py-3 font-medium">Earned</th>
-                  <th className="px-4 py-3 font-medium">Pending</th>
-                  <th className="px-4 py-3 font-medium">Credit</th>
-                  <th className="px-4 py-3 font-medium">Actions</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Customer</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Code</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400 hidden lg:table-cell">Link</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Earned</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Pending</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Credit</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {referrals.map((referral) => (
-                  <tr key={referral.id} className="bg-white">
+              <tbody>
+                {referrals.map((referral, idx) => (
+                  <tr
+                    key={referral.id}
+                    className={`border-t border-slate-50 transition-colors hover:bg-primary-50/30 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/40"}`}
+                  >
                     <td className="px-4 py-3">
-                      <p className="font-medium text-slate-900">{referral.referrerName || "—"}</p>
+                      <p className="font-semibold text-slate-900">{referral.referrerName || "—"}</p>
                       <p className="text-xs text-slate-500">{referral.referrerPhone}</p>
                     </td>
-                    <td className="px-4 py-3 font-semibold text-slate-900">{referral.code}</td>
-                    <td className="px-4 py-3 hidden lg:table-cell max-w-xs truncate text-slate-600">
+                    <td className="px-4 py-3">
+                      <code className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-800">
+                        {referral.code}
+                      </code>
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell max-w-xs truncate text-slate-500 text-xs">
                       {referral.shareUrl}
                     </td>
-                    <td className="px-4 py-3">{referral.earnedCount}</td>
-                    <td className="px-4 py-3">{referral.pendingCount}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{formatNgn(referral.storeCreditBalanceNgn)}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                        {referral.earnedCount}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {referral.pendingCount > 0 ? (
+                        <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                          {referral.pendingCount}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-xs">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap font-semibold text-slate-800">{formatNgn(referral.storeCreditBalanceNgn)}</td>
                     <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex gap-1.5">
                         <button
                           type="button"
-                          className="btn-outline text-sm py-2 px-3"
+                          title="Copy share link"
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                           onClick={() => copyLink(referral.shareUrl)}
                         >
+                          <Copy className="h-3 w-3" />
                           Copy
                         </button>
                         <button
                           type="button"
-                          className="btn-outline text-sm py-2 px-3 text-red-600 border-red-200 hover:bg-red-50"
+                          className="inline-flex items-center gap-1 rounded-lg border border-red-100 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
                           disabled={deletingId === referral.id}
                           onClick={() => void handleDelete(referral)}
                         >
-                          {deletingId === referral.id ? "Deleting..." : "Delete"}
+                          {deletingId === referral.id ? "…" : "Delete"}
                         </button>
                       </div>
                     </td>
