@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Holdam from "@holdam/ts";
 import { isPostgresConfigured } from "@/lib/db/client";
-import { parseHoldamWebhookData } from "@/lib/holdam/webhook-payload";
+import { parseHoldamWebhookData, resolveWebhookBuyerPhone } from "@/lib/holdam/webhook-payload";
 import { processReferralWebhook } from "@/lib/referral/service";
 import { ensureReferralReady } from "@/lib/referral/db-ready";
 import { processOrderWebhook } from "@/lib/orders/service";
@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
     const event = JSON.parse(rawBody);
     const parsed = parseHoldamWebhookData(event.data);
     const dealId = parsed.dealId;
+    const buyerPhone = resolveWebhookBuyerPhone(event.data);
     const { metadata, status, amount } = parsed;
 
     console.log("[Webhook][holdam] Event received", {
@@ -75,6 +76,7 @@ export async function POST(req: NextRequest) {
             eventName: event.event,
             dealId: String(dealId),
             metadata: metadata ?? null,
+            buyerPhone,
           })
         )
         .catch((referralError) => {
@@ -86,6 +88,7 @@ export async function POST(req: NextRequest) {
           processOrderWebhook({
             eventName: event.event,
             dealId: String(dealId),
+            buyerPhone,
           })
         )
         .catch((orderError) => {

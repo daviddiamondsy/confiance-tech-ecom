@@ -14,6 +14,7 @@ import AdminStatCard from "@/components/admin/AdminStatCard";
 import ProductEditModal from "@/components/admin/ProductEditModal";
 import AdminReferralsPanel from "@/components/admin/AdminReferralsPanel";
 import AdminOrdersPanel from "@/components/admin/AdminOrdersPanel";
+import AdminAccountingOverview from "@/components/admin/AdminAccountingOverview";
 import ProductFormFields from "@/components/admin/ProductFormFields";
 import {
   adminProductToForm,
@@ -578,8 +579,15 @@ export default function AdminDashboard() {
           <div>
             <h2 className="font-display text-2xl font-bold text-slate-900">Overview</h2>
             <p className="text-sm text-slate-600 mt-1">
-              Snapshot of your catalog and pricing settings.
+              Snapshot of your catalog, pricing, and store accounting.
             </p>
+          </div>
+
+          <AdminAccountingOverview />
+
+          <div>
+            <h3 className="font-display text-lg font-bold text-slate-900">Catalog</h3>
+            <p className="text-sm text-slate-600 mt-1">Products and pricing settings.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -620,6 +628,9 @@ export default function AdminDashboard() {
               </button>
               <button type="button" className="btn-outline text-sm py-2 px-4" onClick={() => setActiveTab("filters")}>
                 Edit filter tags
+              </button>
+              <button type="button" className="btn-outline text-sm py-2 px-4" onClick={() => setActiveTab("orders")}>
+                View orders
               </button>
               <button type="button" className="btn-outline text-sm py-2 px-4" onClick={() => setActiveTab("referrals")}>
                 Referral links

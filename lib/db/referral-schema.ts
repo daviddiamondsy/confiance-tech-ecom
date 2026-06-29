@@ -59,4 +59,10 @@ export async function ensureReferralSchema(): Promise<void> {
   await sqlDdl`CREATE INDEX IF NOT EXISTS idx_referral_events_referee ON referral_events (referee_phone)`;
   await sqlDdl`CREATE INDEX IF NOT EXISTS idx_referral_events_status ON referral_events (status)`;
   await sqlDdl`CREATE INDEX IF NOT EXISTS idx_store_credit_ledger_phone ON store_credit_ledger (phone)`;
+  await sqlDdl`ALTER TABLE referral_events ADD COLUMN IF NOT EXISTS holdam_escrow_id TEXT`;
+  await sqlDdl`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_referral_events_holdam_escrow_id
+    ON referral_events (holdam_escrow_id)
+    WHERE holdam_escrow_id IS NOT NULL
+  `;
 }

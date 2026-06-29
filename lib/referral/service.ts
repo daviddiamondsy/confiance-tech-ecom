@@ -1,3 +1,4 @@
+import { ensureHoldamDealLinked } from "@/lib/holdam/deal-link";
 import { REFERRAL_MIN_DEAL_NGN, REFERRAL_TIERS, referralTierForPrice } from "@/lib/referral/config";
 import { coerceDate, coerceDateIso } from "@/lib/referral/dates";
 import { phonesMatch } from "@/lib/referral/phone";
@@ -14,6 +15,7 @@ import {
   insertReferralCode,
   insertReferralEvent,
   isWebhookEventProcessed,
+  linkReferralHoldamEscrowId,
   listReferralCodesForAdmin,
   listReferralEventsForReferrer,
   markReferralEventEarned,
@@ -347,11 +349,17 @@ export async function processReferralWebhook(params: {
   eventName: string;
   dealId: string;
   metadata?: Record<string, unknown> | null;
+  buyerPhone?: string | null;
 }): Promise<void> {
   const eventKey = `${params.eventName}:${params.dealId}`;
   if (await isWebhookEventProcessed(eventKey)) {
     return;
   }
+
+  await ensureHoldamDealLinked({
+    webhookDealId: params.dealId,
+    buyerPhone: params.buyerPhone,
+  });
 
   const event = await getReferralEventByDealId(params.dealId);
 

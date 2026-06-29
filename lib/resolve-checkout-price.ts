@@ -34,9 +34,22 @@ export async function resolveCheckoutPrice(input: {
   productSlug?: string;
   storage?: string;
 }): Promise<ResolvedCheckoutPrice | null> {
-  const product =
-    (input.productSlug ? await getProductBySlug(input.productSlug) : undefined) ??
-    (input.productId ? await getProductById(input.productId) : undefined);
+  const byId = input.productId ? await getProductById(input.productId) : undefined;
+  const bySlug = input.productSlug ? await getProductBySlug(input.productSlug) : undefined;
+
+  // Prefer productId: bot and checkout forms select by id; slug can be stale or duplicated in DB.
+  let product = byId ?? bySlug;
+
+  if (byId && bySlug && byId.id !== bySlug.id) {
+    console.warn("[resolveCheckoutPrice] productId/slug mismatch; using productId", {
+      productId: byId.id,
+      productIdName: byId.name,
+      productSlug: input.productSlug,
+      slugResolvedId: bySlug.id,
+      slugResolvedName: bySlug.name,
+    });
+    product = byId;
+  }
 
   const price = resolveVariantPrice(product, input.storage);
   if (!product || price == null) return null;

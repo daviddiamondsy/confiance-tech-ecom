@@ -52,6 +52,7 @@ export interface StoreOrderRecord {
   notes: string | null;
   admin_note: string | null;
   holdam_event: string | null;
+  holdam_escrow_id: string | null;
   created_at: Date | string;
   updated_at: Date | string;
   secured_at: Date | string | null;

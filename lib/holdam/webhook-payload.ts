@@ -36,6 +36,14 @@ export function resolveWebhookDealId(data: unknown): string | null {
   return null;
 }
 
+export function resolveWebhookBuyerPhone(data: unknown): string | null {
+  const root = readRecord(data);
+  if (!root) return null;
+
+  const buyer = readRecord(root.buyer);
+  return readString(buyer?.phone);
+}
+
 /** Parse `event.data` from a verified Holdam webhook body. */
 export function parseHoldamWebhookData(data: unknown): ParsedHoldamWebhookData {
   const root = readRecord(data);
