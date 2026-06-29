@@ -191,7 +191,11 @@ export async function previewReferralDiscount(params: {
   }
 
   if (await refereeAlreadyUsedReferral(params.refereePhone)) {
-    return { valid: false, reason: "Referral discount already used on this phone number." };
+    return {
+      valid: false,
+      reason:
+        "Referral discount already used on this phone number for a paid order. One friend discount per phone, ever.",
+    };
   }
 
   const tier = referralTierForPrice(params.catalogPriceNgn);

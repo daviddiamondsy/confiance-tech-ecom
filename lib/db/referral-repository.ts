@@ -117,11 +117,22 @@ export async function insertReferralCode(params: {
 
 export async function refereeAlreadyUsedReferral(refereePhone: string): Promise<boolean> {
   const phone = normalizeNigerianPhone(refereePhone);
+  // Lifetime discount applies after payment is secured (or referrer credit earned).
+  // Unpaid checkout attempts keep status pending + order pending_payment and must not block retries.
   const { rows } = await sql<{ exists: boolean }>`
     SELECT EXISTS (
-      SELECT 1 FROM referral_events
-      WHERE referee_phone = ${phone}
-        AND status IN ('pending', 'earned')
+      SELECT 1
+      FROM referral_events re
+      LEFT JOIN store_orders so ON so.deal_id = re.deal_id
+      WHERE re.referee_phone = ${phone}
+        AND (
+          re.status = 'earned'
+          OR (
+            re.status = 'pending'
+            AND so.fulfillment_status IS NOT NULL
+            AND so.fulfillment_status <> 'pending_payment'
+          )
+        )
     ) AS exists
   `;
   return Boolean(rows[0]?.exists);
