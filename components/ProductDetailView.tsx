@@ -37,47 +37,49 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
 
   return (
     <>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+          {/* Image */}
           <div className="relative">
-            <div className="aspect-square bg-slate-100 rounded-2xl overflow-hidden relative shadow-card border border-slate-100">
+            <div className="aspect-square bg-gradient-to-br from-slate-50 to-slate-100 rounded-3xl overflow-hidden relative shadow-card border border-slate-100">
               <Image
                 src={product.image}
                 alt={variant.displayName}
                 fill
-                className="object-contain p-6"
+                className="object-contain p-8"
               />
               {badge && (
-                <span className="absolute top-4 left-4 px-4 py-1.5 bg-primary-600 text-white text-sm font-semibold rounded-full shadow-soft">
+                <span className="absolute top-4 left-4 px-3 py-1.5 bg-primary-600 text-white text-xs font-bold rounded-full shadow-soft tracking-wide">
                   {badge}
                 </span>
               )}
             </div>
           </div>
 
+          {/* Info */}
           <div>
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-slate-900 mb-4 tracking-tight">
+            <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-4 tracking-tight leading-tight">
               {variant.displayName}
             </h1>
 
             {product.storageOptions && product.storageOptions.length > 0 && (
-              <div className="mb-6">
-                <p className="text-sm font-medium text-slate-700 mb-3">Storage</p>
-                <div className="flex flex-wrap gap-3">
+              <div className="mb-5">
+                <p className="input-label">Storage</p>
+                <div className="flex flex-wrap gap-2.5">
                   {product.storageOptions.map((option, index) => (
                     <button
                       key={option.storage}
                       type="button"
                       onClick={() => setSelectedStorageIndex(index)}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
                         selectedStorageIndex === index
-                          ? "border-primary-600 bg-primary-50 text-primary-700 shadow-soft"
-                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                          ? "border-primary-600 bg-primary-50 text-primary-700 ring-2 ring-primary-100"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-primary-300 hover:bg-primary-50/50"
                       }`}
                     >
                       <span className="block">{option.storage}</span>
                       <span
-                        className={`block text-xs font-medium mt-0.5 ${
+                        className={`block text-xs font-semibold mt-0.5 ${
                           selectedStorageIndex === index ? "text-primary-600" : "text-slate-500"
                         }`}
                       >
@@ -90,18 +92,18 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
             )}
 
             {product.colorOptions && product.colorOptions.length > 0 && (
-              <div className="mb-6">
-                <p className="text-sm font-medium text-slate-700 mb-3">Color</p>
-                <div className="flex flex-wrap gap-3">
+              <div className="mb-5">
+                <p className="input-label">Color</p>
+                <div className="flex flex-wrap gap-2.5">
                   {product.colorOptions.map((color, index) => (
                     <button
                       key={color}
                       type="button"
                       onClick={() => setSelectedColorIndex(index)}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
                         selectedColorIndex === index
-                          ? "border-primary-600 bg-primary-50 text-primary-700 shadow-soft"
-                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                          ? "border-primary-600 bg-primary-50 text-primary-700 ring-2 ring-primary-100"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-primary-300 hover:bg-primary-50/50"
                       }`}
                     >
                       {color}
@@ -113,30 +115,34 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
 
             <ReferralDiscountBanner catalogPriceNgn={variant.price} />
 
-            <div className="flex items-center gap-3 mb-6">
-              <span className="text-3xl font-bold text-primary-600">
+            <div className="flex items-baseline gap-3 mb-2">
+              <span className="text-3xl md:text-4xl font-bold text-slate-900">
                 ₦{variant.price.toLocaleString()}
               </span>
               {product.originalPrice && (
-                <span className="text-xl text-slate-400 line-through">
+                <span className="text-lg text-slate-400 line-through">
                   ₦{product.originalPrice.toLocaleString()}
                 </span>
               )}
-              {product.originalPrice && (
-                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-sm font-semibold rounded-full">
+            </div>
+            {product.originalPrice && (
+              <div className="mb-4">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 text-sm font-bold rounded-full">
                   Save ₦{(product.originalPrice - variant.price).toLocaleString()}
                 </span>
-              )}
-            </div>
+              </div>
+            )}
 
-            <p className="text-slate-600 text-lg mb-8 leading-relaxed">{product.description}</p>
+            <p className="text-slate-600 leading-relaxed mb-6">{product.description}</p>
 
-            <div className="mb-8">
-              <h3 className="font-display font-semibold text-slate-900 mb-4">Key Features</h3>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="mb-6">
+              <h3 className="font-display font-semibold text-slate-900 mb-3 text-sm uppercase tracking-wider text-primary-600">Key Features</h3>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {product.features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-2 text-slate-600">
-                    <Check className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                  <li key={index} className="flex items-start gap-2.5 text-slate-600 text-sm">
+                    <span className="flex-shrink-0 h-5 w-5 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5">
+                      <Check className="h-3 w-3 text-emerald-600" />
+                    </span>
                     {feature}
                   </li>
                 ))}
@@ -283,14 +289,17 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                   <ProductSpecifications specs={displaySpecs} />
                 </div>
 
-                <div className="mt-6 p-6 bg-gradient-to-br from-primary-50 to-violet-50 rounded-2xl border border-primary-100">
-                  <h4 className="font-display font-semibold text-primary-900 mb-2">Need Help?</h4>
-                  <p className="text-sm text-primary-700 mb-4 leading-relaxed">
-                    Our product specialists are here to answer your questions.
+                <div className="mt-6 p-6 bg-gradient-to-br from-primary-600 to-violet-700 rounded-2xl text-white shadow-glow">
+                  <h4 className="font-display font-semibold text-white mb-1.5">Need Help?</h4>
+                  <p className="text-sm text-primary-100 mb-4 leading-relaxed">
+                    Our product specialists are ready to answer your questions.
                   </p>
-                  <button className="btn-primary w-full text-sm py-2.5">
-                    Chat with Us
-                  </button>
+                  <a
+                    href="#order-form"
+                    className="inline-flex items-center justify-center gap-2 w-full py-2.5 bg-white text-primary-700 text-sm font-semibold rounded-xl hover:bg-primary-50 transition-colors"
+                  >
+                    Order Now
+                  </a>
                 </div>
               </div>
             </div>

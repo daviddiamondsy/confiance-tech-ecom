@@ -115,138 +115,157 @@ function ReferDashboardContent() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12">
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-100 text-primary-600 mb-4">
-          <Gift className="h-7 w-7" />
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Hero */}
+      <div className="relative bg-slate-950 text-white overflow-hidden -mx-4 sm:-mx-6 lg:-mx-8 mb-10">
+        <div className="absolute inset-0 bg-hero-mesh opacity-50" />
+        <div className="absolute -bottom-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/50 to-transparent" />
+        <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-14 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 border border-white/10 mb-5">
+            <Gift className="h-8 w-8 text-primary-300" />
+          </div>
+          <h1 className="font-display text-3xl md:text-4xl font-bold mb-3 tracking-tight">
+            Refer &amp; Earn Store Points
+          </h1>
+          <p className="text-slate-400 leading-relaxed max-w-lg mx-auto">
+            Share your link. Friends save on their first order. You earn store points after their order completes.
+          </p>
         </div>
-        <h1 className="font-display text-3xl font-bold text-slate-900 mb-3">
-          Refer a Friend, Earn Store Points
-        </h1>
-        <p className="text-slate-600 leading-relaxed max-w-xl mx-auto">
-          Share your link. Friends save on their first order from our store. You earn store points after
-          their order completes and the return window closes.
-        </p>
       </div>
 
-      <div className="card-elevated p-8 mb-8">
-        <form onSubmit={handleLookup} className="space-y-4">
-          <div>
-            <label htmlFor="refer-name" className="block text-sm font-medium text-slate-700 mb-1.5">
-              Your name (optional)
-            </label>
-            <input
-              id="refer-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="How friends will see you"
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label htmlFor="refer-phone" className="block text-sm font-medium text-slate-700 mb-1.5">
-              Phone number used at checkout *
-            </label>
-            <input
-              id="refer-phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Your mobile number"
-              required
-              className="input-field"
-            />
-          </div>
-          <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-50">
-            {loading ? "Loading..." : "Get my referral link"}
-          </button>
-        </form>
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+      <div className="card-elevated overflow-hidden mb-8">
+        <div className="bg-gradient-to-r from-primary-600 to-violet-600 px-8 py-5">
+          <h2 className="font-display font-bold text-white">Find your referral link</h2>
+          <p className="text-primary-100 text-sm mt-0.5">Enter the phone number you used at checkout</p>
+        </div>
+        <div className="p-8">
+          <form onSubmit={handleLookup} className="space-y-4">
+            <div>
+              <label htmlFor="refer-name" className="input-label">Your name (optional)</label>
+              <input
+                id="refer-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="How friends will see you"
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label htmlFor="refer-phone" className="input-label">Phone number used at checkout *</label>
+              <input
+                id="refer-phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="e.g. 08012345678"
+                required
+                className="input-field"
+              />
+            </div>
+            <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-60">
+              {loading ? "Loading…" : "Get my referral link"}
+            </button>
+          </form>
+          {error && (
+            <div className="mt-4 alert-error">
+              <span>{error}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {dashboard && (
         <div className="space-y-6">
-          <div className="card-elevated p-8">
-            <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-6">
-              Your referral link
-            </p>
-
-            <div className="flex items-stretch gap-3 mb-6">
-              <div className="flex flex-1 items-center justify-between rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 gap-3">
-                <span className="text-sm font-medium text-slate-900 break-all">{dashboard.shareUrl}</span>
+          {/* Referral link card */}
+          <div className="card-elevated overflow-hidden">
+            <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <p className="font-display font-semibold text-slate-900">Your referral link</p>
+                <p className="text-xs text-slate-500 mt-0.5">Share this link with friends to earn store points</p>
+              </div>
+              {copiedLink && (
+                <span className="badge-success">Copied!</span>
+              )}
+            </div>
+            <div className="p-8">
+              <div className="flex items-center gap-2 mb-5 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-sm font-mono text-slate-700 flex-1 break-all">{dashboard.shareUrl}</span>
                 <button
                   type="button"
                   onClick={copyReferralLink}
-                  className="inline-flex flex-shrink-0 items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900 transition-colors"
+                  className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-primary-600 hover:border-primary-300 hover:bg-primary-50 transition-all text-xs font-semibold"
                   aria-label={copiedLink ? "Referral link copied" : "Copy referral link"}
                 >
-                  <Copy className="h-4 w-4" />
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy
                 </button>
               </div>
+              <button type="button" onClick={copyShareMessage} className="btn-primary">
+                <Share2 className="h-4 w-4" />
+                {copiedShare ? "Message copied!" : "Copy share message"}
+              </button>
             </div>
-            {copiedLink && (
-              <p className="-mt-4 mb-4 text-xs font-medium text-emerald-600">Link copied</p>
-            )}
-
-            <button type="button" onClick={copyShareMessage} className="btn-primary w-full sm:w-auto">
-              <Share2 className="h-4 w-4" />
-              {copiedShare ? "Message copied" : "Share"}
-            </button>
           </div>
 
+          {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="card-elevated p-5">
-              <p className="text-sm text-slate-500 mb-1">Available store points</p>
-              <p className="text-2xl font-bold text-primary-600">
+            <div className="stat-card border-l-4 border-primary-500">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Store points</p>
+              <p className="text-2xl font-bold text-primary-600 mt-1">
                 {formatNgn(dashboard.storeCreditBalanceNgn)}
               </p>
-              <p className="mt-2 text-xs text-slate-500">
-                Store points expire {STORE_CREDIT_EXPIRY_MONTHS} months after each reward is earned.
+              <p className="text-xs text-slate-400 mt-1">
+                Expires {STORE_CREDIT_EXPIRY_MONTHS} months after earned
               </p>
             </div>
-            <div className="card-elevated p-5">
-              <p className="text-sm text-slate-500 mb-1">Successful referrals</p>
-              <p className="text-2xl font-bold text-slate-900">{dashboard.stats.earnedCount}</p>
+            <div className="stat-card border-l-4 border-emerald-500">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Earned</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">{dashboard.stats.earnedCount}</p>
+              <p className="text-xs text-slate-400 mt-1">Successful referrals</p>
             </div>
-            <div className="card-elevated p-5">
-              <p className="text-sm text-slate-500 mb-1">Pending referrals</p>
-              <p className="text-2xl font-bold text-slate-900">{dashboard.stats.pendingCount}</p>
+            <div className="stat-card border-l-4 border-amber-400">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">{dashboard.stats.pendingCount}</p>
+              <p className="text-xs text-slate-400 mt-1">Awaiting completion</p>
             </div>
           </div>
 
           {dashboard.referrals.length > 0 && (
-            <div className="card-elevated p-8">
-              <h2 className="font-display text-xl font-bold text-slate-900 mb-2">Your referrals</h2>
-              <p className="text-sm text-slate-500 mb-4">
-                Points appear here after each friend&apos;s order completes. Pending orders show the amount
-                you will earn.
-              </p>
+            <div className="card-elevated overflow-hidden">
+              <div className="px-8 py-5 border-b border-slate-100">
+                <h2 className="font-display text-lg font-bold text-slate-900">Your referrals</h2>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  Points appear after each friend&apos;s order completes.
+                </p>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead>
-                    <tr className="border-b border-slate-200 text-slate-500">
-                      <th className="py-2 pr-4 font-medium">Friend</th>
-                      <th className="py-2 pr-4 font-medium">Tier</th>
-                      <th className="py-2 pr-4 font-medium">Status</th>
-                      <th className="py-2 pr-4 font-medium">You earn</th>
-                      <th className="py-2 font-medium">Expires</th>
+                    <tr className="bg-slate-50 text-slate-500 border-b border-slate-100">
+                      <th className="py-3 px-6 font-semibold">Friend</th>
+                      <th className="py-3 pr-4 font-semibold">Tier</th>
+                      <th className="py-3 pr-4 font-semibold">Status</th>
+                      <th className="py-3 pr-4 font-semibold">You earn</th>
+                      <th className="py-3 pr-6 font-semibold">Expires</th>
                     </tr>
                   </thead>
-                  <tbody className="text-slate-700">
+                  <tbody>
                     {dashboard.referrals.map((referral) => (
-                      <tr key={referral.id} className="border-b border-slate-100 last:border-0">
-                        <td className="py-3 pr-4 font-medium text-slate-900">
+                      <tr key={referral.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
+                        <td className="py-3.5 px-6 font-semibold text-slate-900">
                           {referral.refereePhoneMasked}
                         </td>
-                        <td className="py-3 pr-4">{referral.tierLabel}</td>
-                        <td className="py-3 pr-4 capitalize">
-                          {referral.status === "pending" ? "Pending" : "Earned"}
+                        <td className="py-3.5 pr-4 text-slate-600">{referral.tierLabel}</td>
+                        <td className="py-3.5 pr-4">
+                          <span className={referral.status === "earned" ? "badge-success" : "badge-warning"}>
+                            {referral.status === "earned" ? "Earned" : "Pending"}
+                          </span>
                         </td>
-                        <td className="py-3 pr-4 font-medium text-slate-900">
+                        <td className="py-3.5 pr-4 font-semibold text-slate-900">
                           {formatNgn(referral.referrerCreditNgn)}
                         </td>
-                        <td className="py-3 text-slate-600">
+                        <td className="py-3.5 pr-6 text-slate-500 text-xs">
                           {referral.creditExpiresAt
                             ? formatReferralDate(referral.creditExpiresAt)
                             : referral.status === "pending"
@@ -322,8 +341,15 @@ export default function ReferPageClient() {
   return (
     <div className="min-h-screen bg-surface-muted">
       <Header />
-      <Suspense fallback={<div className="py-20 text-center text-slate-500">Loading...</div>}>
-        <ReferDashboardContent />
+      <Suspense fallback={
+        <div className="py-20 text-center text-slate-500 animate-pulse">
+          <div className="w-12 h-12 bg-slate-200 rounded-2xl mx-auto mb-4" />
+          <p className="text-sm">Loading your dashboard…</p>
+        </div>
+      }>
+        <div className="pb-16">
+          <ReferDashboardContent />
+        </div>
       </Suspense>
       <Footer />
     </div>
