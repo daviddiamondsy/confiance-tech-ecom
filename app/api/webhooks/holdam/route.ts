@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Holdam from "@holdam/ts";
 import { isPostgresConfigured } from "@/lib/db/client";
+import { parseHoldamWebhookData } from "@/lib/holdam/webhook-payload";
 import { processReferralWebhook } from "@/lib/referral/service";
 import { ensureReferralReady } from "@/lib/referral/db-ready";
 import { processOrderWebhook } from "@/lib/orders/service";
@@ -30,7 +31,9 @@ export async function POST(req: NextRequest) {
     }
 
     const event = JSON.parse(rawBody);
-    const { id: dealId, metadata, status, amount } = event.data ?? {};
+    const parsed = parseHoldamWebhookData(event.data);
+    const dealId = parsed.dealId;
+    const { metadata, status, amount } = parsed;
 
     console.log("[Webhook][holdam] Event received", {
       event: event.event,
