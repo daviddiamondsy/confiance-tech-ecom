@@ -20,16 +20,16 @@ export interface GenerateProductCopyInput {
   storage?: string;
 }
 
-export function getAdminOpenAiApiKey(): string | null {
+export function getAdminAnthropicApiKey(): string | null {
   return (
-    process.env.ADMIN_OPENAI_API_KEY?.trim() ||
-    process.env.OPENAI_API_KEY?.trim() ||
+    process.env.ADMIN_ANTHROPIC_API_KEY?.trim() ||
+    process.env.ANTHROPIC_API_KEY?.trim() ||
     null
   );
 }
 
-export function getAdminOpenAiModel(): string {
-  return process.env.ADMIN_OPENAI_MODEL?.trim() || "gpt-4o-mini";
+export function getAdminAnthropicModel(): string {
+  return process.env.ADMIN_ANTHROPIC_MODEL?.trim() || "claude-haiku-4-5";
 }
 
 export class AdminProductCopyAiError extends Error {
@@ -42,22 +42,22 @@ export class AdminProductCopyAiError extends Error {
   }
 }
 
-function openAiErrorMessage(status: number, body: string): string {
+function anthropicErrorMessage(status: number, body: string): string {
   try {
     const data = JSON.parse(body) as {
-      error?: { message?: string; code?: string; type?: string };
+      error?: { message?: string; type?: string };
     };
-    const code = data.error?.code ?? data.error?.type;
+    const type = data.error?.type;
     const message = data.error?.message?.trim();
 
-    if (code === "insufficient_quota") {
-      return "OpenAI quota exceeded. Add billing credits at platform.openai.com or use another API key.";
+    if (type === "insufficient_quota_error") {
+      return "Anthropic quota exceeded. Add billing credits at console.anthropic.com or use another API key.";
     }
-    if (code === "invalid_api_key" || status === 401) {
-      return "Invalid OpenAI API key. Check ADMIN_OPENAI_API_KEY or OPENAI_API_KEY in .env.local.";
+    if (type === "authentication_error" || status === 401) {
+      return "Invalid Anthropic API key. Check ADMIN_ANTHROPIC_API_KEY or ANTHROPIC_API_KEY in .env.local.";
     }
-    if (code === "rate_limit_exceeded") {
-      return "OpenAI rate limit hit. Wait a moment and try again.";
+    if (type === "rate_limit_error") {
+      return "Anthropic rate limit hit. Wait a moment and try again.";
     }
     if (message) {
       return message;
@@ -66,7 +66,15 @@ function openAiErrorMessage(status: number, body: string): string {
     // Ignore JSON parse errors and fall through.
   }
 
-  return "Could not generate copy. Check your OpenAI account and try again.";
+  return "Could not generate copy. Check your Anthropic account and try again.";
+}
+
+/** Extract JSON text from an Anthropic Messages API response payload. */
+export function extractAnthropicMessageText(payload: {
+  content?: Array<{ type?: string; text?: string }>;
+}): string | null {
+  const textBlock = payload.content?.find((block) => block.type === "text" && block.text?.trim());
+  return textBlock?.text?.trim() ?? null;
 }
 
 function conditionLabel(filterSlugs: string[] | undefined): "new" | "clean" | "unspecified" {
@@ -180,11 +188,11 @@ export function finalizeGeneratedProductCopy(
 export async function generateProductCopyWithAi(
   input: GenerateProductCopyInput
 ): Promise<GeneratedProductCopy> {
-  const apiKey = getAdminOpenAiApiKey();
+  const apiKey = getAdminAnthropicApiKey();
   if (!apiKey) {
     throw new AdminProductCopyAiError(
       "AI_NOT_CONFIGURED",
-      "AI copy generation is not configured. Set ADMIN_OPENAI_API_KEY or OPENAI_API_KEY."
+      "AI copy generation is not configured. Set ADMIN_ANTHROPIC_API_KEY or ANTHROPIC_API_KEY."
     );
   }
 
@@ -193,36 +201,35 @@ export async function generateProductCopyWithAi(
     throw new AdminProductCopyAiError("PRODUCT_NAME_REQUIRED", "Product name is required.");
   }
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: getAdminOpenAiModel(),
+      model: getAdminAnthropicModel(),
+      max_tokens: 2048,
       temperature: 0.35,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: buildUserPrompt(input) },
-      ],
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: buildUserPrompt(input) }],
     }),
   });
 
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
-    console.error("[admin-product-copy-ai] OpenAI error", response.status, detail);
+    console.error("[admin-product-copy-ai] Anthropic error", response.status, detail);
     throw new AdminProductCopyAiError(
       "AI_REQUEST_FAILED",
-      openAiErrorMessage(response.status, detail)
+      anthropicErrorMessage(response.status, detail)
     );
   }
 
   const payload = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
+    content?: Array<{ type?: string; text?: string }>;
   };
-  const content = payload.choices?.[0]?.message?.content;
+  const content = extractAnthropicMessageText(payload);
   if (!content) {
     throw new AdminProductCopyAiError(
       "INVALID_AI_RESPONSE",
