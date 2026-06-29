@@ -512,7 +512,9 @@ export default function AdminDashboard() {
       if (!response.ok) {
         setEditMessages((prev) => ({
           ...prev,
-          [productId]: data.error ?? "Could not update product",
+          [productId]: data.detail
+            ? `${data.error ?? "Could not update product"}: ${data.detail}`
+            : (data.error ?? "Could not update product"),
         }));
         return;
       }
