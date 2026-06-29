@@ -1,5 +1,5 @@
 import {
-  getPendingHoldamOrderByPhone,
+  getPendingCheckoutOrderByPhone,
   getStoreOrderByDealId,
   linkHoldamEscrowId,
 } from "@/lib/db/orders-repository";
@@ -18,7 +18,7 @@ export async function ensureHoldamDealLinked(params: {
 
   if (!params.buyerPhone) return;
 
-  const pending = await getPendingHoldamOrderByPhone(params.buyerPhone);
+  const pending = await getPendingCheckoutOrderByPhone(params.buyerPhone);
   if (!pending?.deal_id) return;
 
   await linkHoldamEscrowId({

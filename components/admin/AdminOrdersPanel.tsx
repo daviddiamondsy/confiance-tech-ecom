@@ -6,7 +6,7 @@ import StateSelect from "@/components/StateSelect";
 import { formatNgn } from "@/lib/referral/config";
 import { statusBadgeClass, statusLabel } from "@/lib/orders/status";
 import type { AdminOrderRow, OrderFulfillmentStatus } from "@/lib/orders/types";
-import { MANUAL_ORDER_STATUSES } from "@/lib/orders/types";
+import { ADMIN_EDITABLE_ORDER_STATUSES, ORDER_SOURCES, sourceLabel } from "@/lib/orders/types";
 
 const emptyManualForm = {
   productName: "",
@@ -156,40 +156,14 @@ export default function AdminOrdersPanel() {
     }
   };
 
-  const markHoldamShipped = async (order: AdminOrderRow) => {
-    setDraftStatuses((prev) => ({ ...prev, [order.id]: "shipped" }));
-    setSavingId(order.id);
-    setError("");
-    setMessage("");
-
-    try {
-      const response = await fetch(`/api/admin/orders/${order.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fulfillmentStatus: "shipped" }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data.error || "Could not mark order shipped.");
-        return;
-      }
-      setMessage(`Order #${order.id} marked shipped.`);
-      await loadOrders();
-    } catch {
-      setError("Network error while updating order.");
-    } finally {
-      setSavingId(null);
-    }
-  };
-
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h2 className="font-display text-2xl font-bold text-slate-900">Orders</h2>
           <p className="text-sm text-slate-600 mt-1">
-            Holdam checkout orders sync from webhooks. Add email or offline orders manually for
-            fulfillment tracking.
+            Website checkout, chatbot, and manual orders in one list. Holdam webhooks can still
+            update payment status; ops can override any order here.
           </p>
         </div>
         <button
@@ -319,7 +293,7 @@ export default function AdminOrdersPanel() {
                   }))
                 }
               >
-                {MANUAL_ORDER_STATUSES.map((status) => (
+                {ADMIN_EDITABLE_ORDER_STATUSES.map((status) => (
                   <option key={status} value={status}>
                     {statusLabel(status)}
                   </option>
@@ -386,8 +360,11 @@ export default function AdminOrdersPanel() {
               onChange={(e) => setSourceFilter(e.target.value)}
             >
               <option value="all">All</option>
-              <option value="holdam">Holdam checkout</option>
-              <option value="manual">Manual</option>
+              {ORDER_SOURCES.map((source) => (
+                <option key={source} value={source}>
+                  {sourceLabel(source)}
+                </option>
+              ))}
             </select>
           </label>
         </div>
@@ -411,11 +388,7 @@ export default function AdminOrdersPanel() {
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.map((order) => {
-                  const canMarkShipped =
-                    order.source === "holdam" && order.fulfillmentStatus === "secured";
-
-                  return (
+                {filteredOrders.map((order) => (
                     <tr key={order.id} className="border-t border-slate-100 align-top">
                       <td className="px-4 py-3 whitespace-nowrap text-slate-600">
                         {formatDate(order.createdAt)}
@@ -435,7 +408,7 @@ export default function AdminOrdersPanel() {
                         )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">{amountLabel(order)}</td>
-                      <td className="px-4 py-3 capitalize">{order.source}</td>
+                      <td className="px-4 py-3">{sourceLabel(order.source)}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex rounded-lg border px-2 py-1 text-xs font-medium ${statusBadgeClass(order.fulfillmentStatus)}`}
@@ -447,28 +420,22 @@ export default function AdminOrdersPanel() {
                         )}
                       </td>
                       <td className="px-4 py-3 min-w-[220px]">
-                        {order.source === "manual" ? (
-                          <select
-                            className="input-field w-full text-xs mb-2"
-                            value={draftStatuses[order.id] ?? order.fulfillmentStatus}
-                            onChange={(e) =>
-                              setDraftStatuses((prev) => ({
-                                ...prev,
-                                [order.id]: e.target.value as OrderFulfillmentStatus,
-                              }))
-                            }
-                          >
-                            {MANUAL_ORDER_STATUSES.map((status) => (
-                              <option key={status} value={status}>
-                                {statusLabel(status)}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <p className="text-xs text-slate-500 mb-2">
-                            Payment status updates from Holdam webhooks.
-                          </p>
-                        )}
+                        <select
+                          className="input-field w-full text-xs mb-2"
+                          value={draftStatuses[order.id] ?? order.fulfillmentStatus}
+                          onChange={(e) =>
+                            setDraftStatuses((prev) => ({
+                              ...prev,
+                              [order.id]: e.target.value as OrderFulfillmentStatus,
+                            }))
+                          }
+                        >
+                          {ADMIN_EDITABLE_ORDER_STATUSES.map((status) => (
+                            <option key={status} value={status}>
+                              {statusLabel(status)}
+                            </option>
+                          ))}
+                        </select>
 
                         <textarea
                           className="input-field w-full text-xs min-h-[56px] mb-2"
@@ -488,16 +455,6 @@ export default function AdminOrdersPanel() {
                           >
                             {savingId === order.id ? "Saving..." : "Save"}
                           </button>
-                          {canMarkShipped && (
-                            <button
-                              type="button"
-                              className="btn-primary text-xs py-1.5 px-2"
-                              disabled={savingId === order.id}
-                              onClick={() => void markHoldamShipped(order)}
-                            >
-                              Mark shipped
-                            </button>
-                          )}
                           {order.merchantDealUrl && (
                             <a
                               href={order.merchantDealUrl}
@@ -512,8 +469,7 @@ export default function AdminOrdersPanel() {
                         </div>
                       </td>
                     </tr>
-                  );
-                })}
+                ))}
               </tbody>
             </table>
           </div>

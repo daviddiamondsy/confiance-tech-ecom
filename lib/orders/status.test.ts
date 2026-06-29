@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  isValidManualStatus,
+  isValidAdminOrderStatus,
   mapWebhookEventToStatus,
   resolveStatusAfterWebhook,
   statusLabel,
 } from "@/lib/orders/status";
+import { normalizeOrderSource, sourceLabel } from "@/lib/orders/types";
 
 // BDD: e-com.md › Feature: Order fulfillment (admin) › deal.funded secures Holdam order
 describe("e-com.md › Order fulfillment › webhook status mapping", () => {
@@ -39,16 +40,21 @@ describe("e-com.md › Order fulfillment › webhook status mapping", () => {
   });
 });
 
-describe("e-com.md › Order fulfillment › manual order statuses", () => {
-  it("allows manual ops statuses except disputed", () => {
-    expect(isValidManualStatus("secured")).toBe(true);
-    expect(isValidManualStatus("shipped")).toBe(true);
-    expect(isValidManualStatus("refunded")).toBe(true);
-    expect(isValidManualStatus("disputed")).toBe(false);
+describe("e-com.md › Order fulfillment › admin order statuses", () => {
+  it("allows all fulfillment statuses from admin", () => {
+    expect(isValidAdminOrderStatus("secured")).toBe(true);
+    expect(isValidAdminOrderStatus("shipped")).toBe(true);
+    expect(isValidAdminOrderStatus("disputed")).toBe(true);
+    expect(isValidAdminOrderStatus("refunded")).toBe(true);
   });
 
   it("labels statuses for admin UI", () => {
     expect(statusLabel("pending_payment")).toBe("Pending payment");
     expect(statusLabel("shipped")).toBe("Shipped");
+  });
+
+  it("normalizes legacy holdam source to website", () => {
+    expect(normalizeOrderSource("holdam")).toBe("website");
+    expect(sourceLabel("holdam")).toBe("Website");
   });
 });

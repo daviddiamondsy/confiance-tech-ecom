@@ -12,7 +12,8 @@ export interface OrderAccountingSummary {
   pendingPaymentNgn: number;
   securedGmvNgn: number;
   manualOrderCount: number;
-  holdamOrderCount: number;
+  websiteOrderCount: number;
+  chatbotOrderCount: number;
 }
 
 export interface ReferralAccountingSummary {
@@ -43,7 +44,8 @@ export async function fetchOrderAccountingSummary(): Promise<OrderAccountingSumm
     pending_payment_ngn: number | null;
     secured_gmv_ngn: number | null;
     manual_order_count: string;
-    holdam_order_count: string;
+    website_order_count: string;
+    chatbot_order_count: string;
   }>`
     SELECT
       COUNT(*)::text AS total_orders,
@@ -65,7 +67,8 @@ export async function fetchOrderAccountingSummary(): Promise<OrderAccountingSumm
         0
       )::int AS secured_gmv_ngn,
       COUNT(*) FILTER (WHERE source = 'manual')::text AS manual_order_count,
-      COUNT(*) FILTER (WHERE source = 'holdam')::text AS holdam_order_count
+      COUNT(*) FILTER (WHERE source IN ('website', 'holdam'))::text AS website_order_count,
+      COUNT(*) FILTER (WHERE source = 'chatbot')::text AS chatbot_order_count
     FROM store_orders
   `;
 
@@ -82,7 +85,8 @@ export async function fetchOrderAccountingSummary(): Promise<OrderAccountingSumm
     pendingPaymentNgn: Number(row?.pending_payment_ngn ?? 0),
     securedGmvNgn: Number(row?.secured_gmv_ngn ?? 0),
     manualOrderCount: Number(row?.manual_order_count ?? 0),
-    holdamOrderCount: Number(row?.holdam_order_count ?? 0),
+    websiteOrderCount: Number(row?.website_order_count ?? 0),
+    chatbotOrderCount: Number(row?.chatbot_order_count ?? 0),
   };
 }
 

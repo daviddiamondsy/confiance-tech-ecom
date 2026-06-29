@@ -1,4 +1,4 @@
-import { sqlDdl } from "@/lib/db/client";
+import { sql, sqlDdl } from "@/lib/db/client";
 
 /** Idempotent store orders DDL. Requires Postgres (Neon). */
 export async function ensureOrdersSchema(): Promise<void> {
@@ -6,7 +6,7 @@ export async function ensureOrdersSchema(): Promise<void> {
     CREATE TABLE IF NOT EXISTS store_orders (
       id SERIAL PRIMARY KEY,
       deal_id TEXT UNIQUE,
-      source TEXT NOT NULL DEFAULT 'holdam',
+      source TEXT NOT NULL DEFAULT 'website',
       fulfillment_status TEXT NOT NULL DEFAULT 'pending_payment',
       product_id TEXT,
       product_name TEXT NOT NULL,
@@ -41,5 +41,11 @@ export async function ensureOrdersSchema(): Promise<void> {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_store_orders_holdam_escrow_id
     ON store_orders (holdam_escrow_id)
     WHERE holdam_escrow_id IS NOT NULL
+  `;
+
+  await sql`
+    UPDATE store_orders
+    SET source = 'website', updated_at = NOW()
+    WHERE source = 'holdam'
   `;
 }
