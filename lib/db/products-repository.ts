@@ -633,6 +633,156 @@ function resolvePricingFromInput(input: {
   };
 }
 
+interface PersistProductRowFields {
+  productId: string;
+  slug: string;
+  primaryFilterSlug: string | null;
+  name: string;
+  price: number;
+  yuanCost: number;
+  image: string;
+  badge: string | null;
+  description: string;
+  features: string[];
+  specifications: Record<string, string>;
+  shipping: ProductShippingCosts;
+}
+
+/** UPDATE with shipping columns; retries after schema migration, then falls back like reads. */
+async function persistAdminProductRowUpdate(fields: PersistProductRowFields): Promise<void> {
+  const {
+    productId,
+    slug,
+    primaryFilterSlug,
+    name,
+    price,
+    yuanCost,
+    image,
+    badge,
+    description,
+    features,
+    specifications,
+    shipping,
+  } = fields;
+
+  const coreParams = [
+    productId,
+    slug,
+    primaryFilterSlug,
+    name,
+    price,
+    yuanCost,
+    image,
+    badge,
+    description,
+    JSON.stringify(features),
+    JSON.stringify(specifications),
+  ];
+
+  const runFullUpdate = () =>
+    sql.query(
+      `UPDATE products SET
+        slug = $2,
+        filter_slug = $3,
+        name = $4,
+        price = $5,
+        yuan_cost = $6,
+        image = $7,
+        badge = $8,
+        description = $9,
+        features = $10::jsonb,
+        specifications = $11::jsonb,
+        china_shipping_yuan = $12,
+        international_shipping_ngn = $13,
+        local_delivery_ngn = $14,
+        updated_at = NOW()
+      WHERE id = $1`,
+      [
+        ...coreParams,
+        shipping.chinaShippingYuan,
+        shipping.internationalShippingNgn,
+        shipping.localDeliveryNgn,
+      ]
+    );
+
+  const runIntlShippingUpdate = () =>
+    sql.query(
+      `UPDATE products SET
+        slug = $2,
+        filter_slug = $3,
+        name = $4,
+        price = $5,
+        yuan_cost = $6,
+        image = $7,
+        badge = $8,
+        description = $9,
+        features = $10::jsonb,
+        specifications = $11::jsonb,
+        china_shipping_yuan = $12,
+        international_shipping_ngn = $13,
+        updated_at = NOW()
+      WHERE id = $1`,
+      [...coreParams, shipping.chinaShippingYuan, shipping.internationalShippingNgn]
+    );
+
+  const runCoreUpdate = () =>
+    sql.query(
+      `UPDATE products SET
+        slug = $2,
+        filter_slug = $3,
+        name = $4,
+        price = $5,
+        yuan_cost = $6,
+        image = $7,
+        badge = $8,
+        description = $9,
+        features = $10::jsonb,
+        specifications = $11::jsonb,
+        updated_at = NOW()
+      WHERE id = $1`,
+      coreParams
+    );
+
+  let lastError: unknown;
+  try {
+    await runFullUpdate();
+    return;
+  } catch (error) {
+    lastError = error;
+    if (!isMissingShippingColumnsError(error)) throw error;
+  }
+
+  console.warn(
+    "[products] shipping columns missing on update; applying schema and retrying.",
+    getPostgresErrorMessage(lastError)
+  );
+  await ensureCatalogSchema();
+
+  try {
+    await runFullUpdate();
+    return;
+  } catch (error) {
+    lastError = error;
+    if (!isMissingShippingColumnsError(error)) throw error;
+  }
+
+  const message = (getPostgresErrorMessage(lastError) ?? "").toLowerCase();
+  if (message.includes("local_delivery_ngn")) {
+    console.warn(
+      "[products] local_delivery_ngn still missing; updating without that column.",
+      getPostgresErrorMessage(lastError)
+    );
+    await runIntlShippingUpdate();
+    return;
+  }
+
+  console.warn(
+    "[products] shipping columns still missing; updating core product fields only.",
+    getPostgresErrorMessage(lastError)
+  );
+  await runCoreUpdate();
+}
+
 async function replaceProductStorageOptions(
   productId: string,
   variants: Array<{ storage: string; yuan: number }>,
@@ -939,40 +1089,20 @@ export async function updateAdminProduct(
     await replaceProductFilterSlugs(productId, nextFilterSlugs);
   }
 
-  await sql.query(
-    `UPDATE products SET
-      slug = $2,
-      filter_slug = $3,
-      name = $4,
-      price = $5,
-      yuan_cost = $6,
-      image = $7,
-      badge = $8,
-      description = $9,
-      features = $10::jsonb,
-      specifications = $11::jsonb,
-      china_shipping_yuan = $12,
-      international_shipping_ngn = $13,
-      local_delivery_ngn = $14,
-      updated_at = NOW()
-    WHERE id = $1`,
-    [
-      productId,
-      slug,
-      primaryFilterSlug || null,
-      name,
-      price,
-      yuanCost,
-      image,
-      badge,
-      description,
-      JSON.stringify(features),
-      JSON.stringify(specifications),
-      shipping.chinaShippingYuan,
-      shipping.internationalShippingNgn,
-      shipping.localDeliveryNgn,
-    ]
-  );
+  await persistAdminProductRowUpdate({
+    productId,
+    slug,
+    primaryFilterSlug: primaryFilterSlug || null,
+    name,
+    price,
+    yuanCost,
+    image,
+    badge,
+    description,
+    features,
+    specifications,
+    shipping,
+  });
 
   if (input.colors !== undefined) {
     const { replaceProductColors } = await import("@/lib/db/colors-repository");
