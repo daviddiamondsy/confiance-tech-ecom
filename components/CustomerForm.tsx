@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Send, CheckCircle } from "lucide-react";
+import { Send, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import StateSelect from "@/components/StateSelect";
 import { resolveStorefrontCheckoutError } from "@/lib/checkout-errors";
 import {
@@ -399,92 +399,93 @@ export default function CustomerForm({
   }
 
   return (
-    <div className="card-elevated p-8">
-      <h3 className="font-display text-2xl font-bold text-slate-900 mb-2">{title}</h3>
-      <p className="text-slate-600 mb-6">{subtitle}</p>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1.5">
-            Full Name *
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Your full name"
-            required
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-1.5">
-            Phone Number *
-          </label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            placeholder="Your mobile number"
-            required
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label htmlFor="address" className="block text-sm font-medium text-slate-700 mb-1.5">
-            Address *
-          </label>
-          <input
-            type="text"
-            id="address"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            placeholder="Delivery address"
-            required
-            className="input-field"
-          />
-        </div>
-        <div>
-          <label htmlFor="state" className="block text-sm font-medium text-slate-700 mb-1.5">
-            State *
-          </label>
-          <StateSelect
-            id="state"
-            name="state"
-            value={formData.state}
-            onChange={handleStateChange}
-            required
-            placeholder="Select your state"
-          />
-        </div>
-        {storeCreditField}
-        <button
-          type="submit"
-          disabled={isSubmitting || isRedirecting}
-          className="btn-primary w-full py-4 text-lg disabled:opacity-50"
-        >
-          {primaryButtonLabel}
-          <Send className="h-5 w-5" />
-        </button>
-        {continuePaymentLink && (
-          <div className="text-center">{continuePaymentLink}</div>
+    <div id="order-form" className="bg-white rounded-3xl border border-slate-100 shadow-card overflow-hidden">
+      <div className="bg-gradient-to-r from-primary-600 to-violet-600 px-8 py-6">
+        <h3 className="font-display text-2xl font-bold text-white mb-1">{title}</h3>
+        <p className="text-primary-100 text-sm leading-relaxed">{subtitle}</p>
+      </div>
+      <div className="p-8">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label htmlFor="name" className="input-label">Full Name *</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Your full name"
+              required
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label htmlFor="phone" className="input-label">Phone Number *</label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="e.g. 08012345678"
+              required
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label htmlFor="address" className="input-label">Delivery Address *</label>
+            <input
+              type="text"
+              id="address"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              placeholder="Street, area, city"
+              required
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label htmlFor="state" className="input-label">State *</label>
+            <StateSelect
+              id="state"
+              name="state"
+              value={formData.state}
+              onChange={handleStateChange}
+              required
+              placeholder="Select your state"
+            />
+          </div>
+          {storeCreditField}
+          <button
+            type="submit"
+            disabled={isSubmitting || isRedirecting}
+            className="btn-primary w-full py-4 text-base disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {(isSubmitting || isRedirecting) ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Send className="h-5 w-5" />
+            )}
+            {primaryButtonLabel}
+          </button>
+          {continuePaymentLink && (
+            <div className="text-center">{continuePaymentLink}</div>
+          )}
+        </form>
+        {isSubmitted && (
+          <div className="mt-5 alert-success">
+            <CheckCircle className="h-5 w-5 flex-shrink-0" />
+            <span>Thank you! We have received your request and will contact you shortly.</span>
+          </div>
         )}
-      </form>
-      {isSubmitted && (
-        <div className="mt-4 flex items-center gap-2 text-green-600 bg-green-50 p-4 rounded-lg">
-          <CheckCircle className="h-5 w-5" />
-          <span>Thank you! We have received your request and will contact you shortly.</span>
-        </div>
-      )}
-      {errorMessage && (
-        <div className="mt-4 text-sm text-red-600 bg-red-50 p-4 rounded-lg">
-          <span>{errorMessage}</span>
-        </div>
-      )}
+        {errorMessage && (
+          <div className="mt-5 alert-error">
+            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
