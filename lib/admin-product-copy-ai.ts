@@ -69,13 +69,53 @@ function anthropicErrorMessage(status: number, body: string): string {
   return "Could not generate copy. Check your Anthropic account and try again.";
 }
 
-/** Extract JSON text from an Anthropic Messages API response payload. */
-export function extractAnthropicMessageText(payload: {
-  content?: Array<{ type?: string; text?: string }>;
-}): string | null {
-  const textBlock = payload.content?.find((block) => block.type === "text" && block.text?.trim());
-  return textBlock?.text?.trim() ?? null;
+/** Strip markdown fences and parse JSON from model text output. */
+export function parseAiJsonContent(content: string): unknown {
+  let text = content.trim();
+
+  const fenced = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  if (fenced) {
+    text = fenced[1].trim();
+  } else if (text.startsWith("```")) {
+    text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return JSON.parse(text.slice(start, end + 1));
+    }
+    throw new Error("invalid json");
+  }
 }
+
+const PRODUCT_COPY_OUTPUT_SCHEMA = {
+  type: "object",
+  properties: {
+    description: { type: "string" },
+    features: {
+      type: "array",
+      items: { type: "string" },
+    },
+    specifications: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          label: { type: "string" },
+          value: { type: "string" },
+        },
+        required: ["label", "value"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["description", "features", "specifications"],
+  additionalProperties: false,
+} as const;
 
 function conditionLabel(filterSlugs: string[] | undefined): "new" | "clean" | "unspecified" {
   if (filterSlugs?.includes(NEW_PRODUCT_FILTER_SLUG)) return "new";
@@ -103,15 +143,15 @@ Return JSON only with this shape:
 {
   "description": "string",
   "features": ["string"],
-  "specifications": { "Label": "value" }
+  "specifications": [{ "label": "Display", "value": "6.1-inch Super Retina XDR" }]
 }
 
 Rules:
 - description: 2-3 sentences. Mention key specs and trust (inspected, tested, certified).
 - features: 6-8 short bullet strings (no leading bullets in the strings).
-- specifications: 5-8 rows using labels like Display, Processor, Camera, Battery, Connectivity. Use title case labels.
+- specifications: 5-8 rows as label/value pairs (Display, Processor, Camera, Battery, Connectivity). Use title case labels.
 - Do NOT include a Storage specification row (storage is managed separately).
-- For Clean / UK Grade A iPhones: include "90+ Battery Health" in features and "Battery health": "90%+" in specifications.
+- For Clean / UK Grade A iPhones: include "90+ Battery Health" in features and a Battery health spec row with value "90%+".
 - For New products: emphasize brand new, factory-fresh, inspected and certified.
 - For Clean products: emphasize UK Grade A, accessories included, inspected and certified.
 - Be accurate to the real product model. Do not invent wrong chip names or screen sizes.
@@ -136,11 +176,22 @@ export function parseGeneratedProductCopy(raw: unknown): GeneratedProductCopy {
   const specifications: Record<string, string> = {};
 
   if (record.specifications && typeof record.specifications === "object") {
-    for (const [key, value] of Object.entries(record.specifications as Record<string, unknown>)) {
-      const label = key.trim();
-      const text = typeof value === "string" ? value.trim() : "";
-      if (!label || !text || label.toLowerCase() === "storage") continue;
-      specifications[label] = text;
+    if (Array.isArray(record.specifications)) {
+      for (const row of record.specifications) {
+        if (!row || typeof row !== "object") continue;
+        const entry = row as Record<string, unknown>;
+        const label = typeof entry.label === "string" ? entry.label.trim() : "";
+        const text = typeof entry.value === "string" ? entry.value.trim() : "";
+        if (!label || !text || label.toLowerCase() === "storage") continue;
+        specifications[label] = text;
+      }
+    } else {
+      for (const [key, value] of Object.entries(record.specifications as Record<string, unknown>)) {
+        const label = key.trim();
+        const text = typeof value === "string" ? value.trim() : "";
+        if (!label || !text || label.toLowerCase() === "storage") continue;
+        specifications[label] = text;
+      }
     }
   }
 
@@ -152,6 +203,47 @@ export function parseGeneratedProductCopy(raw: unknown): GeneratedProductCopy {
   }
 
   return { description, features, specifications };
+}
+
+/** Extract JSON text from an Anthropic Messages API response payload. */
+export function extractAnthropicMessageText(payload: {
+  content?: Array<{ type?: string; text?: string }>;
+}): string | null {
+  const textBlock = payload.content?.find((block) => block.type === "text" && block.text?.trim());
+  return textBlock?.text?.trim() ?? null;
+}
+
+async function requestAnthropicProductCopy(
+  apiKey: string,
+  input: GenerateProductCopyInput,
+  useStructuredOutput: boolean
+): Promise<Response> {
+  const body: Record<string, unknown> = {
+    model: getAdminAnthropicModel(),
+    max_tokens: 2048,
+    temperature: 0.35,
+    system: SYSTEM_PROMPT,
+    messages: [{ role: "user", content: buildUserPrompt(input) }],
+  };
+
+  if (useStructuredOutput) {
+    body.output_config = {
+      format: {
+        type: "json_schema",
+        schema: PRODUCT_COPY_OUTPUT_SCHEMA,
+      },
+    };
+  }
+
+  return fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
 }
 
 /** Post-process AI output to match storefront conventions when tags imply condition. */
@@ -201,21 +293,24 @@ export async function generateProductCopyWithAi(
     throw new AdminProductCopyAiError("PRODUCT_NAME_REQUIRED", "Product name is required.");
   }
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: getAdminAnthropicModel(),
-      max_tokens: 2048,
-      temperature: 0.35,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: buildUserPrompt(input) }],
-    }),
-  });
+  let response = await requestAnthropicProductCopy(apiKey, input, true);
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    const retryWithoutStructured =
+      response.status === 400 &&
+      /output_config|structured|json_schema|format/i.test(detail);
+
+    if (retryWithoutStructured) {
+      console.warn("[admin-product-copy-ai] Structured output unavailable; retrying plain JSON");
+      response = await requestAnthropicProductCopy(apiKey, input, false);
+    } else {
+      console.error("[admin-product-copy-ai] Anthropic error", response.status, detail);
+      throw new AdminProductCopyAiError(
+        "AI_REQUEST_FAILED",
+        anthropicErrorMessage(response.status, detail)
+      );
+    }
+  }
 
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
@@ -239,8 +334,9 @@ export async function generateProductCopyWithAi(
 
   let parsed: unknown;
   try {
-    parsed = JSON.parse(content);
+    parsed = parseAiJsonContent(content);
   } catch {
+    console.error("[admin-product-copy-ai] Unparseable AI content", content.slice(0, 500));
     throw new AdminProductCopyAiError(
       "INVALID_AI_RESPONSE",
       "AI returned an invalid response. Try again."
