@@ -17,14 +17,21 @@ export interface ReferralTier {
 /** Budget band starts at ₦0; reward sizing anchors here (~entry catalog). */
 const BUDGET_REWARD_FLOOR_NGN = 400_000;
 
-/** Friend ~3.8% and referrer ~4.5% of tier floor (~8.3% combined at floor). Moderate vs 20%/15% markup. */
-const REFERRAL_FRIEND_RATE = 0.038;
-const REFERRAL_REFERRER_RATE = 0.045;
+/**
+ * 5% of tier floor total referral pool, split between friend discount and referrer credit.
+ * Historical split: friend 5/11, referrer 6/11 (~2.3% / ~2.7% at floor).
+ */
+const REFERRAL_POOL_RATE = 0.05;
+const REFERRAL_FRIEND_POOL_SHARE = 5 / 11;
+const REFERRAL_REFERRER_POOL_SHARE = 6 / 11;
 
-function tierRewards(friendRate: number, referrerRate: number, floorNgn: number) {
+function tierRewards(floorNgn: number) {
+  const poolNgn = floorNgn * REFERRAL_POOL_RATE;
   return {
-    refereeDiscountNgn: Math.round((floorNgn * friendRate) / 1000) * 1000,
-    referrerCreditNgn: Math.round((floorNgn * referrerRate) / 1000) * 1000,
+    refereeDiscountNgn:
+      Math.round((poolNgn * REFERRAL_FRIEND_POOL_SHARE) / 1000) * 1000,
+    referrerCreditNgn:
+      Math.round((poolNgn * REFERRAL_REFERRER_POOL_SHARE) / 1000) * 1000,
   };
 }
 
@@ -34,27 +41,27 @@ export const REFERRAL_TIERS: ReferralTier[] = [
     label: "Budget",
     minPriceNgn: 0,
     maxPriceNgn: 550_000,
-    ...tierRewards(REFERRAL_FRIEND_RATE, REFERRAL_REFERRER_RATE, BUDGET_REWARD_FLOOR_NGN),
+    ...tierRewards(BUDGET_REWARD_FLOOR_NGN),
   },
   {
     id: "mid",
     label: "Mid",
     minPriceNgn: 550_000,
     maxPriceNgn: 850_000,
-    ...tierRewards(REFERRAL_FRIEND_RATE, REFERRAL_REFERRER_RATE, 550_000),
+    ...tierRewards(550_000),
   },
   {
     id: "premium",
     label: "Premium",
     minPriceNgn: 850_000,
     maxPriceNgn: 1_500_000,
-    ...tierRewards(REFERRAL_FRIEND_RATE, REFERRAL_REFERRER_RATE, 850_000),
+    ...tierRewards(850_000),
   },
   {
     id: "jumbo",
     label: "Jumbo",
     minPriceNgn: 1_500_000,
-    ...tierRewards(REFERRAL_FRIEND_RATE, REFERRAL_REFERRER_RATE, 1_500_000),
+    ...tierRewards(1_500_000),
   },
 ];
 
