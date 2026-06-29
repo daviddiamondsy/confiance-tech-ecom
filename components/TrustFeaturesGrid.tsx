@@ -30,18 +30,21 @@ export default function TrustFeaturesGrid({ variant = "homepage", className }: T
 
   return (
     <div className={cn("grid grid-cols-2 lg:grid-cols-4 gap-4", className)}>
-      {STOREFRONT_TRUST_FEATURES.map((feature) => (
+      {STOREFRONT_TRUST_FEATURES.map((feature, index) => (
         <div
           key={feature.title}
-          className="card-elevated p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:-translate-y-0.5"
+          className="group card-elevated p-5 flex flex-col sm:flex-row sm:items-start gap-4 hover:-translate-y-1 hover:border-primary-100 hover:shadow-card-hover transition-all duration-300"
         >
-          <div className="h-11 w-11 bg-gradient-to-br from-primary-500 to-violet-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-glow">
+          <div className="h-12 w-12 bg-gradient-to-br from-primary-500 to-violet-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-glow group-hover:scale-110 transition-transform duration-300">
             <feature.icon className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h3 className="font-display font-semibold text-slate-900 text-sm">{feature.title}</h3>
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-[10px] font-bold text-primary-400 uppercase tracking-widest">0{index + 1}</span>
+            </div>
+            <h3 className="font-display font-semibold text-slate-900 text-sm leading-snug">{feature.title}</h3>
             {feature.description ? (
-              <p className="text-xs text-slate-500 mt-0.5">{feature.description}</p>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">{feature.description}</p>
             ) : null}
           </div>
         </div>

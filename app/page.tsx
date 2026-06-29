@@ -4,10 +4,11 @@ import HomeProductCollections from "@/components/HomeProductCollections";
 import HomeReferAndEarn from "@/components/HomeReferAndEarn";
 import FaqAccordion from "@/components/FaqAccordion";
 import TrustFeaturesGrid from "@/components/TrustFeaturesGrid";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, MessageCircle, Sparkles, ShieldCheck, Star, Zap } from "lucide-react";
 import Link from "next/link";
 import { getProducts } from "@/lib/products";
 import { STOREFRONT_HERO_COPY, STOREFRONT_FEATURED_COPY } from "@/lib/device-quality-copy";
+import { STOREFRONT_SOCIAL_LINKS } from "@/lib/storefront-contact";
 
 export const dynamic = "force-dynamic";
 
@@ -22,27 +23,96 @@ export default async function Home() {
       <section className="relative bg-slate-950 text-white overflow-hidden">
         <div className="absolute inset-0 bg-hero-mesh" />
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550009158-9ebf69056955?w=1920&q=80')] bg-cover bg-center opacity-[0.07]" />
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-surface-muted to-transparent" />
+        {/* Decorative orbs */}
+        <div className="absolute top-1/4 right-1/4 h-80 w-80 rounded-full bg-primary-500/10 blur-3xl pointer-events-none animate-float" />
+        <div className="absolute -bottom-20 right-10 h-64 w-64 rounded-full bg-violet-500/15 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-surface-muted to-transparent" />
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 md:py-36">
-          <div className="max-w-3xl animate-slide-up">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 text-primary-300 text-sm font-medium rounded-full mb-8 border border-white/10 backdrop-blur-sm">
-              <Sparkles className="h-4 w-4" />
-              Trusted Tech, Built to Last
-            </span>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-[1.1] tracking-tight">
-              Computing You Can
-              <span className="block mt-1 bg-gradient-to-r from-primary-400 via-violet-400 to-primary-300 bg-clip-text text-transparent">
-                Count On
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 md:py-40">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="animate-slide-up">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 text-primary-300 text-sm font-medium rounded-full mb-8 border border-white/10 backdrop-blur-sm">
+                <Sparkles className="h-4 w-4" />
+                Trusted Tech, Built to Last
               </span>
-            </h1>
-            <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-xl leading-relaxed">
-              {STOREFRONT_HERO_COPY}
-            </p>
-            <Link href="/products" className="btn-primary px-8 py-4 text-base">
-              View all Products
-              <ArrowRight className="h-5 w-5" />
-            </Link>
+              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-[1.1] tracking-tight">
+                Computing You Can
+                <span className="block mt-1 bg-gradient-to-r from-primary-400 via-violet-400 to-primary-300 bg-clip-text text-transparent">
+                  Count On
+                </span>
+              </h1>
+              <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-xl leading-relaxed">
+                {STOREFRONT_HERO_COPY}
+              </p>
+              <div className="flex flex-wrap items-center gap-4">
+                <Link href="/products" className="btn-primary px-8 py-4 text-base">
+                  Shop Now
+                  <ArrowRight className="h-5 w-5" />
+                </Link>
+                <a
+                  href={STOREFRONT_SOCIAL_LINKS.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-secondary px-6 py-4 text-base"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  Chat with us
+                </a>
+              </div>
+
+              {/* Social proof stats */}
+              <div className="mt-12 flex flex-wrap gap-6">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-white/10">
+                    <ShieldCheck className="h-4 w-4 text-primary-300" />
+                  </span>
+                  <span className="text-slate-300 font-medium">Verified Quality</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-white/10">
+                    <Zap className="h-4 w-4 text-amber-400" />
+                  </span>
+                  <span className="text-slate-300 font-medium">Fast Nationwide Delivery</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-white/10">
+                    <Star className="h-4 w-4 text-yellow-400" />
+                  </span>
+                  <span className="text-slate-300 font-medium">Top-Rated Service</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Hero visual — product spotlight */}
+            <div className="hidden lg:flex items-center justify-center">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary-500/20 rounded-3xl blur-2xl scale-110" />
+                <div className="relative rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm p-8 shadow-2xl">
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { label: "Brand New", color: "bg-primary-500/20 text-primary-300", icon: "✦" },
+                      { label: "UK Grade A", color: "bg-violet-500/20 text-violet-300", icon: "◆" },
+                      { label: "7-Day Returns", color: "bg-emerald-500/20 text-emerald-300", icon: "↩" },
+                      { label: "With Accessories", color: "bg-amber-500/20 text-amber-300", icon: "⚡" },
+                    ].map((item) => (
+                      <div
+                        key={item.label}
+                        className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                      >
+                        <span className={`text-2xl h-10 w-10 flex items-center justify-center rounded-xl ${item.color}`}>
+                          {item.icon}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-300 text-center">{item.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-primary-500/20 to-violet-500/20 border border-white/10 text-center">
+                    <p className="text-white font-display font-bold text-lg">iPhones · Laptops · Tablets</p>
+                    <p className="text-slate-400 text-xs mt-1">Premium devices shipped nationwide</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -82,6 +152,46 @@ export default async function Home() {
             <p className="text-slate-600">Got questions? We have got answers.</p>
           </div>
           <FaqAccordion />
+        </div>
+      </section>
+
+      {/* Final CTA Banner */}
+      <section className="py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-violet-700 text-white text-center shadow-glow">
+            <div className="absolute inset-0 bg-hero-mesh opacity-30 pointer-events-none" />
+            <div className="absolute -top-16 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+            <div className="relative px-6 py-16 md:py-20">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/15 text-primary-100 text-sm font-medium rounded-full mb-6 border border-white/20">
+                <Sparkles className="h-4 w-4" />
+                Ready to upgrade?
+              </span>
+              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4 tracking-tight">
+                Find Your Next Device Today
+              </h2>
+              <p className="text-primary-100 text-lg max-w-xl mx-auto mb-8 leading-relaxed">
+                Browse our curated selection of premium tech. Every device ships with accessories and a 7-day return guarantee.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-4">
+                <Link
+                  href="/products"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary-700 font-semibold rounded-xl hover:bg-primary-50 transition-colors shadow-soft text-base"
+                >
+                  Browse All Products
+                  <ArrowRight className="h-5 w-5" />
+                </Link>
+                <a
+                  href={STOREFRONT_SOCIAL_LINKS.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-secondary px-6 py-4 text-base"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  Ask a question
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

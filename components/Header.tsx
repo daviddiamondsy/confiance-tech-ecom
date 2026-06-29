@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, X } from "lucide-react";
+import { Menu, X, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,10 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full glass-header">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="group">
+          <Link href="/" className="group flex items-center gap-2">
+            <span className="h-7 w-7 flex items-center justify-center rounded-lg bg-primary-600 shadow-glow group-hover:bg-primary-700 transition-colors">
+              <ShoppingBag className="h-4 w-4 text-white" />
+            </span>
             <span className="font-display text-lg font-bold text-slate-900 tracking-tight group-hover:text-primary-600 transition-colors">
               Confiance Tech
             </span>
@@ -36,6 +39,15 @@ export default function Header() {
               </Link>
             ))}
           </nav>
+
+          <div className="hidden md:flex items-center gap-3">
+            <Link
+              href="/products"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors shadow-soft"
+            >
+              Shop Now
+            </Link>
+          </div>
 
           <button
             className="md:hidden p-2.5 text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
