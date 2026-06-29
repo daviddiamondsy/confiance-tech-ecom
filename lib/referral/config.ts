@@ -18,20 +18,17 @@ export interface ReferralTier {
 const BUDGET_REWARD_FLOOR_NGN = 400_000;
 
 /**
- * 5% of tier floor total referral pool, split between friend discount and referrer credit.
- * Historical split: friend 5/11, referrer 6/11 (~2.3% / ~2.7% at floor).
+ * 5% of tier floor total referral pool, split equally between friend and referrer.
+ * Flat per-tier amounts (rounded to nearest ₦1,000) for clear share messaging.
  */
 const REFERRAL_POOL_RATE = 0.05;
-const REFERRAL_FRIEND_POOL_SHARE = 5 / 11;
-const REFERRAL_REFERRER_POOL_SHARE = 6 / 11;
 
 function tierRewards(floorNgn: number) {
-  const poolNgn = floorNgn * REFERRAL_POOL_RATE;
+  const halfPoolNgn = (floorNgn * REFERRAL_POOL_RATE) / 2;
+  const roundedHalfNgn = Math.round(halfPoolNgn / 1000) * 1000;
   return {
-    refereeDiscountNgn:
-      Math.round((poolNgn * REFERRAL_FRIEND_POOL_SHARE) / 1000) * 1000,
-    referrerCreditNgn:
-      Math.round((poolNgn * REFERRAL_REFERRER_POOL_SHARE) / 1000) * 1000,
+    refereeDiscountNgn: roundedHalfNgn,
+    referrerCreditNgn: roundedHalfNgn,
   };
 }
 
