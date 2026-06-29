@@ -47,7 +47,7 @@ function buildReferralRows(referral?: OrderEmailReferralDetails): [string, strin
     rows.push(["Referral discount", formatCurrency(referral.refereeDiscountNgn)]);
   }
   if (typeof referral.storeCreditAppliedNgn === "number" && referral.storeCreditAppliedNgn > 0) {
-    rows.push(["Store credit applied", formatCurrency(referral.storeCreditAppliedNgn)]);
+    rows.push(["Store points applied", formatCurrency(referral.storeCreditAppliedNgn)]);
   }
   if (
     typeof referral.catalogPriceNgn === "number" &&

@@ -21,8 +21,8 @@ const STEPS = [
   },
   {
     icon: Wallet,
-    title: "You earn store credit",
-    description: "Receive store credit after their order completes and the return window closes.",
+    title: "You earn store points",
+    description: "Receive store points after their order completes and the return window closes.",
   },
 ] as const;
 
@@ -43,12 +43,12 @@ export default function HomeReferAndEarn() {
                   Refer & Earn
                 </span>
                 <h2 className="font-display text-3xl md:text-4xl font-bold tracking-tight mb-4">
-                  Share Confiance Tech. Earn store credit.
+                  Share Confiance Tech. Earn store points.
                 </h2>
                 <p className="text-slate-300 leading-relaxed mb-8 max-w-xl">
                   Past buyers get a personal referral link. Friends save on their first order. You earn
-                  store credit to use on your next purchase within {STORE_CREDIT_EXPIRY_MONTHS} months.
-                  Rewards are store credit, not cash.
+                  store points to use on your next purchase within {STORE_CREDIT_EXPIRY_MONTHS} months.
+                  Rewards are store points, not cash.
                 </p>
 
                 <div className="space-y-4 mb-8">

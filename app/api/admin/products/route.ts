@@ -26,6 +26,7 @@ import {
   type InternationalShippingNgn,
   type LocalDeliveryNgn,
 } from "@/lib/product-shipping";
+import { revalidateStorefrontCatalog } from "@/lib/storefront-revalidation";
 
 function parseProductShippingInput(
   body: Record<string, unknown>,
@@ -160,6 +161,7 @@ export async function POST(req: NextRequest) {
     });
     const products = await fetchAdminProducts();
     const product = products.find((item) => item.id === created.id);
+    revalidateStorefrontCatalog(product?.slug ?? created.slug);
     return NextResponse.json({ product: product ?? created }, { status: 201 });
   } catch (error) {
     if (error instanceof Error) {
@@ -313,6 +315,7 @@ export async function PUT(req: NextRequest) {
   try {
     await ensureCatalogSchema();
     const product = await updateAdminProduct(productId, input);
+    revalidateStorefrontCatalog(product.slug);
     return NextResponse.json({ product });
   } catch (error) {
     if (error instanceof Error) {
@@ -374,11 +377,18 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    await deleteAdminProduct(productId);
+    const { slug } = await deleteAdminProduct(productId);
+    revalidateStorefrontCatalog(slug);
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof Error && error.message === "NOT_FOUND") {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+    if (error instanceof Error && error.message === "DELETE_FAILED") {
+      return NextResponse.json(
+        { error: "Product could not be removed. Try again or check the database." },
+        { status: 500 }
+      );
     }
     const detail = getPostgresErrorMessage(error);
     console.error("[admin/products] delete failed", error);

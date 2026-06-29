@@ -1172,14 +1172,24 @@ export async function backfillCatalogSpecifications(): Promise<number> {
   return updated;
 }
 
-export async function deleteAdminProduct(productId: string): Promise<void> {
-  const { rows } = await sql<{ id: string }>`
-    SELECT id FROM products WHERE id = ${productId} LIMIT 1
-  `;
-
-  if (!rows[0]) {
+export async function deleteAdminProduct(productId: string): Promise<{ slug: string | null }> {
+  const existing = await fetchProductRowById(productId);
+  if (!existing) {
     throw new Error("NOT_FOUND");
   }
 
+  // Explicit cleanup before row delete (FK cascades should cover this; keeps deletes reliable).
+  await sql`DELETE FROM product_filter_assignments WHERE product_id = ${productId}`;
+  await sql`DELETE FROM product_storage_options WHERE product_id = ${productId}`;
+  await sql`DELETE FROM product_colors WHERE product_id = ${productId}`;
   await sql`DELETE FROM products WHERE id = ${productId}`;
+
+  const { rows } = await sql<{ id: string }>`
+    SELECT id FROM products WHERE id = ${productId} LIMIT 1
+  `;
+  if (rows[0]) {
+    throw new Error("DELETE_FAILED");
+  }
+
+  return { slug: existing.slug };
 }
