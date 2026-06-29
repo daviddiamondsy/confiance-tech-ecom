@@ -57,4 +57,9 @@ describe("e-com.md › Order fulfillment › admin order statuses", () => {
     expect(normalizeOrderSource("holdam")).toBe("website");
     expect(sourceLabel("holdam")).toBe("Website");
   });
+
+  it("labels chatbot orders for admin UI", () => {
+    expect(normalizeOrderSource("chatbot")).toBe("chatbot");
+    expect(sourceLabel("chatbot")).toBe("Chatbot");
+  });
 });

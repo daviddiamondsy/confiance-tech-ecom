@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
   const startTime = Date.now();
   try {
     const {
+      source,
       productId,
       productSlug,
       productName,
@@ -24,6 +25,8 @@ export async function POST(req: NextRequest) {
       referralCode,
       applyStoreCredit,
     } = await req.json();
+
+    const orderSource = source === "chatbot" ? "chatbot" : "website";
 
     console.log("[API][create-holdam-deal] ===== START =====");
     console.log("[API][create-holdam-deal] Received request", {
@@ -190,6 +193,7 @@ export async function POST(req: NextRequest) {
       try {
         await recordHoldamOrder({
           dealId: deal.data.id,
+          source: orderSource,
           productId: resolvedProductId,
           productName: resolvedProductName,
           catalogPriceNgn: amountNgn,
