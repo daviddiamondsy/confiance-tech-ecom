@@ -121,10 +121,10 @@ function ReferDashboardContent() {
           <Gift className="h-7 w-7" />
         </div>
         <h1 className="font-display text-3xl font-bold text-slate-900 mb-3">
-          Refer a Friend, Earn Store Credit
+          Refer a Friend, Earn Store Points
         </h1>
         <p className="text-slate-600 leading-relaxed max-w-xl mx-auto">
-          Share your link. Friends save on their first order from our store. You earn store credit after
+          Share your link. Friends save on their first order from our store. You earn store points after
           their order completes and the return window closes.
         </p>
       </div>
@@ -197,12 +197,12 @@ function ReferDashboardContent() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card-elevated p-5">
-              <p className="text-sm text-slate-500 mb-1">Available store credit</p>
+              <p className="text-sm text-slate-500 mb-1">Available store points</p>
               <p className="text-2xl font-bold text-primary-600">
                 {formatNgn(dashboard.storeCreditBalanceNgn)}
               </p>
               <p className="mt-2 text-xs text-slate-500">
-                Store credit expires {STORE_CREDIT_EXPIRY_MONTHS} months after each reward is earned.
+                Store points expire {STORE_CREDIT_EXPIRY_MONTHS} months after each reward is earned.
               </p>
             </div>
             <div className="card-elevated p-5">
@@ -219,7 +219,7 @@ function ReferDashboardContent() {
             <div className="card-elevated p-8">
               <h2 className="font-display text-xl font-bold text-slate-900 mb-2">Your referrals</h2>
               <p className="text-sm text-slate-500 mb-4">
-                Credit appears here after each friend&apos;s order completes. Pending orders show the amount
+                Points appear here after each friend&apos;s order completes. Pending orders show the amount
                 you will earn.
               </p>
               <div className="overflow-x-auto">
@@ -269,8 +269,8 @@ function ReferDashboardContent() {
             <ol className="space-y-3 text-slate-600 list-decimal list-inside leading-relaxed">
               <li>Send your link to a friend buying their first device from us.</li>
               <li>They get an automatic discount at checkout.</li>
-              <li>You receive store credit after their order completes (not returned or disputed).</li>
-              <li>Use store credit on your next order from this store within {STORE_CREDIT_EXPIRY_MONTHS} months.</li>
+              <li>You receive store points after their order completes (not returned or disputed).</li>
+              <li>Use store points on your next order from this store within {STORE_CREDIT_EXPIRY_MONTHS} months.</li>
             </ol>
           </div>
 
@@ -280,7 +280,7 @@ function ReferDashboardContent() {
               <h2 className="font-display text-xl font-bold text-slate-900">Reward tiers</h2>
             </div>
             <p className="text-sm text-slate-500 mb-4">
-              Fixed store credit amounts by your friend&apos;s catalog price band.
+              Fixed store point amounts by your friend&apos;s catalog price band.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">

@@ -6,14 +6,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { HOLDAM_DELIVERY_DAYS } from "@/lib/delivery-deadline";
 import { productPath } from "@/lib/product-slug";
-import { getProductBySlug, getProducts } from "@/lib/products";
+import { getProductBySlug } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
-
-export async function generateStaticParams() {
-  const products = await getProducts();
-  return products.map((product) => ({ slug: product.slug }));
-}
 
 interface ProductPageProps {
   params: {

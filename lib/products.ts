@@ -4,6 +4,7 @@ export { getSelectedVariant, getDisplaySpecs } from "@/lib/product-utils";
 export { productPath, slugifyProductName } from "@/lib/product-slug";
 export { priceFromYuan, sellingMarkupForYuan, toCharmPrice } from "@/lib/pricing";
 
+import { unstable_noStore as noStore } from "next/cache";
 import { catalogProductIdForSlug } from "@/lib/product-slug";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
@@ -33,6 +34,8 @@ async function resolveDbProductForSlug(slug: string): Promise<Product | undefine
 }
 
 export async function getProducts(): Promise<Product[]> {
+  noStore();
+
   if (shouldUseStaticCatalog()) {
     return getStaticCatalogProducts();
   }
@@ -60,6 +63,8 @@ export async function getProducts(): Promise<Product[]> {
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  noStore();
+
   if (shouldUseStaticCatalog()) {
     const product = getStaticProductBySlug(slug);
     if (product) return product;
@@ -87,6 +92,8 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
+  noStore();
+
   if (shouldUseStaticCatalog()) {
     return getStaticProductById(id);
   }

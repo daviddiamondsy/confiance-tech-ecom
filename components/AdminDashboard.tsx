@@ -401,7 +401,7 @@ export default function AdminDashboard() {
 
   async function handleDeleteProduct(product: AdminProductRecord) {
     const confirmed = window.confirm(
-      `Delete "${product.name}" from the catalog?\n\nThis cannot be undone. Built-in catalog items may reappear on the storefront from the default seed after delete.`
+      `Delete "${product.name}" from the catalog?\n\nThis cannot be undone. Built-in catalog items only come back if you run Import catalog again.`
     );
     if (!confirmed) return;
 
@@ -418,7 +418,9 @@ export default function AdminDashboard() {
       if (!response.ok) {
         setEditMessages((prev) => ({
           ...prev,
-          [product.id]: data.error ?? "Could not delete product",
+          [product.id]: data.detail
+            ? `${data.error ?? "Could not delete product"}: ${data.detail}`
+            : (data.error ?? "Could not delete product"),
         }));
         return;
       }

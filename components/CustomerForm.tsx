@@ -277,7 +277,7 @@ export default function CustomerForm({
           className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
         />
         <span className="text-sm text-slate-700 leading-relaxed">
-          Apply {formatNgn(storeCreditBalanceNgn)} store credit to this order
+          Apply {formatNgn(storeCreditBalanceNgn)} store points to this order
         </span>
       </label>
     ) : null;
