@@ -7,6 +7,7 @@ import {
   patchStoreOrder,
   updateStoreOrderFromWebhook,
 } from "@/lib/db/orders-repository";
+import { ensureHoldamDealLinked } from "@/lib/holdam/deal-link";
 import { sendOrderEmail } from "@/lib/order-email";
 import { ensureOrdersReady } from "@/lib/orders/db-ready";
 import {
@@ -78,11 +79,17 @@ export async function recordHoldamOrder(params: CreateHoldamOrderParams): Promis
 export async function processOrderWebhook(params: {
   eventName: string;
   dealId: string;
+  buyerPhone?: string | null;
 }): Promise<void> {
   const mapped = mapWebhookEventToStatus(params.eventName);
   if (!mapped) return;
 
   await ensureOrdersReady();
+
+  await ensureHoldamDealLinked({
+    webhookDealId: params.dealId,
+    buyerPhone: params.buyerPhone,
+  });
 
   const existing = await getStoreOrderByDealId(params.dealId);
   if (!existing) return;

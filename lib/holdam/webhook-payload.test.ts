@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseHoldamWebhookData, resolveWebhookDealId } from "@/lib/holdam/webhook-payload";
+import { parseHoldamWebhookData, resolveWebhookBuyerPhone, resolveWebhookDealId } from "@/lib/holdam/webhook-payload";
 
 // BDD: e-com.md › Feature: Merchant Webhook Handling › deal.funded secures order
 describe("e-com.md › Merchant webhooks › deal id resolution", () => {
@@ -54,5 +54,14 @@ describe("e-com.md › Merchant webhooks › deal id resolution", () => {
     expect(resolveWebhookDealId(null)).toBeNull();
     expect(resolveWebhookDealId({ status: "funded" })).toBeNull();
     expect(parseHoldamWebhookData({})).toMatchObject({ dealId: null });
+  });
+
+  it("reads buyer phone from nested payload", () => {
+    expect(
+      resolveWebhookBuyerPhone({
+        dealId: "esc_abc123",
+        buyer: { phone: "+2348012345678" },
+      })
+    ).toBe("+2348012345678");
   });
 });

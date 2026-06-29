@@ -36,4 +36,10 @@ export async function ensureOrdersSchema(): Promise<void> {
   await sqlDdl`CREATE INDEX IF NOT EXISTS idx_store_orders_source ON store_orders (source)`;
   await sqlDdl`CREATE INDEX IF NOT EXISTS idx_store_orders_created ON store_orders (created_at DESC)`;
   await sqlDdl`CREATE INDEX IF NOT EXISTS idx_store_orders_customer_phone ON store_orders (customer_phone)`;
+  await sqlDdl`ALTER TABLE store_orders ADD COLUMN IF NOT EXISTS holdam_escrow_id TEXT`;
+  await sqlDdl`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_store_orders_holdam_escrow_id
+    ON store_orders (holdam_escrow_id)
+    WHERE holdam_escrow_id IS NOT NULL
+  `;
 }

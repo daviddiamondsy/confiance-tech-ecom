@@ -133,9 +133,42 @@ export async function getStoreOrderById(id: number): Promise<StoreOrderRecord | 
 
 export async function getStoreOrderByDealId(dealId: string): Promise<StoreOrderRecord | null> {
   const { rows } = await sql<StoreOrderRecord>`
-    SELECT * FROM store_orders WHERE deal_id = ${dealId} LIMIT 1
+    SELECT * FROM store_orders
+    WHERE deal_id = ${dealId} OR holdam_escrow_id = ${dealId}
+    LIMIT 1
   `;
   return rows[0] ? mapRow(rows[0]) : null;
+}
+
+export async function getPendingHoldamOrderByPhone(phone: string): Promise<StoreOrderRecord | null> {
+  const customerPhone = normalizeNigerianPhone(phone);
+  if (!customerPhone) return null;
+
+  const { rows } = await sql<StoreOrderRecord>`
+    SELECT *
+    FROM store_orders
+    WHERE customer_phone = ${customerPhone}
+      AND source = 'holdam'
+      AND fulfillment_status = 'pending_payment'
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+  return rows[0] ? mapRow(rows[0]) : null;
+}
+
+export async function linkHoldamEscrowId(params: {
+  checkoutDealId: string;
+  escrowId: string;
+}): Promise<void> {
+  if (!params.checkoutDealId || !params.escrowId) return;
+  if (params.checkoutDealId === params.escrowId) return;
+
+  await sql`
+    UPDATE store_orders
+    SET holdam_escrow_id = ${params.escrowId}, updated_at = NOW()
+    WHERE deal_id = ${params.checkoutDealId}
+      AND holdam_escrow_id IS NULL
+  `;
 }
 
 export async function updateStoreOrderStatus(params: {
@@ -203,7 +236,7 @@ export async function updateStoreOrderFromWebhook(params: {
       secured_at = ${sqlTimestamp(securedAt)},
       completed_at = ${sqlTimestamp(completedAt)},
       updated_at = NOW()
-    WHERE deal_id = ${params.dealId}
+    WHERE deal_id = ${params.dealId} OR holdam_escrow_id = ${params.dealId}
     RETURNING *
   `;
 

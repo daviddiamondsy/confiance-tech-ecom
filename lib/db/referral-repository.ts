@@ -241,16 +241,33 @@ export async function insertReferralEvent(params: {
 
 export async function getReferralEventByDealId(dealId: string): Promise<ReferralEventRow | null> {
   const { rows } = await sql<ReferralEventRow>`
-    SELECT * FROM referral_events WHERE deal_id = ${dealId} LIMIT 1
+    SELECT * FROM referral_events
+    WHERE deal_id = ${dealId} OR holdam_escrow_id = ${dealId}
+    LIMIT 1
   `;
   return rows[0] ?? null;
+}
+
+export async function linkReferralHoldamEscrowId(params: {
+  checkoutDealId: string;
+  escrowId: string;
+}): Promise<void> {
+  if (!params.checkoutDealId || !params.escrowId) return;
+  if (params.checkoutDealId === params.escrowId) return;
+
+  await sql`
+    UPDATE referral_events
+    SET holdam_escrow_id = ${params.escrowId}
+    WHERE deal_id = ${params.checkoutDealId}
+      AND holdam_escrow_id IS NULL
+  `;
 }
 
 export async function markReferralEventEarned(dealId: string): Promise<ReferralEventRow | null> {
   const { rows } = await sql<ReferralEventRow>`
     UPDATE referral_events
     SET status = 'earned', earned_at = NOW()
-    WHERE deal_id = ${dealId} AND status = 'pending'
+    WHERE (deal_id = ${dealId} OR holdam_escrow_id = ${dealId}) AND status = 'pending'
     RETURNING *
   `;
   return rows[0] ?? null;
@@ -260,7 +277,7 @@ export async function voidReferralEvent(dealId: string): Promise<ReferralEventRo
   const { rows } = await sql<ReferralEventRow>`
     UPDATE referral_events
     SET status = 'void', voided_at = NOW()
-    WHERE deal_id = ${dealId} AND status IN ('pending', 'earned')
+    WHERE (deal_id = ${dealId} OR holdam_escrow_id = ${dealId}) AND status IN ('pending', 'earned')
     RETURNING *
   `;
   return rows[0] ?? null;
