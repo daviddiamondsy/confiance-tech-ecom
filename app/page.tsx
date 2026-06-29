@@ -29,8 +29,7 @@ export default async function Home() {
         <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-surface-muted to-transparent" />
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 md:py-40">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="animate-slide-up">
+          <div className="max-w-3xl animate-slide-up">
               <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 text-primary-300 text-sm font-medium rounded-full mb-8 border border-white/10 backdrop-blur-sm">
                 <Sparkles className="h-4 w-4" />
                 Trusted Tech, Built to Last
@@ -81,38 +80,6 @@ export default async function Home() {
                   <span className="text-slate-300 font-medium">Top-Rated Service</span>
                 </div>
               </div>
-            </div>
-
-            {/* Hero visual — product spotlight */}
-            <div className="hidden lg:flex items-center justify-center">
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary-500/20 rounded-3xl blur-2xl scale-110" />
-                <div className="relative rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm p-8 shadow-2xl">
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { label: "Brand New", color: "bg-primary-500/20 text-primary-300", icon: "✦" },
-                      { label: "UK Grade A", color: "bg-violet-500/20 text-violet-300", icon: "◆" },
-                      { label: "7-Day Returns", color: "bg-emerald-500/20 text-emerald-300", icon: "↩" },
-                      { label: "With Accessories", color: "bg-amber-500/20 text-amber-300", icon: "⚡" },
-                    ].map((item) => (
-                      <div
-                        key={item.label}
-                        className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
-                      >
-                        <span className={`text-2xl h-10 w-10 flex items-center justify-center rounded-xl ${item.color}`}>
-                          {item.icon}
-                        </span>
-                        <span className="text-xs font-semibold text-slate-300 text-center">{item.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-primary-500/20 to-violet-500/20 border border-white/10 text-center">
-                    <p className="text-white font-display font-bold text-lg">iPhones · Laptops · Tablets</p>
-                    <p className="text-slate-400 text-xs mt-1">Premium devices shipped nationwide</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
