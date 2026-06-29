@@ -55,4 +55,12 @@
   .card-elevated {
     @apply bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300;
   }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary-600 to-violet-600 bg-clip-text text-transparent;
+  }
+
+  .badge-pill {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold;
+  }
 }

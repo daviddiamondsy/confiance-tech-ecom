@@ -51,8 +51,8 @@ export default function FaqAccordion() {
             className={cn(
               "rounded-2xl border transition-all duration-300 overflow-hidden",
               isOpen
-                ? "border-primary-200 bg-primary-50/50 shadow-soft"
-                : "border-slate-200 bg-white hover:border-slate-300"
+                ? "border-primary-200 bg-primary-50/60 shadow-soft"
+                : "border-slate-200 bg-white hover:border-primary-100 hover:bg-primary-50/20"
             )}
           >
             <button
@@ -61,7 +61,15 @@ export default function FaqAccordion() {
               onClick={() => setOpenIndex(isOpen ? null : index)}
               aria-expanded={isOpen}
             >
-              <span className="font-display font-semibold text-slate-900">{faq.question}</span>
+              <div className="flex items-center gap-3 min-w-0">
+                <span className={cn(
+                  "flex-shrink-0 h-7 w-7 rounded-lg flex items-center justify-center text-xs font-bold transition-colors",
+                  isOpen ? "bg-primary-600 text-white" : "bg-slate-100 text-slate-500"
+                )}>
+                  {index + 1}
+                </span>
+                <span className="font-display font-semibold text-slate-900">{faq.question}</span>
+              </div>
               <ChevronDown
                 className={cn(
                   "h-5 w-5 text-slate-400 flex-shrink-0 transition-transform duration-300",
@@ -76,7 +84,7 @@ export default function FaqAccordion() {
               )}
             >
               <div className="overflow-hidden">
-                <p className="px-5 pb-5 text-slate-600 leading-relaxed">{faq.answer}</p>
+                <p className="px-5 pb-5 pl-[60px] text-slate-600 leading-relaxed">{faq.answer}</p>
               </div>
             </div>
           </div>
