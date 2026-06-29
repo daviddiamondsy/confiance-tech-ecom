@@ -42,7 +42,7 @@ export function sellingMarkupForYuan(
 /**
  * Selling price in NGN:
  * markup × (product yuan × rate + total shipping), then charm pricing.
- * Total shipping = china shipping (yuan × rate) + international shipping NGN.
+ * Total shipping = china shipping (yuan × rate) + international shipping NGN + local delivery NGN.
  */
 export function priceFromYuan(
   yuan: number,

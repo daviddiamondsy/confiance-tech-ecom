@@ -15,8 +15,10 @@ import {
   productShippingFromRow,
   DEFAULT_CHINA_SHIPPING_YUAN,
   DEFAULT_INTERNATIONAL_SHIPPING_NGN,
+  DEFAULT_LOCAL_DELIVERY_NGN,
   type ChinaShippingYuan,
   type InternationalShippingNgn,
+  type LocalDeliveryNgn,
   type ProductShippingCosts,
 } from "@/lib/product-shipping";
 import { getPostgresErrorMessage, isMissingShippingColumnsError } from "@/lib/db/postgres-errors";
@@ -50,15 +52,20 @@ interface ProductRow {
   sort_order: number;
   china_shipping_yuan: number;
   international_shipping_ngn: number;
+  local_delivery_ngn: number;
 }
 
-type ProductRowWithoutShipping = Omit<ProductRow, "china_shipping_yuan" | "international_shipping_ngn">;
+type ProductRowWithoutShipping = Omit<
+  ProductRow,
+  "china_shipping_yuan" | "international_shipping_ngn" | "local_delivery_ngn"
+>;
 
 function withDefaultShipping(row: ProductRowWithoutShipping): ProductRow {
   return {
     ...row,
     china_shipping_yuan: DEFAULT_CHINA_SHIPPING_YUAN,
     international_shipping_ngn: DEFAULT_INTERNATIONAL_SHIPPING_NGN,
+    local_delivery_ngn: DEFAULT_LOCAL_DELIVERY_NGN,
   };
 }
 
@@ -68,7 +75,7 @@ async function fetchAllProductRows(): Promise<ProductRow[]> {
       SELECT
         id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
         description, features, specifications, sort_order,
-        china_shipping_yuan, international_shipping_ngn
+        china_shipping_yuan, international_shipping_ngn, local_delivery_ngn
       FROM products
       ORDER BY sort_order ASC, id ASC
     `;
@@ -96,7 +103,7 @@ async function fetchProductRowById(id: string): Promise<ProductRow | undefined> 
       SELECT
         id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
         description, features, specifications, sort_order,
-        china_shipping_yuan, international_shipping_ngn
+        china_shipping_yuan, international_shipping_ngn, local_delivery_ngn
       FROM products
       WHERE id = ${id}
       LIMIT 1
@@ -123,7 +130,7 @@ async function fetchProductRowBySlug(slug: string): Promise<ProductRow | undefin
       SELECT
         id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
         description, features, specifications, sort_order,
-        china_shipping_yuan, international_shipping_ngn
+        china_shipping_yuan, international_shipping_ngn, local_delivery_ngn
       FROM products
       WHERE slug = ${slug}
       LIMIT 1
@@ -436,6 +443,7 @@ export async function fetchAdminProducts(): Promise<AdminProductRecord[]> {
       specifications: row.specifications ?? {},
       chinaShippingYuan: shipping.chinaShippingYuan,
       internationalShippingNgn: shipping.internationalShippingNgn,
+      localDeliveryNgn: shipping.localDeliveryNgn,
       storageVariants: options.map((option) => ({
         storage: option.storage,
         yuan:
@@ -483,6 +491,7 @@ export interface CreateProductInput {
   storageVariants?: Array<{ storage: string; yuan: number }>;
   chinaShippingYuan?: ChinaShippingYuan;
   internationalShippingNgn?: InternationalShippingNgn;
+  localDeliveryNgn?: LocalDeliveryNgn;
 }
 
 export interface AdminProductRecord {
@@ -501,6 +510,7 @@ export interface AdminProductRecord {
   specifications: Record<string, string>;
   chinaShippingYuan: number;
   internationalShippingNgn: number;
+  localDeliveryNgn: number;
   storageVariants: Array<{ storage: string; yuan: number }>;
   colors: string[];
 }
@@ -716,10 +726,13 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
   });
   const { storageVariants, baseYuan, storageLabel: storage } = pricing;
   const shipping =
-    input.chinaShippingYuan != null && input.internationalShippingNgn != null
+    input.chinaShippingYuan != null &&
+    input.internationalShippingNgn != null &&
+    input.localDeliveryNgn != null
       ? {
           chinaShippingYuan: input.chinaShippingYuan,
           internationalShippingNgn: input.internationalShippingNgn,
+          localDeliveryNgn: input.localDeliveryNgn,
         }
       : defaultShippingForProductName(name);
   const price = priceFromYuan(baseYuan, config, shipping);
@@ -742,8 +755,8 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
     `INSERT INTO products (
       id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge, description,
       features, specifications, sort_order, china_shipping_yuan, international_shipping_ngn,
-      updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, $8, $9, $10::jsonb, $11::jsonb, $12, $13, $14, NOW())`,
+      local_delivery_ngn, updated_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, $8, $9, $10::jsonb, $11::jsonb, $12, $13, $14, $15, NOW())`,
     [
       id,
       slug,
@@ -759,6 +772,7 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
       sortOrder,
       shipping.chinaShippingYuan,
       shipping.internationalShippingNgn,
+      shipping.localDeliveryNgn,
     ]
   );
 
@@ -834,7 +848,9 @@ export async function updateAdminProduct(
     input.yuanCost !== undefined;
 
   const shouldSyncShipping =
-    input.chinaShippingYuan !== undefined || input.internationalShippingNgn !== undefined;
+    input.chinaShippingYuan !== undefined ||
+    input.internationalShippingNgn !== undefined ||
+    input.localDeliveryNgn !== undefined;
 
   let storageVariantsForSave: Array<{ storage: string; yuan: number }> | undefined;
   let yuanCost =
@@ -871,6 +887,8 @@ export async function updateAdminProduct(
       input.chinaShippingYuan ?? existing.china_shipping_yuan ?? undefined,
     international_shipping_ngn:
       input.internationalShippingNgn ?? existing.international_shipping_ngn ?? undefined,
+    local_delivery_ngn:
+      input.localDeliveryNgn ?? existing.local_delivery_ngn ?? undefined,
     name,
   });
 
@@ -935,6 +953,7 @@ export async function updateAdminProduct(
       specifications = $11::jsonb,
       china_shipping_yuan = $12,
       international_shipping_ngn = $13,
+      local_delivery_ngn = $14,
       updated_at = NOW()
     WHERE id = $1`,
     [
@@ -951,6 +970,7 @@ export async function updateAdminProduct(
       JSON.stringify(specifications),
       shipping.chinaShippingYuan,
       shipping.internationalShippingNgn,
+      shipping.localDeliveryNgn,
     ]
   );
 
