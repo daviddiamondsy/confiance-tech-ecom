@@ -23,7 +23,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  if (product.slug !== params.slug) {
+  if (product.slug.toLowerCase() !== params.slug.trim().toLowerCase()) {
     redirect(productPath(product));
   }
 

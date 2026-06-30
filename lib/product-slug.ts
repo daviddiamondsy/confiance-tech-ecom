@@ -53,6 +53,19 @@ export function catalogProductIdForSlug(slug: string): string | undefined {
   return undefined;
 }
 
-export function productPath(product: { slug: string }): string {
-  return `/products/${product.slug}`;
+export function productPath(product: {
+  slug?: string | null;
+  id?: string;
+  name?: string;
+}): string {
+  const slug =
+    product.slug?.trim() ||
+    (product.id && product.name
+      ? resolveStorefrontProductSlug({
+          id: product.id,
+          dbSlug: null,
+          name: product.name,
+        })
+      : "");
+  return slug ? `/products/${slug}` : "/products";
 }
