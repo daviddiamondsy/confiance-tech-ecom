@@ -60,6 +60,10 @@ export async function insertHoldamOrder(params: CreateHoldamOrderParams): Promis
       ${params.storeCreditAppliedNgn ?? 0}
     )
     ON CONFLICT (deal_id) DO UPDATE SET
+      source = CASE
+        WHEN EXCLUDED.source = 'chatbot' THEN 'chatbot'
+        ELSE store_orders.source
+      END,
       updated_at = NOW()
     RETURNING *
   `;

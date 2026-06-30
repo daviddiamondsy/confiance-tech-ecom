@@ -1193,3 +1193,110 @@ export async function deleteAdminProduct(productId: string): Promise<{ slug: str
 
   return { slug: existing.slug };
 }
+
+export interface InsertProductIfAbsentInput {
+  id: string;
+  slug: string;
+  name: string;
+  yuanCost: number;
+  image: string;
+  badge?: string | null;
+  description: string;
+  features: string[];
+  specifications: Record<string, string>;
+  filterSlug: string;
+  colors: string[];
+}
+
+export type InsertProductIfAbsentResult = "inserted" | "skipped";
+
+/** Insert a catalog product only when its id is not already in Postgres. */
+export async function insertProductIfAbsent(
+  input: InsertProductIfAbsentInput
+): Promise<InsertProductIfAbsentResult> {
+  const { rows } = await sql<{ id: string }>`
+    SELECT id FROM products WHERE id = ${input.id} LIMIT 1
+  `;
+  if (rows.length > 0) {
+    return "skipped";
+  }
+
+  const config = await fetchPricingConfig();
+  const shipping = defaultShippingForProductName(input.name);
+  const price = priceFromYuan(input.yuanCost, config, shipping);
+  const sortOrder = await nextSortOrder();
+
+  await sql.query(
+    `INSERT INTO products (
+      id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge, description,
+      features, specifications, sort_order, china_shipping_yuan, international_shipping_ngn,
+      local_delivery_ngn, updated_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, $8, $9, $10::jsonb, $11::jsonb, $12, $13, $14, $15, NOW())`,
+    [
+      input.id,
+      input.slug,
+      input.filterSlug,
+      input.name,
+      price,
+      input.yuanCost,
+      input.image,
+      input.badge ?? null,
+      input.description,
+      JSON.stringify(input.features),
+      JSON.stringify(input.specifications),
+      sortOrder,
+      shipping.chinaShippingYuan,
+      shipping.internationalShippingNgn,
+      shipping.localDeliveryNgn,
+    ]
+  );
+
+  await replaceProductFilterSlugs(input.id, [input.filterSlug]);
+
+  if (input.colors.length > 0) {
+    const { replaceProductColors } = await import("@/lib/db/colors-repository");
+    await replaceProductColors(input.id, input.colors);
+  }
+
+  return "inserted";
+}
+
+/** Add iPhone 15 and iPhone 17 rows only; existing products are left unchanged. */
+export async function insertNewIphoneProductsIfAbsent(): Promise<
+  Array<{ id: string; name: string; result: InsertProductIfAbsentResult; price?: number }>
+> {
+  const { buildNewIphoneProducts, NEW_IPHONE_PRODUCT_META } = await import(
+    "@/lib/new-iphone-products"
+  );
+  const products = buildNewIphoneProducts();
+  const results: Array<{ id: string; name: string; result: InsertProductIfAbsentResult; price?: number }> =
+    [];
+
+  for (const product of products) {
+    const meta = NEW_IPHONE_PRODUCT_META[product.id];
+    if (!meta) continue;
+
+    const result = await insertProductIfAbsent({
+      id: product.id,
+      slug: meta.slug,
+      name: product.name,
+      yuanCost: meta.yuan,
+      image: product.image,
+      badge: product.badge ?? null,
+      description: product.description,
+      features: product.features,
+      specifications: product.specifications,
+      filterSlug: meta.filterSlug,
+      colors: meta.colors,
+    });
+
+    results.push({
+      id: product.id,
+      name: product.name,
+      result,
+      price: result === "inserted" ? product.price : undefined,
+    });
+  }
+
+  return results;
+}

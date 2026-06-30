@@ -7,7 +7,14 @@ import {
 } from "@/lib/device-quality-copy";
 import type { Product } from "@/lib/product-utils";
 
-type Iphone17CatalogProduct = Omit<Product, "slug"> & { id: string };
+export type NewIphoneProduct = Omit<Product, "slug"> & { id: string };
+
+export interface NewIphoneProductMeta {
+  yuan: number;
+  filterSlug: string;
+  colors: string[];
+  slug: string;
+}
 
 function catalogPrice(productName: string, yuan: number): number {
   return computePriceFromYuan(
@@ -17,47 +24,50 @@ function catalogPrice(productName: string, yuan: number): number {
   );
 }
 
-const IPHONE_17_IMAGES = {
-  base: "/product-images/iphone-17.png",
-  pro: "/product-images/iphone-17-pro.png",
-  proMax: "/product-images/iphone-17-pro-max.png",
-} as const;
-
-/** Yuan costs from supplier (256GB). */
-export const IPHONE_17_YUAN = {
-  clean: 4750,
-  new: 5600,
-  proClean: 7000,
-  proMaxClean: 7800,
-} as const;
-
-export const IPHONE_17_CATALOG_IDS = {
-  clean: "16",
-  new: "17",
-  proClean: "18",
-  proMaxClean: "19",
-} as const;
-
-export const IPHONE_17_FILTER_SLUGS = {
-  clean: "clean",
-  new: "new",
-  proClean: "clean",
-  proMaxClean: "clean",
-} as const;
-
-/** iPhone 17 lineup for catalog seed and targeted DB upserts. */
-export function buildIphone17CatalogProducts(): Iphone17CatalogProduct[] {
-  const cleanName = "Apple iPhone 17 (Clean)";
-  const newName = "Apple iPhone 17 (New)";
-  const proName = "Apple iPhone 17 Pro (Clean)";
-  const proMaxName = "Apple iPhone 17 Pro Max (Clean)";
+/** iPhone 15 + iPhone 17 products to add to Postgres (ids 16-20). */
+export function buildNewIphoneProducts(): NewIphoneProduct[] {
+  const iphone15Name = "Apple iPhone 15 256GB (Clean)";
+  const iphone17CleanName = "Apple iPhone 17 (Clean)";
+  const iphone17NewName = "Apple iPhone 17 (New)";
+  const iphone17ProName = "Apple iPhone 17 Pro (Clean)";
+  const iphone17ProMaxName = "Apple iPhone 17 Pro Max (Clean)";
 
   return [
     {
-      id: IPHONE_17_CATALOG_IDS.clean,
-      name: cleanName,
-      price: catalogPrice(cleanName, IPHONE_17_YUAN.clean),
-      image: IPHONE_17_IMAGES.base,
+      id: "20",
+      name: iphone15Name,
+      price: catalogPrice(iphone15Name, 3100),
+      image: "/product-images/iphone-15.png",
+      badge: "Popular",
+      description:
+        "The iPhone 15 features a 6.1-inch Super Retina XDR display with Dynamic Island, A16 Bionic chip, and a 48MP Main camera with 2x optical zoom. " +
+        "USB-C charging, MagSafe support, and all-day battery life. " +
+        IPHONE_QUALITY_TAIL,
+      features: [
+        BATTERY_HEALTH_FEATURE,
+        "6.1-inch Super Retina XDR Display",
+        "A16 Bionic Chip",
+        "48MP Main Camera with 2x Zoom",
+        "Dynamic Island",
+        "USB-C and MagSafe",
+        "5G Capable",
+        "Face ID Security",
+      ],
+      specifications: {
+        Display: "6.1-inch Super Retina XDR",
+        Processor: "A16 Bionic chip",
+        Storage: "256GB",
+        Camera: "48MP Main + 12MP Ultra Wide",
+        Battery: "Up to 26 hours video playback",
+        "Battery health": BATTERY_HEALTH_SPEC,
+        Connectivity: "5G, Wi-Fi 6, Bluetooth 5.3, USB-C",
+      },
+    },
+    {
+      id: "16",
+      name: iphone17CleanName,
+      price: catalogPrice(iphone17CleanName, 4750),
+      image: "/product-images/iphone-17.png",
       badge: "New Arrival",
       description:
         "The iPhone 17 features a 6.3-inch Super Retina XDR display with ProMotion up to 120Hz, A19 chip, and a 48MP Dual Fusion camera with 2x optical zoom. " +
@@ -84,10 +94,10 @@ export function buildIphone17CatalogProducts(): Iphone17CatalogProduct[] {
       },
     },
     {
-      id: IPHONE_17_CATALOG_IDS.new,
-      name: newName,
-      price: catalogPrice(newName, IPHONE_17_YUAN.new),
-      image: IPHONE_17_IMAGES.base,
+      id: "17",
+      name: iphone17NewName,
+      price: catalogPrice(iphone17NewName, 5600),
+      image: "/product-images/iphone-17.png",
       badge: "Brand New",
       description:
         "The iPhone 17 features a 6.3-inch Super Retina XDR display with ProMotion up to 120Hz, A19 chip, and a 48MP Dual Fusion camera with 2x optical zoom. " +
@@ -112,10 +122,10 @@ export function buildIphone17CatalogProducts(): Iphone17CatalogProduct[] {
       },
     },
     {
-      id: IPHONE_17_CATALOG_IDS.proClean,
-      name: proName,
-      price: catalogPrice(proName, IPHONE_17_YUAN.proClean),
-      image: IPHONE_17_IMAGES.pro,
+      id: "18",
+      name: iphone17ProName,
+      price: catalogPrice(iphone17ProName, 7000),
+      image: "/product-images/iphone-17-pro.png",
       badge: "Pro",
       description:
         "The iPhone 17 Pro features a 6.3-inch Super Retina XDR display, A19 Pro chip, and a 48MP Pro Fusion camera with 4x telephoto and up to 8x optical-quality zoom. " +
@@ -142,10 +152,10 @@ export function buildIphone17CatalogProducts(): Iphone17CatalogProduct[] {
       },
     },
     {
-      id: IPHONE_17_CATALOG_IDS.proMaxClean,
-      name: proMaxName,
-      price: catalogPrice(proMaxName, IPHONE_17_YUAN.proMaxClean),
-      image: IPHONE_17_IMAGES.proMax,
+      id: "19",
+      name: iphone17ProMaxName,
+      price: catalogPrice(iphone17ProMaxName, 7800),
+      image: "/product-images/iphone-17-pro-max.png",
       badge: "Pro Max",
       description:
         "The iPhone 17 Pro Max features a 6.9-inch Super Retina XDR display, A19 Pro chip, and the most advanced 48MP Pro Fusion camera on iPhone with 4x telephoto. " +
@@ -173,3 +183,36 @@ export function buildIphone17CatalogProducts(): Iphone17CatalogProduct[] {
     },
   ];
 }
+
+export const NEW_IPHONE_PRODUCT_META: Record<string, NewIphoneProductMeta> = {
+  "20": {
+    yuan: 3100,
+    filterSlug: "clean",
+    colors: ["Black", "Blue", "Green", "Yellow", "Pink"],
+    slug: "apple-iphone-15-256gb",
+  },
+  "16": {
+    yuan: 4750,
+    filterSlug: "clean",
+    colors: ["Black", "White", "Mist Blue", "Sage", "Lavender"],
+    slug: "apple-iphone-17",
+  },
+  "17": {
+    yuan: 5600,
+    filterSlug: "new",
+    colors: ["Black", "White", "Mist Blue", "Sage", "Lavender"],
+    slug: "apple-iphone-17-new",
+  },
+  "18": {
+    yuan: 7000,
+    filterSlug: "clean",
+    colors: ["Silver", "Cosmic Orange", "Deep Blue"],
+    slug: "apple-iphone-17-pro",
+  },
+  "19": {
+    yuan: 7800,
+    filterSlug: "clean",
+    colors: ["Silver", "Cosmic Orange", "Deep Blue"],
+    slug: "apple-iphone-17-pro-max",
+  },
+};
