@@ -235,6 +235,12 @@ export function previewVariantPricesFromForm(
   ];
 }
 
+/** Maps admin form badge to a DB update (null clears an existing badge). */
+export function badgeValueForProductUpdate(raw: unknown): string | null {
+  if (raw === "" || raw == null) return null;
+  return String(raw).trim() || null;
+}
+
 /** Strip single-price fields when storage variants drive pricing. */
 export function productFormPayloadForSave(form: ProductFormState): ProductFormState {
   if (!usesStorageVariantsField(form)) return form;

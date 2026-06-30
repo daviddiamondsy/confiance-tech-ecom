@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import {
+  badgeValueForProductUpdate,
   parseColorsInput,
   parseFeaturesInput,
   parseFilterSlugsInput,
@@ -219,7 +220,7 @@ function buildUpdateInput(body: Record<string, unknown>): UpdateProductInput {
     input.filterSlugs = parseFilterSlugsInput(body.filterSlugs, body.filterSlug);
   }
   if (body.badge !== undefined) {
-    input.badge = body.badge === "" || body.badge == null ? undefined : String(body.badge).trim();
+    input.badge = badgeValueForProductUpdate(body.badge);
   }
   if (body.storage !== undefined) {
     input.storage =
