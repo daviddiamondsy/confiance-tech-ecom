@@ -11,7 +11,7 @@ import Image from "next/image";
 import type { Product } from "@/lib/product-utils";
 import { getSelectedVariant, getDisplaySpecs } from "@/lib/product-utils";
 import { storefrontProductBadge } from "@/lib/product-condition-suffix";
-import { STOREFRONT_TRUST_FEATURES } from "@/lib/storefront-trust-features";
+import { PRODUCT_DETAIL_TRUST_FEATURES } from "@/lib/storefront-trust-features";
 import { STOREFRONT_PRODUCT_DETAIL_TRUST_COPY } from "@/lib/device-quality-copy";
 
 interface ProductDetailViewProps {
@@ -149,7 +149,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
               </ul>
             </div>
 
-            <TrustFeaturesGrid variant="compact" className="mb-8" />
+            <TrustFeaturesGrid variant="product-detail" className="mb-8" />
           </div>
         </div>
       </div>
@@ -233,7 +233,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  {STOREFRONT_TRUST_FEATURES.map((feature) => (
+                  {PRODUCT_DETAIL_TRUST_FEATURES.map((feature) => (
                     <div
                       key={feature.title}
                       className="p-6 bg-white rounded-2xl border border-slate-100 shadow-soft"

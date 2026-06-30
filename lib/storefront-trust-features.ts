@@ -29,3 +29,14 @@ export const STOREFRONT_TRUST_FEATURES: StorefrontTrustFeature[] = [
     description: "Computing devices inspected before every shipment",
   },
 ];
+
+/** Product detail pages list included accessories explicitly. */
+export const PRODUCT_DETAIL_TRUST_FEATURES: StorefrontTrustFeature[] =
+  STOREFRONT_TRUST_FEATURES.map((feature) =>
+    feature.title === "With Accessories"
+      ? {
+          ...feature,
+          description: "Charger, screen guard, and protective case included",
+        }
+      : feature
+  );

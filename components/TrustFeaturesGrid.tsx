@@ -1,13 +1,23 @@
 import { cn } from "@/lib/utils";
-import { STOREFRONT_TRUST_FEATURES } from "@/lib/storefront-trust-features";
+import {
+  PRODUCT_DETAIL_TRUST_FEATURES,
+  STOREFRONT_TRUST_FEATURES,
+  type StorefrontTrustFeature,
+} from "@/lib/storefront-trust-features";
 
 interface TrustFeaturesGridProps {
-  variant?: "homepage" | "compact";
+  variant?: "homepage" | "compact" | "product-detail";
   className?: string;
 }
 
+function featuresForVariant(variant: TrustFeaturesGridProps["variant"]): StorefrontTrustFeature[] {
+  return variant === "product-detail" ? PRODUCT_DETAIL_TRUST_FEATURES : STOREFRONT_TRUST_FEATURES;
+}
+
 export default function TrustFeaturesGrid({ variant = "homepage", className }: TrustFeaturesGridProps) {
-  if (variant === "compact") {
+  const features = featuresForVariant(variant);
+
+  if (variant === "compact" || variant === "product-detail") {
     return (
       <div
         className={cn(
@@ -15,7 +25,7 @@ export default function TrustFeaturesGrid({ variant = "homepage", className }: T
           className
         )}
       >
-        {STOREFRONT_TRUST_FEATURES.map((feature) => (
+        {features.map((feature) => (
           <div key={feature.title} className="text-center">
             <feature.icon className="h-6 w-6 text-primary-600 mx-auto mb-2" />
             <p className="text-sm font-medium text-slate-900">{feature.title}</p>
@@ -30,7 +40,7 @@ export default function TrustFeaturesGrid({ variant = "homepage", className }: T
 
   return (
     <div className={cn("grid grid-cols-2 lg:grid-cols-4 gap-4", className)}>
-      {STOREFRONT_TRUST_FEATURES.map((feature) => (
+      {features.map((feature) => (
         <div
           key={feature.title}
           className="group card-elevated p-5 flex flex-col sm:flex-row sm:items-start gap-4 hover:-translate-y-1 hover:border-primary-100 hover:shadow-card-hover transition-all duration-300"
