@@ -9,6 +9,10 @@ import { computeCheckoutAmount, recordReferralOnDealCreated } from "@/lib/referr
 import { getStoreCreditBalance, getReferralCodeByCode } from "@/lib/db/referral-repository";
 import { ensureReferralReady } from "@/lib/referral/db-ready";
 import { recordHoldamOrder } from "@/lib/orders/service";
+import {
+  deriveOrderSource,
+  readBotStoreKeyFromRequest,
+} from "@/lib/orders/derive-order-source";
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
@@ -26,13 +30,18 @@ export async function POST(req: NextRequest) {
       applyStoreCredit,
     } = await req.json();
 
-    const orderSource = source === "chatbot" ? "chatbot" : "website";
+    const orderSource = deriveOrderSource({
+      bodySource: source,
+      botStoreApiKey: process.env.BOT_STORE_API_KEY,
+      requestBotKey: readBotStoreKeyFromRequest(req),
+    });
 
     console.log("[API][create-holdam-deal] ===== START =====");
     console.log("[API][create-holdam-deal] Received request", {
       productId,
       productName,
       productPrice,
+      orderSource,
       hasCustomerData: Boolean(customerData),
       timestamp: new Date().toISOString(),
     });

@@ -14,6 +14,7 @@ export const CATALOG_SLUGS: Record<string, string> = {
   "17": "apple-iphone-17-new",
   "18": "apple-iphone-17-pro",
   "19": "apple-iphone-17-pro-max",
+  "20": "apple-iphone-15-256gb",
 };
 
 /** Build a URL-safe slug from a product name. */
