@@ -5,6 +5,10 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DELIVERY_ESTIMATE_COPY } from "@/lib/delivery-deadline";
 import { GRADE_A_FAQ_ANSWER } from "@/lib/device-quality-copy";
+import {
+  STOREFRONT_PHONE,
+  STOREFRONT_WHATSAPP_PHONE,
+} from "@/lib/storefront-contact";
 
 const faqs = [
   {
@@ -33,8 +37,7 @@ const faqs = [
   },
   {
     question: "How can I contact you?",
-    answer:
-      "Reach us via WhatsApp or call at 07065093454.",
+    answer: `Call ${STOREFRONT_PHONE} or WhatsApp ${STOREFRONT_WHATSAPP_PHONE}.`,
   },
 ];
 

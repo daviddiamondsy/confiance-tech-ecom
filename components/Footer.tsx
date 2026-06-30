@@ -3,8 +3,10 @@ import { Facebook, Instagram, Phone } from "lucide-react";
 import CompanyLogo from "@/components/CompanyLogo";
 import { STOREFRONT_FOOTER_COPY } from "@/lib/device-quality-copy";
 import {
+  STOREFRONT_CALL_URL,
   STOREFRONT_PHONE,
   STOREFRONT_SOCIAL_LINKS,
+  STOREFRONT_WHATSAPP_PHONE,
 } from "@/lib/storefront-contact";
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -129,7 +131,9 @@ export default function Footer() {
                 <span className="flex-shrink-0 p-2 rounded-lg bg-primary-500/10">
                   <Phone className="h-4 w-4 text-primary-400" />
                 </span>
-                <span>{STOREFRONT_PHONE}</span>
+                <a href={STOREFRONT_CALL_URL} className="hover:text-white transition-colors">
+                  {STOREFRONT_PHONE}
+                </a>
               </li>
               <li>
                 <a
@@ -139,7 +143,7 @@ export default function Footer() {
                   className="inline-flex items-center gap-2 hover:text-green-400 transition-colors"
                 >
                   <WhatsAppIcon className="h-4 w-4" />
-                  Chat on WhatsApp
+                  WhatsApp {STOREFRONT_WHATSAPP_PHONE}
                 </a>
               </li>
             </ul>
