@@ -3,6 +3,7 @@ import {
   BATTERY_HEALTH_SPEC,
   IPHONE_QUALITY_TAIL,
 } from "@/lib/device-quality-copy";
+import { ensureIphoneProductCopy } from "@/lib/iphone-product-copy";
 import {
   CLEAN_PRODUCT_FILTER_SLUG,
   NEW_PRODUCT_FILTER_SLUG,
@@ -131,7 +132,9 @@ function buildUserPrompt(input: GenerateProductCopyInput): string {
     `Product name: ${input.productName.trim()}`,
     `Condition tag: ${condition}`,
     input.storage?.trim() ? `Default storage label: ${input.storage.trim()}` : null,
-    isIphone ? "Device family: iPhone (include 90+ battery health claims for Clean units)" : null,
+    isIphone
+      ? "Device family: iPhone (include Unlocked, and 90+ battery health claims for Clean units)"
+      : null,
   ].filter(Boolean);
 
   return lines.join("\n");
@@ -151,6 +154,7 @@ Rules:
 - features: 6-8 short bullet strings (no leading bullets in the strings).
 - specifications: 5-8 rows as label/value pairs (Display, Processor, Camera, Battery, Connectivity). Use title case labels.
 - Do NOT include a Storage specification row (storage is managed separately).
+- For all iPhones: include "Unlocked" in features and mention Unlocked in the Connectivity specification value.
 - For Clean / UK Grade A iPhones: include "90+ Battery Health" in features and a Battery health spec row with value "90%+".
 - For New products: emphasize brand new, factory-fresh, inspected and certified.
 - For Clean products: emphasize UK Grade A, accessories included, inspected and certified.
@@ -254,8 +258,8 @@ export function finalizeGeneratedProductCopy(
   const condition = conditionLabel(input.filterSlugs);
   const isIphone = /iphone/i.test(input.productName);
   let description = copy.description;
-  const features = [...copy.features];
-  const specifications = { ...copy.specifications };
+  let features = [...copy.features];
+  let specifications = { ...copy.specifications };
 
   if (condition === "clean" && isIphone) {
     if (!features.some((feature) => /battery health/i.test(feature))) {
@@ -272,6 +276,16 @@ export function finalizeGeneratedProductCopy(
   } else if (condition === "clean" && !/grade a|accessories/i.test(description)) {
     description =
       `${description} UK Grade A condition with accessories included. Inspected, tested, and certified.`.trim();
+  }
+
+  if (isIphone) {
+    const ensured = ensureIphoneProductCopy({
+      name: input.productName,
+      features,
+      specifications,
+    });
+    features = ensured.features;
+    specifications = ensured.specifications;
   }
 
   return { description, features, specifications };

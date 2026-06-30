@@ -26,6 +26,7 @@ import {
   BATTERY_HEALTH_FEATURE,
   BATTERY_HEALTH_SPEC,
 } from "@/lib/device-quality-copy";
+import { ensureIphoneProductCopy } from "@/lib/iphone-product-copy";
 import type { Product, StorageOption } from "@/lib/product-utils";
 import {
   isNewProductFromFilterSlugs,
@@ -890,18 +891,23 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
   const price = priceFromYuan(baseYuan, config, shipping);
   const isNew = isNewProductFromFilterSlugs(filterSlugs);
   const isIphone = /iphone/i.test(name);
-  const features =
+  let features =
     input.features?.map((feature) => feature.trim()).filter(Boolean) ??
     (isNew
       ? ["Brand new product", "Inspected, tested, and certified"]
       : isIphone
         ? [BATTERY_HEALTH_FEATURE, "UK Grade A condition with accessories included", "Inspected, tested, and certified"]
         : ["UK Grade A condition with accessories included", "Inspected, tested, and certified"]);
-  const specifications = resolveProductSpecifications({
+  let specifications = resolveProductSpecifications({
     specifications: input.specifications,
     storage,
     productName: name,
   });
+  ({ features, specifications } = ensureIphoneProductCopy({
+    name,
+    features,
+    specifications,
+  }));
 
   await sql.query(
     `INSERT INTO products (
@@ -992,7 +998,7 @@ export async function updateAdminProduct(
     input.description !== undefined ? input.description.trim() : existing.description;
   const badge =
     input.badge !== undefined ? input.badge?.trim() || null : existing.badge;
-  const features = input.features ?? existing.features ?? [];
+  let features = input.features ?? existing.features ?? [];
 
   const shouldSyncStorage =
     input.storageVariants !== undefined ||
@@ -1046,12 +1052,17 @@ export async function updateAdminProduct(
 
   const storage = storageInput;
   const price = priceFromYuan(yuanCost, config, shipping);
-  const specifications = resolveProductSpecifications({
+  let specifications = resolveProductSpecifications({
     specifications: input.specifications,
     storage,
     productName: name,
     existing: existing.specifications,
   });
+  ({ features, specifications } = ensureIphoneProductCopy({
+    name,
+    features,
+    specifications,
+  }));
 
   const previousBaseName = stripConditionSuffix(existing.name);
   const nextBaseName = stripConditionSuffix(name);
@@ -1167,6 +1178,51 @@ export async function backfillCatalogSpecifications(): Promise<number> {
     await sql.query(
       `UPDATE products SET specifications = $1::jsonb, updated_at = NOW() WHERE id = $2`,
       [JSON.stringify(specifications), productId]
+    );
+    updated += 1;
+  }
+
+  return updated;
+}
+
+/** Add Unlocked to features and Connectivity for every iPhone row in Postgres. */
+export async function backfillIphoneUnlockedCopy(): Promise<number> {
+  const { rows } = await sql<{
+    id: string;
+    name: string;
+    features: string[] | null;
+    specifications: Record<string, string> | null;
+  }>`
+    SELECT id, name, features, specifications
+    FROM products
+    WHERE name ILIKE '%iphone%'
+  `;
+
+  let updated = 0;
+
+  for (const row of rows) {
+    const features = Array.isArray(row.features) ? [...row.features] : [];
+    const specifications =
+      row.specifications && typeof row.specifications === "object"
+        ? { ...row.specifications }
+        : {};
+    const next = ensureIphoneProductCopy({
+      name: row.name,
+      features,
+      specifications,
+    });
+
+    const featuresChanged = JSON.stringify(next.features) !== JSON.stringify(features);
+    const specificationsChanged =
+      JSON.stringify(next.specifications) !== JSON.stringify(specifications);
+
+    if (!featuresChanged && !specificationsChanged) continue;
+
+    await sql.query(
+      `UPDATE products
+       SET features = $1::jsonb, specifications = $2::jsonb, updated_at = NOW()
+       WHERE id = $3`,
+      [JSON.stringify(next.features), JSON.stringify(next.specifications), row.id]
     );
     updated += 1;
   }

@@ -1,6 +1,11 @@
 import { priceFromYuan as computePriceFromYuan, DEFAULT_PRICING_CONFIG } from "@/lib/pricing";
 import { defaultShippingForProductName } from "@/lib/product-shipping";
-import { BATTERY_HEALTH_FEATURE, BATTERY_HEALTH_SPEC, IPHONE_QUALITY_TAIL } from "@/lib/device-quality-copy";
+import {
+  BATTERY_HEALTH_FEATURE,
+  BATTERY_HEALTH_SPEC,
+  IPHONE_QUALITY_TAIL,
+  IPHONE_UNLOCKED_FEATURE,
+} from "@/lib/device-quality-copy";
 import { buildNewIphoneProducts } from "@/lib/new-iphone-products";
 import type { Product } from "@/lib/product-utils";
 
@@ -41,6 +46,7 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         IPHONE_QUALITY_TAIL,
       features: [
         BATTERY_HEALTH_FEATURE,
+        IPHONE_UNLOCKED_FEATURE,
         "6.1-inch Super Retina XDR Display",
         "A15 Bionic Chip",
         "5G Capable",
@@ -72,6 +78,7 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         IPHONE_QUALITY_TAIL,
       features: [
         BATTERY_HEALTH_FEATURE,
+        IPHONE_UNLOCKED_FEATURE,
         "6.1-inch Super Retina XDR with Dynamic Island",
         "A16 Bionic Chip",
         "Always-On Display",
@@ -99,6 +106,7 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         IPHONE_QUALITY_TAIL,
       features: [
         BATTERY_HEALTH_FEATURE,
+        IPHONE_UNLOCKED_FEATURE,
         "6.7-inch Super Retina XDR Display",
         "A17 Pro Chip",
         "Titanium Design",
@@ -130,6 +138,7 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         IPHONE_QUALITY_TAIL,
       features: [
         BATTERY_HEALTH_FEATURE,
+        IPHONE_UNLOCKED_FEATURE,
         "6.1-inch Super Retina XDR Display",
         "A14 Bionic Chip",
         "5G Capable",
@@ -164,6 +173,7 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         IPHONE_QUALITY_TAIL,
       features: [
         BATTERY_HEALTH_FEATURE,
+        IPHONE_UNLOCKED_FEATURE,
         "6.7-inch Super Retina XDR Display",
         "A14 Bionic Chip",
         "5G Capable",
@@ -196,6 +206,7 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         IPHONE_QUALITY_TAIL,
       features: [
         BATTERY_HEALTH_FEATURE,
+        IPHONE_UNLOCKED_FEATURE,
         "6.7-inch Super Retina XDR with Dynamic Island",
         "A16 Bionic Chip",
         "Always-On Display",
@@ -228,6 +239,7 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         IPHONE_QUALITY_TAIL,
       features: [
         BATTERY_HEALTH_FEATURE,
+        IPHONE_UNLOCKED_FEATURE,
         "6.7-inch Super Retina XDR with ProMotion",
         "A15 Bionic Chip",
         "Pro 12MP Camera System",

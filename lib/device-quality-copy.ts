@@ -5,6 +5,8 @@ export const BATTERY_HEALTH_FEATURE = "90+ Battery Health";
 
 export const BATTERY_HEALTH_SPEC = "90%+";
 
+export const IPHONE_UNLOCKED_FEATURE = "Unlocked";
+
 /** Primary storefront quality phrase. */
 export const NEW_GRADE_A_DEVICES_COPY = "brand new and UK Grade A computing devices";
 

@@ -15,6 +15,7 @@
     "source:product-images": "tsx scripts/source-product-images.ts",
     "crop:logo": "python3 scripts/crop-logo.py",
     "db:backfill-specifications": "tsx scripts/db-backfill-specifications.ts",
+    "db:backfill-iphone-unlocked": "tsx scripts/db-backfill-iphone-unlocked.ts",
     "db:setup": "npm run db:migrate && npm run db:seed",
     "prepare": "husky",
     "hooks:install": "husky"

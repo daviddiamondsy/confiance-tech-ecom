@@ -1,6 +1,7 @@
 import { buildCatalogProducts } from "@/lib/catalog-seed";
 import { CATALOG_FILTERS, DEFAULT_PRODUCT_COLORS } from "@/lib/catalog-yuan";
 import { isPostgresConfigured } from "@/lib/db/client";
+import { ensureIphoneProductCopy } from "@/lib/iphone-product-copy";
 import type { Product } from "@/lib/product-utils";
 import { slugForProductId } from "@/lib/product-slug";
 
@@ -15,8 +16,15 @@ export function getStaticCatalogProducts(): Product[] {
   if (!cachedStaticProducts) {
     cachedStaticProducts = buildCatalogProducts().map((product) => {
       const filterSlug = CATALOG_FILTERS[product.id];
+      const iphoneCopy = ensureIphoneProductCopy({
+        name: product.name,
+        features: [...(product.features ?? [])],
+        specifications: { ...(product.specifications ?? {}) },
+      });
       return {
         ...product,
+        features: iphoneCopy.features,
+        specifications: iphoneCopy.specifications,
         slug: slugForProductId(product.id, product.name),
         filterSlug,
         filterSlugs: filterSlug ? [filterSlug] : undefined,
