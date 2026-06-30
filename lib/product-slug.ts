@@ -10,6 +10,10 @@ export const CATALOG_SLUGS: Record<string, string> = {
   "13": "samsung-galaxy-s24-ultra",
   "14": "samsung-galaxy-s25-ultra",
   "15": "apple-iphone-12",
+  "16": "apple-iphone-17",
+  "17": "apple-iphone-17-new",
+  "18": "apple-iphone-17-pro",
+  "19": "apple-iphone-17-pro-max",
 };
 
 /** Build a URL-safe slug from a product name. */
