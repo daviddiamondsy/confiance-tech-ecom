@@ -515,7 +515,9 @@ export interface AdminProductRecord {
   colors: string[];
 }
 
-export type UpdateProductInput = Partial<Omit<CreateProductInput, "slug">>;
+export type UpdateProductInput = Partial<Omit<CreateProductInput, "slug" | "badge">> & {
+  badge?: string | null;
+};
 
 async function nextProductId(): Promise<string> {
   const { rows } = await sql<{ next_id: number }>`

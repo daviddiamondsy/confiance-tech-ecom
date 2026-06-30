@@ -1,5 +1,4 @@
 import { Headphones, Package, Shield, Truck, type LucideIcon } from "lucide-react";
-import { DELIVERY_ESTIMATE_COPY } from "@/lib/delivery-deadline";
 
 export interface StorefrontTrustFeature {
   icon: LucideIcon;
@@ -11,7 +10,7 @@ export const STOREFRONT_TRUST_FEATURES: StorefrontTrustFeature[] = [
   {
     icon: Truck,
     title: "Fast Delivery",
-    description: DELIVERY_ESTIMATE_COPY,
+    description: "Free and fast",
   },
   {
     icon: Package,
