@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   extractAnthropicMessageText,
+  finalizeGeneratedProductCopy,
   parseAiJsonContent,
   parseGeneratedProductCopy,
 } from "@/lib/admin-product-copy-ai";
@@ -72,5 +73,26 @@ describe("admin-product-copy-ai", () => {
       Display: "6.1-inch",
       Processor: "A14 Bionic",
     });
+  });
+
+  it("finalizeGeneratedProductCopy adds Unlocked for iPhones", () => {
+    const copy = finalizeGeneratedProductCopy(
+      {
+        description: "The iPhone 14 Pro introduces Dynamic Island.",
+        features: ["90+ Battery Health", "A16 Bionic Chip", "Face ID Security"],
+        specifications: {
+          Display: "6.1-inch Super Retina XDR",
+          Connectivity: "5G, Wi-Fi 6, Bluetooth 5.3",
+        },
+      },
+      {
+        productName: "Apple iPhone 14 Pro 256GB (Clean)",
+        filterSlugs: ["clean"],
+      }
+    );
+
+    expect(copy.features).toContain("Unlocked");
+    expect(copy.specifications.Connectivity).toBe("Unlocked, 5G, Wi-Fi 6, Bluetooth 5.3");
+    expect(copy.description).toContain("90+ battery health");
   });
 });

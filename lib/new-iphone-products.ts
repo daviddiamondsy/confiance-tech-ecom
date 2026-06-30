@@ -4,6 +4,7 @@ import {
   BATTERY_HEALTH_FEATURE,
   BATTERY_HEALTH_SPEC,
   IPHONE_QUALITY_TAIL,
+  IPHONE_UNLOCKED_FEATURE,
 } from "@/lib/device-quality-copy";
 import type { Product } from "@/lib/product-utils";
 
@@ -45,6 +46,7 @@ export function buildNewIphoneProducts(): NewIphoneProduct[] {
         IPHONE_QUALITY_TAIL,
       features: [
         BATTERY_HEALTH_FEATURE,
+        IPHONE_UNLOCKED_FEATURE,
         "6.1-inch Super Retina XDR Display",
         "A16 Bionic Chip",
         "48MP Main Camera with 2x Zoom",
@@ -75,6 +77,7 @@ export function buildNewIphoneProducts(): NewIphoneProduct[] {
         IPHONE_QUALITY_TAIL,
       features: [
         BATTERY_HEALTH_FEATURE,
+        IPHONE_UNLOCKED_FEATURE,
         "6.3-inch Super Retina XDR with ProMotion 120Hz",
         "A19 Chip with Apple Intelligence",
         "48MP Dual Fusion Camera with 2x Zoom",
@@ -103,6 +106,7 @@ export function buildNewIphoneProducts(): NewIphoneProduct[] {
         "The iPhone 17 features a 6.3-inch Super Retina XDR display with ProMotion up to 120Hz, A19 chip, and a 48MP Dual Fusion camera with 2x optical zoom. " +
         "Dynamic Island, Always-On display, Action button, and Camera Control. Brand new product. Inspected, tested, and certified.",
       features: [
+        IPHONE_UNLOCKED_FEATURE,
         "6.3-inch Super Retina XDR with ProMotion 120Hz",
         "A19 Chip with Apple Intelligence",
         "48MP Dual Fusion Camera with 2x Zoom",
@@ -133,6 +137,7 @@ export function buildNewIphoneProducts(): NewIphoneProduct[] {
         IPHONE_QUALITY_TAIL,
       features: [
         BATTERY_HEALTH_FEATURE,
+        IPHONE_UNLOCKED_FEATURE,
         "6.3-inch Super Retina XDR with ProMotion 120Hz",
         "A19 Pro Chip with Apple Intelligence",
         "48MP Pro Fusion Camera with 4x Telephoto",
@@ -163,6 +168,7 @@ export function buildNewIphoneProducts(): NewIphoneProduct[] {
         IPHONE_QUALITY_TAIL,
       features: [
         BATTERY_HEALTH_FEATURE,
+        IPHONE_UNLOCKED_FEATURE,
         "6.9-inch Super Retina XDR with ProMotion 120Hz",
         "A19 Pro Chip with Apple Intelligence",
         "48MP Pro Fusion Camera with 4x Telephoto",
