@@ -45,8 +45,8 @@ export default function AdminShell({
       {/* ── Sidebar (desktop) ── */}
       <aside className="hidden lg:flex flex-col w-60 shrink-0 bg-white border-r border-slate-100 shadow-sm sticky top-0 h-screen overflow-y-auto">
         <div className="px-5 py-6 border-b border-slate-100">
-          <div className="flex items-center gap-2.5 mb-0.5">
-            <CompanyLogo size={34} />
+          <div className="flex items-center gap-1 mb-0.5">
+            <CompanyLogo size={22} />
             <span className="text-xs font-bold uppercase tracking-widest text-primary-600">
               Confiance
             </span>
@@ -103,8 +103,8 @@ export default function AdminShell({
       <div className="lg:hidden">
         <header className="glass-header sticky top-0 z-20">
           <div className="px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <CompanyLogo size={30} />
+            <div className="flex items-center gap-1">
+              <CompanyLogo size={22} />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-primary-600 leading-none">
                   Confiance Tech
