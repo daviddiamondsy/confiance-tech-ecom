@@ -45,7 +45,7 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4 bg-surface-muted">
       <div className="w-full max-w-md card-elevated p-8">
         <div className="flex justify-center mb-6">
-          <CompanyLogo size={72} priority />
+          <CompanyLogo size={48} priority />
         </div>
         <p className="text-xs font-semibold uppercase tracking-widest text-primary-600 mb-2 text-center">
           Confiance Tech

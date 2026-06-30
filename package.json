@@ -13,6 +13,7 @@
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:seed": "tsx scripts/db-seed.ts",
     "source:product-images": "tsx scripts/source-product-images.ts",
+    "crop:logo": "python3 scripts/crop-logo.py",
     "db:backfill-specifications": "tsx scripts/db-backfill-specifications.ts",
     "db:setup": "npm run db:migrate && npm run db:seed",
     "prepare": "husky",

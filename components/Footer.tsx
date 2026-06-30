@@ -31,8 +31,8 @@ export default function Footer() {
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
           <div className="lg:col-span-1">
-            <div className="mb-5 flex items-center gap-2.5">
-              <CompanyLogo size={40} />
+            <div className="mb-5 flex items-center gap-1.5">
+              <CompanyLogo size={26} />
               <span className="font-display text-lg font-bold text-white tracking-tight">
                 Confiance Tech
               </span>
