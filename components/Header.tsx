@@ -1,9 +1,10 @@
 "use client";
 
-import { Menu, X, ShoppingBag, Zap } from "lucide-react";
+import { Menu, X, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import CompanyLogo from "@/components/CompanyLogo";
 import { cn } from "@/lib/utils";
 
 export default function Header() {
@@ -50,10 +51,8 @@ export default function Header() {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="group flex items-center gap-2">
-            <span className="h-8 w-8 flex items-center justify-center rounded-xl bg-primary-600 shadow-glow group-hover:bg-primary-700 transition-all duration-200 group-hover:scale-105">
-              <ShoppingBag className="h-4 w-4 text-white" />
-            </span>
+          <Link href="/" className="group flex items-center gap-2.5">
+            <CompanyLogo size={44} priority className="group-hover:scale-105 transition-transform duration-200" />
             <span className="font-display text-lg font-bold text-slate-900 tracking-tight group-hover:text-primary-600 transition-colors">
               Confiance<span className="text-primary-600 group-hover:text-slate-900 transition-colors"> Tech</span>
             </span>

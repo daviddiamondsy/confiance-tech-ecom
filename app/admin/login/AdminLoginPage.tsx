@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
+import CompanyLogo from "@/components/CompanyLogo";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -43,7 +44,10 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-surface-muted">
       <div className="w-full max-w-md card-elevated p-8">
-        <p className="text-xs font-semibold uppercase tracking-widest text-primary-600 mb-2">
+        <div className="flex justify-center mb-6">
+          <CompanyLogo size={72} priority />
+        </div>
+        <p className="text-xs font-semibold uppercase tracking-widest text-primary-600 mb-2 text-center">
           Confiance Tech
         </p>
         <h1 className="font-display text-2xl font-bold text-slate-900 mb-2">Catalog admin</h1>
