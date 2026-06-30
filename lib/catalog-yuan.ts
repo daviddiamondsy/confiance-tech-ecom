@@ -13,6 +13,10 @@ export const CATALOG_YUAN: Record<
   "13": { yuan: 4200, storageYuan: { "256GB": 4200, "512GB": 4400 } },
   "14": { yuan: 5300, storageYuan: { "256GB": 5300, "512GB": 5400 } },
   "15": { yuan: 1200, storageYuan: { "128GB": 1200, "256GB": 1400 } },
+  "16": { yuan: 4750 },
+  "17": { yuan: 5600 },
+  "18": { yuan: 7000 },
+  "19": { yuan: 7800 },
 };
 
 /** Catalog filter tag slug per product id (New vs Clean). */
@@ -27,6 +31,10 @@ export const CATALOG_FILTERS: Record<string, string> = {
   "13": "clean",
   "14": "clean",
   "15": "clean",
+  "16": "clean",
+  "17": "new",
+  "18": "clean",
+  "19": "clean",
 };
 
 /** Default colors shown on product pages (display only). */
@@ -41,4 +49,8 @@ export const DEFAULT_PRODUCT_COLORS: Record<string, string[]> = {
   "13": ["Titanium Black", "Titanium Gray", "Titanium Violet", "Titanium Yellow"],
   "14": ["Titanium Black", "Titanium Gray", "Titanium Violet", "Titanium Silver"],
   "15": ["Black", "White", "Red", "Green", "Blue", "Purple"],
+  "16": ["Black", "White", "Mist Blue", "Sage", "Lavender"],
+  "17": ["Black", "White", "Mist Blue", "Sage", "Lavender"],
+  "18": ["Silver", "Cosmic Orange", "Deep Blue"],
+  "19": ["Silver", "Cosmic Orange", "Deep Blue"],
 };

@@ -1,6 +1,7 @@
 import { priceFromYuan as computePriceFromYuan, DEFAULT_PRICING_CONFIG } from "@/lib/pricing";
 import { defaultShippingForProductName } from "@/lib/product-shipping";
 import { BATTERY_HEALTH_FEATURE, BATTERY_HEALTH_SPEC, IPHONE_QUALITY_TAIL } from "@/lib/device-quality-copy";
+import { buildIphone17CatalogProducts } from "@/lib/iphone-17-catalog";
 import type { Product } from "@/lib/product-utils";
 
 type CatalogProductSeed = Omit<Product, "slug">;
@@ -18,6 +19,7 @@ const PRODUCT_IMAGES = {
   iphone13ProMax: "/product-images/iphone-13-pro-max.png",
   iphone14Pro: "/product-images/iphone-14-pro.png",
   iphone15ProMax: "/product-images/iphone-15-pro-max.jpg",
+  iphone15: "/product-images/iphone-15.png",
   iphone12: "/product-images/iphone-12.png",
   iphone12ProMax: "/product-images/iphone-12-pro-max.png",
   iphone14ProMax: "/product-images/iphone-14-pro-max.png",
@@ -340,5 +342,36 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         { storage: "512GB", price: catalogPrice("Samsung Galaxy S25 Ultra (Clean)", 5400) },
       ],
     },
+    {
+      id: "20",
+      name: "Apple iPhone 15 256GB (Clean)",
+      price: catalogPrice("Apple iPhone 15 256GB (Clean)", 3100),
+      image: PRODUCT_IMAGES.iphone15,
+      badge: "Popular",
+      description:
+        "The iPhone 15 features a 6.1-inch Super Retina XDR display with Dynamic Island, A16 Bionic chip, and a 48MP Main camera with 2x optical zoom. " +
+        "USB-C charging, MagSafe support, and all-day battery life. " +
+        IPHONE_QUALITY_TAIL,
+      features: [
+        BATTERY_HEALTH_FEATURE,
+        "6.1-inch Super Retina XDR Display",
+        "A16 Bionic Chip",
+        "48MP Main Camera with 2x Zoom",
+        "Dynamic Island",
+        "USB-C and MagSafe",
+        "5G Capable",
+        "Face ID Security",
+      ],
+      specifications: {
+        Display: "6.1-inch Super Retina XDR",
+        Processor: "A16 Bionic chip",
+        Storage: "256GB",
+        Camera: "48MP Main + 12MP Ultra Wide",
+        Battery: "Up to 26 hours video playback",
+        "Battery health": BATTERY_HEALTH_SPEC,
+        Connectivity: "5G, Wi-Fi 6, Bluetooth 5.3, USB-C",
+      },
+    },
+    ...buildIphone17CatalogProducts(),
   ];
 }
