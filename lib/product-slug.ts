@@ -31,6 +31,17 @@ export function slugForProductId(id: string, name: string): string {
   return CATALOG_SLUGS[id] ?? slugifyProductName(name);
 }
 
+/** Storefront slug: Postgres value wins when ids differ from the static catalog. */
+export function resolveStorefrontProductSlug(input: {
+  id: string;
+  dbSlug: string | null | undefined;
+  name: string;
+}): string {
+  const dbSlug = input.dbSlug?.trim();
+  if (dbSlug) return dbSlug;
+  return slugForProductId(input.id, input.name);
+}
+
 /** Resolve a legacy catalog URL slug (e.g. iphone-13-256gb) to a catalog product id. */
 export function catalogProductIdForSlug(slug: string): string | undefined {
   const normalized = slug.trim().toLowerCase();
