@@ -126,6 +126,7 @@ async function fetchProductRowById(id: string): Promise<ProductRow | undefined> 
 }
 
 async function fetchProductRowBySlug(slug: string): Promise<ProductRow | undefined> {
+  const normalized = slug.trim().toLowerCase();
   try {
     const { rows } = await sql<ProductRow>`
       SELECT
@@ -133,7 +134,7 @@ async function fetchProductRowBySlug(slug: string): Promise<ProductRow | undefin
         description, features, specifications, sort_order,
         china_shipping_yuan, international_shipping_ngn, local_delivery_ngn
       FROM products
-      WHERE slug = ${slug}
+      WHERE LOWER(slug) = ${normalized}
       LIMIT 1
     `;
     return rows[0];
@@ -144,7 +145,7 @@ async function fetchProductRowBySlug(slug: string): Promise<ProductRow | undefin
         id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
         description, features, specifications, sort_order
       FROM products
-      WHERE slug = ${slug}
+      WHERE LOWER(slug) = ${normalized}
       LIMIT 1
     `;
     const row = rows[0];
