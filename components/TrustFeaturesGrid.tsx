@@ -30,7 +30,7 @@ export default function TrustFeaturesGrid({ variant = "homepage", className }: T
 
   return (
     <div className={cn("grid grid-cols-2 lg:grid-cols-4 gap-4", className)}>
-      {STOREFRONT_TRUST_FEATURES.map((feature, index) => (
+      {STOREFRONT_TRUST_FEATURES.map((feature) => (
         <div
           key={feature.title}
           className="group card-elevated p-5 flex flex-col sm:flex-row sm:items-start gap-4 hover:-translate-y-1 hover:border-primary-100 hover:shadow-card-hover transition-all duration-300"
@@ -39,9 +39,6 @@ export default function TrustFeaturesGrid({ variant = "homepage", className }: T
             <feature.icon className="h-5 w-5 text-white" />
           </div>
           <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-[10px] font-bold text-primary-400 uppercase tracking-widest">0{index + 1}</span>
-            </div>
             <h3 className="font-display font-semibold text-slate-900 text-sm leading-snug">{feature.title}</h3>
             {feature.description ? (
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">{feature.description}</p>
