@@ -51,7 +51,7 @@ export default function Header() {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="group flex items-center gap-1.5">
+          <Link href="/" className="group flex items-center gap-2">
             <CompanyLogo size={28} priority className="group-hover:scale-105 transition-transform duration-200" />
             <span className="font-display text-lg font-bold text-slate-900 tracking-tight group-hover:text-primary-600 transition-colors">
               Confiance<span className="text-primary-600 group-hover:text-slate-900 transition-colors"> Tech</span>
