@@ -4,7 +4,7 @@ import HomeProductCollections from "@/components/HomeProductCollections";
 import HomeReferAndEarn from "@/components/HomeReferAndEarn";
 import FaqAccordion from "@/components/FaqAccordion";
 import TrustFeaturesGrid from "@/components/TrustFeaturesGrid";
-import { ArrowRight, MessageCircle, Sparkles, ShieldCheck, Star, Zap } from "lucide-react";
+import { ArrowRight, Gift, MessageCircle, Sparkles, ShieldCheck, Star, Zap } from "lucide-react";
 import Link from "next/link";
 import { getProducts } from "@/lib/products";
 import { STOREFRONT_HERO_COPY, STOREFRONT_FEATURED_COPY } from "@/lib/device-quality-copy";
@@ -57,6 +57,10 @@ export default async function Home() {
                   <MessageCircle className="h-5 w-5" />
                   Chat with us
                 </a>
+                <Link href="/refer" className="btn-secondary px-6 py-4 text-base">
+                  <Gift className="h-5 w-5" />
+                  Refer &amp; Earn
+                </Link>
               </div>
 
               {/* Social proof stats */}
