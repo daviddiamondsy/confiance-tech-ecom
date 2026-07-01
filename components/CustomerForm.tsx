@@ -399,8 +399,8 @@ export default function CustomerForm({
   }
 
   return (
-    <div id="order-form" className="bg-white rounded-3xl border border-slate-100 shadow-card overflow-hidden">
-      <div className="bg-gradient-to-r from-primary-600 to-violet-600 px-8 py-6">
+    <div id="order-form" className="bg-white rounded-3xl border border-slate-100 shadow-card">
+      <div className="bg-gradient-to-r from-primary-600 to-violet-600 px-8 py-6 rounded-t-3xl">
         <h3 className="font-display text-2xl font-bold text-white mb-1">{title}</h3>
         <p className="text-primary-100 text-sm leading-relaxed">{subtitle}</p>
       </div>
@@ -445,7 +445,7 @@ export default function CustomerForm({
               className="input-field"
             />
           </div>
-          <div>
+          <div className="relative z-20">
             <label htmlFor="state" className="input-label">State *</label>
             <StateSelect
               id="state"
