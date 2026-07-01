@@ -138,7 +138,7 @@ export default function StateSelect({
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-2 w-full min-w-[16rem] rounded-xl border border-slate-200 bg-white shadow-card overflow-hidden">
+        <div className="absolute z-[100] mt-2 w-full min-w-[16rem] rounded-xl border border-slate-200 bg-white shadow-card overflow-hidden">
           <div className="p-2 border-b border-slate-100 bg-slate-50/80">
             <div className="relative">
               <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
