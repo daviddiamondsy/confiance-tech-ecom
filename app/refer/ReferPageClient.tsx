@@ -7,9 +7,11 @@ import { Copy, Gift, Share2, Users } from "lucide-react";
 import {
   formatNgn,
   formatReferralTierRange,
+  REFERRAL_ATTRIBUTION_DAYS,
   REFERRAL_TIERS,
   STORE_CREDIT_EXPIRY_MONTHS,
 } from "@/lib/referral/config";
+import ReferralTerms from "@/components/ReferralTerms";
 import { buildReferralShareMessage } from "@/lib/referral/share-message";
 import { readLastOrderPhone } from "@/lib/customer-phone-storage";
 
@@ -158,7 +160,7 @@ function ReferDashboardContent() {
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="e.g. 08012345678"
+                placeholder="Your mobile number"
                 required
                 className="input-field"
               />
@@ -280,59 +282,65 @@ function ReferDashboardContent() {
             </div>
           )}
 
-          <div className="card-elevated p-8">
-            <div className="flex items-center gap-2 mb-4">
-              <Share2 className="h-5 w-5 text-primary-600" />
-              <h2 className="font-display text-xl font-bold text-slate-900">How it works</h2>
-            </div>
-            <ol className="space-y-3 text-slate-600 list-decimal list-inside leading-relaxed">
-              <li>Send your link to a friend buying their first device from us.</li>
-              <li>They get an automatic discount at checkout.</li>
-              <li>You receive store points after their order completes (not returned or disputed).</li>
-              <li>Use store points on your next order from this store within {STORE_CREDIT_EXPIRY_MONTHS} months.</li>
-            </ol>
-          </div>
-
-          <div className="card-elevated p-8">
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="h-5 w-5 text-primary-600" />
-              <h2 className="font-display text-xl font-bold text-slate-900">Reward tiers</h2>
-            </div>
-            <p className="text-sm text-slate-500 mb-4">
-              Fixed store point amounts by your friend&apos;s catalog price band.
-            </p>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead>
-                  <tr className="border-b border-slate-200 text-slate-500">
-                    <th className="py-2 pr-4 font-medium">Price tier</th>
-                    <th className="py-2 pr-4 font-medium">Friend saves</th>
-                    <th className="py-2 font-medium">You earn</th>
-                  </tr>
-                </thead>
-                <tbody className="text-slate-700">
-                  {REFERRAL_TIERS.map((tier) => (
-                    <tr key={tier.id} className="border-b border-slate-100 last:border-0">
-                      <td className="py-3 pr-4">
-                        <span className="block font-medium text-slate-900">{tier.label}</span>
-                        <span className="block text-xs text-slate-500 mt-0.5">
-                          {formatReferralTierRange(tier)}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-4">
-                        {formatNgn(tier.refereeDiscountNgn)}
-                      </td>
-                      <td className="py-3">
-                        {formatNgn(tier.referrerCreditNgn)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
       )}
+
+      <div className="space-y-6 mt-8">
+        <div className="card-elevated p-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Share2 className="h-5 w-5 text-primary-600" />
+            <h2 className="font-display text-xl font-bold text-slate-900">How it works</h2>
+          </div>
+          <ol className="space-y-3 text-slate-600 list-decimal list-inside leading-relaxed">
+            <li>Send your link to a friend buying their first device from us.</li>
+            <li>They get an automatic discount at checkout.</li>
+            <li>You receive store points after their order completes (not returned or disputed).</li>
+            <li>Use store points on your next order from this store within {STORE_CREDIT_EXPIRY_MONTHS} months.</li>
+          </ol>
+        </div>
+
+        <div className="card-elevated p-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="h-5 w-5 text-primary-600" />
+            <h2 className="font-display text-xl font-bold text-slate-900">Reward tiers</h2>
+          </div>
+          <p className="text-sm text-slate-500 mb-4">
+            Fixed store point amounts by your friend&apos;s catalog price band. Referral links stay
+            active for {REFERRAL_ATTRIBUTION_DAYS} days after a friend clicks your link.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-500">
+                  <th className="py-2 pr-4 font-medium">Price tier</th>
+                  <th className="py-2 pr-4 font-medium">Friend saves</th>
+                  <th className="py-2 font-medium">You earn</th>
+                </tr>
+              </thead>
+              <tbody className="text-slate-700">
+                {REFERRAL_TIERS.map((tier) => (
+                  <tr key={tier.id} className="border-b border-slate-100 last:border-0">
+                    <td className="py-3 pr-4">
+                      <span className="block font-medium text-slate-900">{tier.label}</span>
+                      <span className="block text-xs text-slate-500 mt-0.5">
+                        {formatReferralTierRange(tier)}
+                      </span>
+                    </td>
+                    <td className="py-3 pr-4">
+                      {formatNgn(tier.refereeDiscountNgn)}
+                    </td>
+                    <td className="py-3">
+                      {formatNgn(tier.referrerCreditNgn)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <ReferralTerms />
+      </div>
     </div>
   );
 }
