@@ -48,7 +48,7 @@ export default async function Home() {
                   Shop Now
                   <ArrowRight className="h-5 w-5" />
                 </Link>
-                <a
+                {/* <a
                   href={STOREFRONT_SOCIAL_LINKS.whatsapp}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -56,7 +56,7 @@ export default async function Home() {
                 >
                   <MessageCircle className="h-5 w-5" />
                   Chat with us
-                </a>
+                </a> */}
                 <Link href="/refer" className="btn-secondary px-6 py-4 text-base">
                   <Gift className="h-5 w-5" />
                   Refer &amp; Earn
