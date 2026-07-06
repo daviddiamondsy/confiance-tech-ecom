@@ -26,6 +26,7 @@ import {
   type VariantPricePreview,
 } from "@/lib/admin-product-form";
 import type { PricingConfig } from "@/lib/pricing";
+import { formatSupplierCost } from "@/lib/pricing";
 import type { AdminProductRecord } from "@/lib/db/products-repository";
 
 interface ProductFilterTag {
@@ -63,8 +64,11 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [pricing, setPricing] = useState<PricingConfig>({
     yuanToNaira: 207,
+    gbpToNaira: 1850,
+    usdToNaira: 1650,
     sellingMarkup: 1.2,
     expensiveYuanThreshold: 3500,
+    expensiveWholesaleNgnThreshold: 724_500,
     expensiveSellingMarkup: 1.15,
   });
   const [products, setProducts] = useState<AdminProductRecord[]>([]);
@@ -261,7 +265,7 @@ export default function AdminDashboard() {
         filterSlugs: filterTags[0]?.slug ? [filterTags[0].slug] : [],
       });
       setCreateMessage(
-        `Added ${created.name} at ₦${created.price.toLocaleString()} (yuan ${created.yuanCost}).`
+        `Added ${created.name} at ₦${created.price.toLocaleString()} (${formatSupplierCost(created.yuanCost ?? 0, created.costCurrency ?? "cny")}).`
       );
     } catch {
       setCreateError("Could not reach the server. Try again.");
@@ -473,10 +477,13 @@ export default function AdminDashboard() {
   }
 
   function formatStorageVariantSummary(
-    variants: AdminProductRecord["storageVariants"]
+    variants: AdminProductRecord["storageVariants"],
+    costCurrency: AdminProductRecord["costCurrency"] = "cny"
   ): string {
     if (variants.length === 0) return "Single price";
-    return variants.map((variant) => `${variant.storage} (${variant.yuan}¥)`).join(", ");
+    return variants
+      .map((variant) => `${variant.storage} (${formatSupplierCost(variant.yuan, costCurrency)})`)
+      .join(", ");
   }
 
   async function handleProductUpdate(event: FormEvent, productId: string) {
@@ -666,10 +673,10 @@ export default function AdminDashboard() {
         <section className="card-elevated p-6">
           <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Pricing formula</h2>
           <p className="text-sm text-slate-600 mb-6">
-            Selling price = (product yuan x yuan-to-naira rate + total shipping) x markup, then rounded
-            to charm pricing (ends in 9999). Total shipping = china shipping (yuan x rate) +
-            international shipping NGN. Both are set per product. Items at or above the yuan
-            threshold use the lower expensive-item markup (default 1.15 = 15%).
+            CNY: markup x (yuan x rate + china + intl + local), charm pricing (ends in 9999).
+            GBP/USD: markup x (amount x rate + intl + local), no china shipping. Expensive CNY items
+            use the lower markup at or above the yuan threshold. Expensive GBP/USD items use it when
+            wholesale (cost x rate) is at or above the NGN threshold.
           </p>
 
           <form onSubmit={handlePricingSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -688,6 +695,48 @@ export default function AdminDashboard() {
                   setPricing((prev) => ({
                     ...prev,
                     yuanToNaira: Number(event.target.value),
+                  }))
+                }
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="gbpToNaira" className="block text-sm font-medium text-slate-700 mb-2">
+                GBP to naira rate
+              </label>
+              <input
+                id="gbpToNaira"
+                type="number"
+                step="0.01"
+                min="0.01"
+                className="input-field"
+                value={pricing.gbpToNaira}
+                onChange={(event) =>
+                  setPricing((prev) => ({
+                    ...prev,
+                    gbpToNaira: Number(event.target.value),
+                  }))
+                }
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="usdToNaira" className="block text-sm font-medium text-slate-700 mb-2">
+                USD to naira rate
+              </label>
+              <input
+                id="usdToNaira"
+                type="number"
+                step="0.01"
+                min="0.01"
+                className="input-field"
+                value={pricing.usdToNaira}
+                onChange={(event) =>
+                  setPricing((prev) => ({
+                    ...prev,
+                    usdToNaira: Number(event.target.value),
                   }))
                 }
                 required
@@ -740,6 +789,33 @@ export default function AdminDashboard() {
               />
               <p className="text-xs text-slate-500 mt-1">
                 At or above this yuan cost, use the expensive markup. Leave blank to disable.
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="expensiveWholesaleNgnThreshold"
+                className="block text-sm font-medium text-slate-700 mb-2"
+              >
+                Expensive wholesale NGN threshold (GBP/USD)
+              </label>
+              <input
+                id="expensiveWholesaleNgnThreshold"
+                type="number"
+                step="1"
+                min="1"
+                className="input-field"
+                value={pricing.expensiveWholesaleNgnThreshold ?? ""}
+                onChange={(event) =>
+                  setPricing((prev) => ({
+                    ...prev,
+                    expensiveWholesaleNgnThreshold:
+                      event.target.value === "" ? null : Number(event.target.value),
+                  }))
+                }
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                At or above cost x rate (before shipping), use the expensive markup for GBP/USD.
               </p>
             </div>
 
@@ -967,7 +1043,7 @@ export default function AdminDashboard() {
                       <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Product</th>
                       <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Filter</th>
                       <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400 hidden md:table-cell">Storage</th>
-                      <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Yuan</th>
+                      <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Cost</th>
                       <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Price</th>
                       <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide text-slate-400">Actions</th>
                     </tr>
@@ -993,10 +1069,12 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-4 py-3 text-slate-600 text-xs">{filterLabelsForProduct(product)}</td>
                         <td className="px-4 py-3 text-slate-500 text-xs hidden md:table-cell max-w-[180px] truncate">
-                          {formatStorageVariantSummary(product.storageVariants)}
+                          {formatStorageVariantSummary(product.storageVariants, product.costCurrency)}
                         </td>
                         <td className="px-4 py-3 text-slate-600 whitespace-nowrap text-xs">
-                          {product.yuanCost != null ? `${product.yuanCost}¥` : "—"}
+                          {product.yuanCost != null
+                            ? formatSupplierCost(product.yuanCost, product.costCurrency ?? "cny")
+                            : "—"}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap font-semibold text-slate-900">
                           ₦{product.price.toLocaleString()}
@@ -1043,8 +1121,8 @@ export default function AdminDashboard() {
           <section className="card-elevated p-6">
             <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Add product</h2>
             <p className="text-sm text-slate-600 mb-6">
-              Enter the yuan cost and product details. Selling price is calculated from the pricing
-              formula. Requires Postgres.
+              Enter the supplier cost in CNY, GBP, or USD and product details. Selling price is
+              calculated from the pricing formula. Requires Postgres.
             </p>
 
             <form onSubmit={handleCreateProduct} className="space-y-4">

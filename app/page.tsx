@@ -45,7 +45,7 @@ export default async function Home() {
               </p>
               <div className="flex flex-wrap items-center gap-4">
                 <Link href="/products" className="btn-primary px-8 py-4 text-base">
-                  Shop Now
+                  View products
                   <ArrowRight className="h-5 w-5" />
                 </Link>
                 {/* <a

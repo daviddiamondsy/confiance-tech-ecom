@@ -2,7 +2,14 @@ import type { Product } from "@/lib/product-utils";
 export type { Product, StorageOption } from "@/lib/product-utils";
 export { getSelectedVariant, getDisplaySpecs } from "@/lib/product-utils";
 export { productPath, slugifyProductName } from "@/lib/product-slug";
-export { priceFromYuan, sellingMarkupForYuan, toCharmPrice } from "@/lib/pricing";
+export {
+  priceFromYuan,
+  priceFromSupplierCost,
+  sellingMarkupForYuan,
+  sellingMarkupForSupplierCost,
+  formatSupplierCost,
+  toCharmPrice,
+} from "@/lib/pricing";
 
 import { unstable_noStore as noStore } from "next/cache";
 import { catalogProductIdForSlug } from "@/lib/product-slug";

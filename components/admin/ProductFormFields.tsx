@@ -12,6 +12,12 @@ import {
   INTERNATIONAL_SHIPPING_NGN_OPTIONS,
   LOCAL_DELIVERY_NGN_OPTIONS,
 } from "@/lib/product-shipping";
+import {
+  costCurrencyLabel,
+  formatSupplierCost,
+  SUPPLIER_COST_CURRENCIES,
+  type SupplierCostCurrency,
+} from "@/lib/pricing";
 
 interface ProductFilterTag {
   slug: string;
@@ -38,6 +44,9 @@ export default function ProductFormFields({
   onChange,
 }: ProductFormFieldsProps) {
   const usesStorageVariants = usesStorageVariantsField(form);
+  const usesChinaShipping = form.costCurrency === "cny";
+  const costCurrency = form.costCurrency as SupplierCostCurrency;
+  const costUnitLabel = costCurrencyLabel(costCurrency);
   const [generatingCopy, setGeneratingCopy] = useState(false);
   const [generateCopyError, setGenerateCopyError] = useState("");
 
@@ -137,8 +146,40 @@ export default function ProductFormFields({
       </div>
 
       <div>
+        <label
+          htmlFor={`${idPrefix}-cost-currency`}
+          className="block text-sm font-medium text-slate-700 mb-2"
+        >
+          Supplier cost currency
+        </label>
+        <select
+          id={`${idPrefix}-cost-currency`}
+          className="input-field"
+          value={form.costCurrency}
+          onChange={(event) => {
+            const nextCurrency = event.target.value as SupplierCostCurrency;
+            const updates: Partial<ProductFormState> = { costCurrency: nextCurrency };
+            if (nextCurrency !== "cny") {
+              updates.chinaShippingYuan = "0";
+            }
+            onChange(updates);
+          }}
+          required
+        >
+          {SUPPLIER_COST_CURRENCIES.map((currency) => (
+            <option key={currency} value={currency}>
+              {costCurrencyLabel(currency)}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-slate-500 mt-1">
+          CNY uses china shipping in the formula. GBP and USD use international + local delivery only.
+        </p>
+      </div>
+
+      <div>
         <label htmlFor={`${idPrefix}-yuan`} className="block text-sm font-medium text-slate-700 mb-2">
-          Yuan cost{usesStorageVariants ? " (optional)" : ""}
+          Supplier cost ({costUnitLabel}){usesStorageVariants ? " (optional)" : ""}
         </label>
         <input
           id={`${idPrefix}-yuan`}
@@ -175,7 +216,8 @@ export default function ProductFormFields({
           className="input-field"
           value={form.chinaShippingYuan}
           onChange={(event) => onChange({ chinaShippingYuan: event.target.value })}
-          required
+          required={usesChinaShipping}
+          disabled={!usesChinaShipping}
         >
           {CHINA_SHIPPING_YUAN_OPTIONS.map((amount) => (
             <option key={amount} value={amount}>
@@ -184,7 +226,9 @@ export default function ProductFormFields({
           ))}
         </select>
         <p className="text-xs text-slate-500 mt-1">
-          Added to international and local delivery below to get total shipping cost.
+          {usesChinaShipping
+            ? "Added to international and local delivery below to get total shipping cost."
+            : "Not used for GBP or USD pricing. Set to 0 yuan (none)."}
         </p>
       </div>
 
@@ -372,12 +416,12 @@ export default function ProductFormFields({
           htmlFor={`${idPrefix}-storageVariants`}
           className="block text-sm font-medium text-slate-700 mb-2"
         >
-          Storage variants with yuan (optional)
+          Storage variants with supplier cost (optional)
         </label>
         <textarea
           id={`${idPrefix}-storageVariants`}
           className="input-field min-h-[80px]"
-          placeholder="One storage:yuan pair per line"
+          placeholder={`One storage:cost pair per line (${costUnitLabel})`}
           value={form.storageVariants}
           onChange={(event) => {
             const storageVariants = event.target.value;
@@ -390,15 +434,15 @@ export default function ProductFormFields({
           }}
         />
         <p className="text-xs text-slate-500 mt-1">
-          One per line or comma-separated. Each line needs storage:yuan.
+          One per line or comma-separated. Each line needs storage:cost in {costUnitLabel}.
           Use this field for multiple sizes. Do not list sizes in the product name or storage label.
         </p>
         {variantPreviews.length > 0 && (
           <ul className="text-xs text-primary-700 mt-2 space-y-1">
             {variantPreviews.map((variant) => (
               <li key={variant.storage}>
-                {variant.storage} ({variant.yuan}¥): ₦{variant.price.toLocaleString()} (markup x
-                {variant.markup})
+                {variant.storage} ({formatSupplierCost(variant.cost, variant.currency)}): ₦
+                {variant.price.toLocaleString()} (markup x{variant.markup})
               </li>
             ))}
           </ul>

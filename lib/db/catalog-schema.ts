@@ -24,6 +24,18 @@ export async function ensureCatalogSchema(): Promise<void> {
     ALTER TABLE pricing_config
     ADD COLUMN IF NOT EXISTS expensive_selling_markup NUMERIC(6, 3) DEFAULT 1.15
   `;
+  await sqlDdl`
+    ALTER TABLE pricing_config
+    ADD COLUMN IF NOT EXISTS gbp_to_naira NUMERIC(10, 2) NOT NULL DEFAULT 1850
+  `;
+  await sqlDdl`
+    ALTER TABLE pricing_config
+    ADD COLUMN IF NOT EXISTS usd_to_naira NUMERIC(10, 2) NOT NULL DEFAULT 1650
+  `;
+  await sqlDdl`
+    ALTER TABLE pricing_config
+    ADD COLUMN IF NOT EXISTS expensive_wholesale_ngn_threshold NUMERIC(12, 2) DEFAULT 724500
+  `;
 
   await sqlDdl`
     CREATE TABLE IF NOT EXISTS products (
@@ -62,6 +74,10 @@ export async function ensureCatalogSchema(): Promise<void> {
   await sqlDdl`
     ALTER TABLE products
     ADD COLUMN IF NOT EXISTS local_delivery_ngn INTEGER NOT NULL DEFAULT 10000
+  `;
+  await sqlDdl`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS cost_currency TEXT NOT NULL DEFAULT 'cny'
   `;
   await sqlDdl`
     ALTER TABLE products
