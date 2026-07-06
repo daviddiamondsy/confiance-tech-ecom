@@ -18,6 +18,7 @@ export const CATALOG_YUAN: Record<
   "18": { yuan: 7000 },
   "19": { yuan: 7800 },
   "20": { yuan: 3100 },
+  "21": { yuan: 750 },
 };
 
 /** Catalog filter tag slug per product id (New vs Clean). */
@@ -37,6 +38,7 @@ export const CATALOG_FILTERS: Record<string, string> = {
   "18": "clean",
   "19": "clean",
   "20": "clean",
+  "21": "new",
 };
 
 /** Default colors shown on product pages (display only). */
@@ -56,4 +58,5 @@ export const DEFAULT_PRODUCT_COLORS: Record<string, string[]> = {
   "18": ["Silver", "Cosmic Orange", "Deep Blue"],
   "19": ["Silver", "Cosmic Orange", "Deep Blue"],
   "20": ["Black", "Blue", "Green", "Yellow", "Pink"],
+  "21": ["White"],
 };

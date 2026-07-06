@@ -26,6 +26,10 @@ const SOURCES: Array<{ file: string; url: string }> = [
     file: "iphone-17-pro-max.png",
     url: "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-17-pro-max-finish-select-deepblue-202509?wid=940",
   },
+  {
+    file: "airpods-4.png",
+    url: "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-4-select-202409?wid=940",
+  },
 ];
 
 async function download(url: string, dest: string): Promise<void> {

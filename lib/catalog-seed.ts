@@ -30,6 +30,7 @@ const PRODUCT_IMAGES = {
   macbookPro: "/product-images/macbook-pro-m4.png",
   galaxyS24Ultra: "/product-images/galaxy-s24.png",
   galaxyS25Ultra: "/product-images/galaxy-s25-ultra.png",
+  airpods4: "/product-images/airpods-4.png",
 } as const;
 
 /** Static catalog for local dev when Postgres is not configured. */
@@ -352,6 +353,33 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         { storage: "256GB", price: catalogPrice("Samsung Galaxy S25 Ultra (Clean)", 5300) },
         { storage: "512GB", price: catalogPrice("Samsung Galaxy S25 Ultra (Clean)", 5400) },
       ],
+    },
+    {
+      id: "21",
+      name: "Apple AirPods 4 (New)",
+      price: catalogPrice("Apple AirPods 4 (New)", 750),
+      image: PRODUCT_IMAGES.airpods4,
+      badge: "New",
+      description:
+        "AirPods 4 feature an open-ear design, Apple H2 chip, and Personalized Spatial Audio with dynamic head tracking. " +
+        "Up to 5 hours of listening time on a single charge with a USB-C charging case. Brand new product. Inspected, tested, and certified.",
+      features: [
+        "Apple H2 chip",
+        "Personalized Spatial Audio with dynamic head tracking",
+        "Up to 5 hours listening time on a single charge",
+        "USB-C charging case",
+        "Voice Isolation and Hey Siri",
+        "Brand new with accessories included",
+        "Inspected, tested, and certified",
+      ],
+      specifications: {
+        Chip: "Apple H2",
+        Design: "Open-ear in-ear",
+        "Battery life": "Up to 5 hours listening (case provides additional charges)",
+        Charging: "USB-C charging case",
+        Connectivity: "Bluetooth 5.3",
+        Colour: "White",
+      },
     },
     ...buildNewIphoneProducts(),
   ];
