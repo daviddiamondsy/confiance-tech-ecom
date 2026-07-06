@@ -23,7 +23,7 @@ const PRODUCT_IMAGES = {
   iphone13: "/product-images/iphone-13.png",
   iphone13ProMax: "/product-images/iphone-13-pro-max.png",
   iphone14Pro: "/product-images/iphone-14-pro.png",
-  iphone15ProMax: "/product-images/iphone-15-pro-max.jpg",
+  iphone15ProMax: "/product-images/iphone-15-pro-max.png",
   iphone12: "/product-images/iphone-12.png",
   iphone12ProMax: "/product-images/iphone-12-pro-max.png",
   iphone14ProMax: "/product-images/iphone-14-pro-max.png",
