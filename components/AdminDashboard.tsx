@@ -1079,18 +1079,18 @@ export default function AdminDashboard() {
                         <td className="px-4 py-3 whitespace-nowrap font-semibold text-slate-900">
                           ₦{product.price.toLocaleString()}
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-wrap gap-1.5">
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="inline-flex items-center gap-1.5 flex-nowrap">
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                              className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors whitespace-nowrap"
                               onClick={() => setEditingProductId(product.id)}
                             >
                               Edit
                             </button>
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1 rounded-lg border border-red-100 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                              className="inline-flex items-center justify-center rounded-lg border border-red-100 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 whitespace-nowrap"
                               disabled={deletingProductId === product.id}
                               onClick={() => handleDeleteProduct(product)}
                             >
