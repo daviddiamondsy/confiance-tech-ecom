@@ -51,6 +51,20 @@ export const ADMIN_EDITABLE_ORDER_STATUSES: OrderFulfillmentStatus[] = ORDER_FUL
 /** @deprecated Use ADMIN_EDITABLE_ORDER_STATUSES */
 export const MANUAL_ORDER_STATUSES = ADMIN_EDITABLE_ORDER_STATUSES;
 
+export type FulfillmentTaskKey =
+  | "customer_contacted"
+  | "device_sourced"
+  | "qc_passed"
+  | "payment_confirmation_sent"
+  | "receipt_sent";
+
+export interface FulfillmentTaskState {
+  done: boolean;
+  at?: string;
+}
+
+export type FulfillmentTasks = Partial<Record<FulfillmentTaskKey, FulfillmentTaskState>>;
+
 export interface StoreOrderRecord {
   id: number;
   deal_id: string | null;
@@ -78,6 +92,11 @@ export interface StoreOrderRecord {
   updated_at: Date | string;
   secured_at: Date | string | null;
   completed_at: Date | string | null;
+  fulfillment_tasks: FulfillmentTasks | null;
+  shipping_courier: string | null;
+  shipping_tracking: string | null;
+  shipped_at: Date | string | null;
+  receipt_sent_at: Date | string | null;
 }
 
 export interface AdminOrderRow {
@@ -106,6 +125,11 @@ export interface AdminOrderRow {
   updatedAt: string;
   securedAt: string | null;
   completedAt: string | null;
+  fulfillmentTasks: FulfillmentTasks;
+  shippingCourier: string | null;
+  shippingTracking: string | null;
+  shippedAt: string | null;
+  receiptSentAt: string | null;
   merchantDealUrl: string | null;
 }
 
@@ -148,4 +172,10 @@ export interface CreateManualOrderParams {
 export interface UpdateOrderParams {
   fulfillmentStatus?: OrderFulfillmentStatus;
   adminNote?: string;
+  fulfillmentTasks?: FulfillmentTasks;
+  ship?: {
+    courier: string;
+    tracking: string;
+  };
+  markReceiptSent?: boolean;
 }

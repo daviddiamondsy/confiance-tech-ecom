@@ -1,9 +1,11 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { ClipboardList, ExternalLink, Package, RefreshCw } from "lucide-react";
+import { ClipboardList, Package, RefreshCw } from "lucide-react";
 import StateSelect from "@/components/StateSelect";
+import AdminOrderWorkflowModal from "@/components/admin/AdminOrderWorkflowModal";
 import { formatNgn } from "@/lib/referral/config";
+import { orderNeedsFulfillmentAction } from "@/lib/orders/fulfillment-workflow";
 import { statusBadgeClass, statusLabel } from "@/lib/orders/status";
 import type { AdminOrderRow, OrderFulfillmentStatus } from "@/lib/orders/types";
 import { ADMIN_EDITABLE_ORDER_STATUSES, ORDER_SOURCES, sourceLabel } from "@/lib/orders/types";
@@ -53,9 +55,13 @@ export default function AdminOrdersPanel() {
   const [message, setMessage] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
-  const [savingId, setSavingId] = useState<number | null>(null);
-  const [draftNotes, setDraftNotes] = useState<Record<number, string>>({});
-  const [draftStatuses, setDraftStatuses] = useState<Record<number, OrderFulfillmentStatus>>({});
+  const [needsActionOnly, setNeedsActionOnly] = useState(false);
+  const [activeOrderId, setActiveOrderId] = useState<number | null>(null);
+
+  const activeOrder = useMemo(
+    () => orders.find((order) => order.id === activeOrderId) ?? null,
+    [activeOrderId, orders]
+  );
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -70,8 +76,6 @@ export default function AdminOrdersPanel() {
       }
       const rows: AdminOrderRow[] = data.orders ?? [];
       setOrders(rows);
-      setDraftNotes(Object.fromEntries(rows.map((row) => [row.id, row.adminNote ?? ""])));
-      setDraftStatuses(Object.fromEntries(rows.map((row) => [row.id, row.fulfillmentStatus])));
     } catch {
       setError("Network error while loading orders.");
       setOrders([]);
@@ -88,9 +92,15 @@ export default function AdminOrdersPanel() {
     return orders.filter((order) => {
       if (statusFilter !== "all" && order.fulfillmentStatus !== statusFilter) return false;
       if (sourceFilter !== "all" && order.source !== sourceFilter) return false;
+      if (needsActionOnly && !orderNeedsFulfillmentAction(order)) return false;
       return true;
     });
-  }, [orders, sourceFilter, statusFilter]);
+  }, [needsActionOnly, orders, sourceFilter, statusFilter]);
+
+  const needsActionCount = useMemo(
+    () => orders.filter((order) => orderNeedsFulfillmentAction(order)).length,
+    [orders]
+  );
 
   const handleCreateManual = async (event: FormEvent) => {
     event.preventDefault();
@@ -123,37 +133,15 @@ export default function AdminOrdersPanel() {
     }
   };
 
-  const saveOrderUpdate = async (order: AdminOrderRow) => {
-    setSavingId(order.id);
+  const handleWorkflowSaved = (updated: AdminOrderRow) => {
+    setOrders((prev) => prev.map((order) => (order.id === updated.id ? updated : order)));
+    setMessage(`Updated order #${updated.id}.`);
+  };
+
+  const openWorkflow = (orderId: number) => {
     setError("");
     setMessage("");
-
-    const fulfillmentStatus = draftStatuses[order.id];
-    const adminNote = draftNotes[order.id] ?? "";
-
-    try {
-      const response = await fetch(`/api/admin/orders/${order.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fulfillmentStatus:
-            fulfillmentStatus !== order.fulfillmentStatus ? fulfillmentStatus : undefined,
-          adminNote: adminNote !== (order.adminNote ?? "") ? adminNote : undefined,
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data.error || "Could not update order.");
-        return;
-      }
-
-      setMessage(`Updated order #${order.id}.`);
-      await loadOrders();
-    } catch {
-      setError("Network error while updating order.");
-    } finally {
-      setSavingId(null);
-    }
+    setActiveOrderId(orderId);
   };
 
   return (
@@ -162,8 +150,8 @@ export default function AdminOrdersPanel() {
         <div>
           <h2 className="font-display text-2xl font-bold text-slate-900">Orders</h2>
           <p className="text-sm text-slate-600 mt-1">
-            Website checkout, chatbot, and manual orders in one list. Holdam webhooks can still
-            update payment status; ops can override any order here.
+            Track payment milestones, pre-ship checklist, shipping, and receipts from one workflow
+            view per order.
           </p>
         </div>
         <button
@@ -198,7 +186,7 @@ export default function AdminOrdersPanel() {
           <h3 className="font-display text-lg font-bold text-slate-900">Add manual order</h3>
         </div>
         <p className="text-sm text-slate-600 mb-6">
-          For orders taken by email, WhatsApp, or phone. Payment and shipping status are managed here.
+          For orders taken by email, WhatsApp, or phone. Open the workflow view to manage fulfillment.
         </p>
 
         <form onSubmit={handleCreateManual} className="space-y-4">
@@ -341,6 +329,22 @@ export default function AdminOrdersPanel() {
             )}
           </div>
           <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setNeedsActionOnly((prev) => !prev)}
+              className={`inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors ${
+                needsActionOnly
+                  ? "border-amber-300 bg-amber-50 text-amber-800"
+                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              Needs action
+              {needsActionCount > 0 && (
+                <span className="ml-1.5 inline-flex min-w-[1.25rem] justify-center rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px]">
+                  {needsActionCount}
+                </span>
+              )}
+            </button>
             <select
               className="input-field py-1.5 text-xs rounded-lg"
               value={statusFilter}
@@ -382,11 +386,15 @@ export default function AdminOrdersPanel() {
           <div className="flex flex-col items-center gap-3 py-16 text-slate-400">
             <ClipboardList className="h-10 w-10 opacity-40" />
             <p className="text-sm font-medium">No orders match these filters.</p>
-            {(statusFilter !== "all" || sourceFilter !== "all") && (
+            {(statusFilter !== "all" || sourceFilter !== "all" || needsActionOnly) && (
               <button
                 type="button"
                 className="text-xs text-primary-600 hover:underline"
-                onClick={() => { setStatusFilter("all"); setSourceFilter("all"); }}
+                onClick={() => {
+                  setStatusFilter("all");
+                  setSourceFilter("all");
+                  setNeedsActionOnly(false);
+                }}
               >
                 Clear filters
               </button>
@@ -403,104 +411,72 @@ export default function AdminOrdersPanel() {
                   <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">Amount</th>
                   <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">Source</th>
                   <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">Status</th>
-                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">Actions</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">Workflow</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredOrders.map((order, idx) => (
-                    <tr
-                      key={order.id}
-                      className={`border-t border-slate-50 align-top transition-colors hover:bg-primary-50/30 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/40"}`}
-                    >
-                      <td className="px-4 py-3 whitespace-nowrap text-slate-500 text-xs">
-                        {formatDate(order.createdAt)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-semibold text-slate-900">{order.customerName}</p>
-                        <p className="text-slate-500 text-xs">{order.customerPhone}</p>
-                        <p className="text-slate-400 text-xs mt-0.5">
-                          {order.customerAddress}, {order.customerState}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-slate-900">{order.productName}</p>
-                        <p className="text-slate-500 text-xs">{variantLabel(order)}</p>
-                        {order.notes && (
-                          <p className="text-slate-400 text-xs mt-1 italic">{order.notes}</p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap font-semibold text-slate-900">{amountLabel(order)}</td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-                          {sourceLabel(order.source)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
+                  <tr
+                    key={order.id}
+                    className={`border-t border-slate-50 align-top transition-colors hover:bg-primary-50/30 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/40"}`}
+                  >
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-500 text-xs">
+                      {formatDate(order.createdAt)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="font-semibold text-slate-900">{order.customerName}</p>
+                      <p className="text-slate-500 text-xs">{order.customerPhone}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-slate-900">{order.productName}</p>
+                      <p className="text-slate-500 text-xs">{variantLabel(order)}</p>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap font-semibold text-slate-900">
+                      {amountLabel(order)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                        {sourceLabel(order.source)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span
                           className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusBadgeClass(order.fulfillmentStatus)}`}
                         >
                           {statusLabel(order.fulfillmentStatus)}
                         </span>
-                        {order.dealId && (
-                          <p className="text-xs text-slate-400 mt-1 font-mono">{order.dealId}</p>
+                        {orderNeedsFulfillmentAction(order) && (
+                          <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                            Action
+                          </span>
                         )}
-                      </td>
-                      <td className="px-4 py-3 min-w-[220px]">
-                        <select
-                          className="input-field w-full text-xs mb-2 py-1.5"
-                          value={draftStatuses[order.id] ?? order.fulfillmentStatus}
-                          onChange={(e) =>
-                            setDraftStatuses((prev) => ({
-                              ...prev,
-                              [order.id]: e.target.value as OrderFulfillmentStatus,
-                            }))
-                          }
-                        >
-                          {ADMIN_EDITABLE_ORDER_STATUSES.map((status) => (
-                            <option key={status} value={status}>
-                              {statusLabel(status)}
-                            </option>
-                          ))}
-                        </select>
-
-                        <textarea
-                          className="input-field w-full text-xs min-h-[52px] mb-2 py-1.5"
-                          value={draftNotes[order.id] ?? ""}
-                          onChange={(e) =>
-                            setDraftNotes((prev) => ({ ...prev, [order.id]: e.target.value }))
-                          }
-                          placeholder="Internal ops note"
-                        />
-
-                        <div className="flex flex-wrap gap-1.5">
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700 transition-colors disabled:opacity-50"
-                            disabled={savingId === order.id}
-                            onClick={() => void saveOrderUpdate(order)}
-                          >
-                            {savingId === order.id ? "Saving…" : "Save"}
-                          </button>
-                          {order.merchantDealUrl && (
-                            <a
-                              href={order.merchantDealUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                            >
-                              <ExternalLink className="h-3 w-3" aria-hidden />
-                              Deal
-                            </a>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        className="inline-flex items-center rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700 transition-colors"
+                        onClick={() => openWorkflow(order.id)}
+                      >
+                        Manage
+                      </button>
+                    </td>
+                  </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
       </section>
+
+      {activeOrder && (
+        <AdminOrderWorkflowModal
+          order={activeOrder}
+          onClose={() => setActiveOrderId(null)}
+          onSaved={handleWorkflowSaved}
+        />
+      )}
     </div>
   );
 }

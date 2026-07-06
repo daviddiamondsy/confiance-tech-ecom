@@ -11,6 +11,11 @@ import {
 import { ensureHoldamDealLinked } from "@/lib/holdam/deal-link";
 import { sendOrderEmail } from "@/lib/order-email";
 import { ensureOrdersReady } from "@/lib/orders/db-ready";
+import { parseFulfillmentTasks } from "@/lib/orders/fulfillment-workflow";
+import {
+  buildWorkflowPatch,
+  validateOrderWorkflowUpdate,
+} from "@/lib/orders/workflow-update";
 import {
   isValidAdminOrderStatus,
   mapWebhookEventToStatus,
@@ -69,6 +74,11 @@ export function toAdminOrderRow(row: StoreOrderRecord): AdminOrderRow {
     updatedAt: coerceIso(row.updated_at) ?? new Date().toISOString(),
     securedAt: coerceIso(row.secured_at),
     completedAt: coerceIso(row.completed_at),
+    fulfillmentTasks: parseFulfillmentTasks(row.fulfillment_tasks),
+    shippingCourier: row.shipping_courier,
+    shippingTracking: row.shipping_tracking,
+    shippedAt: coerceIso(row.shipped_at),
+    receiptSentAt: coerceIso(row.receipt_sent_at),
     merchantDealUrl: merchantDealUrl(row.deal_id),
   };
 }
@@ -180,6 +190,12 @@ export async function createManualOrder(params: CreateManualOrderParams): Promis
   return toAdminOrderRow(row);
 }
 
+export async function getAdminOrder(id: number): Promise<AdminOrderRow | null> {
+  await ensureOrdersReady();
+  const row = await getStoreOrderById(id);
+  return row ? toAdminOrderRow(row) : null;
+}
+
 export async function updateAdminOrder(id: number, params: UpdateOrderParams): Promise<AdminOrderRow> {
   await ensureOrdersReady();
 
@@ -188,18 +204,33 @@ export async function updateAdminOrder(id: number, params: UpdateOrderParams): P
     throw new Error("Order not found.");
   }
 
-  if (!params.fulfillmentStatus && params.adminNote === undefined) {
+  const current = toAdminOrderRow(existing);
+
+  const hasChanges =
+    params.fulfillmentStatus !== undefined ||
+    params.adminNote !== undefined ||
+    params.fulfillmentTasks !== undefined ||
+    params.ship !== undefined ||
+    params.markReceiptSent === true;
+
+  if (!hasChanges) {
     throw new Error("No changes to save.");
+  }
+
+  const validationError = validateOrderWorkflowUpdate(current, params);
+  if (validationError) {
+    throw new Error(validationError);
   }
 
   if (params.fulfillmentStatus && !isValidAdminOrderStatus(params.fulfillmentStatus)) {
     throw new Error("Invalid order status.");
   }
 
+  const patch = buildWorkflowPatch(current, params);
+
   const updated = await patchStoreOrder({
     id,
-    fulfillmentStatus: params.fulfillmentStatus,
-    adminNote: params.adminNote,
+    ...patch,
   });
 
   if (!updated) {

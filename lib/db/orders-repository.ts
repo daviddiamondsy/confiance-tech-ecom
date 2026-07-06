@@ -1,15 +1,20 @@
 import { sql } from "@/lib/db/client";
+import { parseFulfillmentTasks } from "@/lib/orders/fulfillment-workflow";
 import type {
   CreateDirectOrderParams,
   CreateHoldamOrderParams,
   CreateManualOrderParams,
+  FulfillmentTasks,
   OrderFulfillmentStatus,
   StoreOrderRecord,
 } from "@/lib/orders/types";
 import { normalizeNigerianPhone } from "@/lib/referral/phone";
 
 function mapRow(row: StoreOrderRecord): StoreOrderRecord {
-  return row;
+  return {
+    ...row,
+    fulfillment_tasks: parseFulfillmentTasks(row.fulfillment_tasks),
+  };
 }
 
 function sqlTimestamp(value: Date | string | null | undefined): string | null {
@@ -305,12 +310,25 @@ export async function patchStoreOrder(params: {
   id: number;
   fulfillmentStatus?: OrderFulfillmentStatus;
   adminNote?: string | null;
+  fulfillmentTasks?: FulfillmentTasks;
+  shippingCourier?: string | null;
+  shippingTracking?: string | null;
+  shippedAt?: string | null;
+  receiptSentAt?: string | null;
 }): Promise<StoreOrderRecord | null> {
   const existing = await getStoreOrderById(params.id);
   if (!existing) return null;
 
   const nextStatus = params.fulfillmentStatus ?? existing.fulfillment_status;
   const nextNote = params.adminNote !== undefined ? params.adminNote : existing.admin_note;
+  const nextTasks =
+    params.fulfillmentTasks !== undefined
+      ? params.fulfillmentTasks
+      : parseFulfillmentTasks(existing.fulfillment_tasks);
+  const nextCourier =
+    params.shippingCourier !== undefined ? params.shippingCourier : existing.shipping_courier;
+  const nextTracking =
+    params.shippingTracking !== undefined ? params.shippingTracking : existing.shipping_tracking;
 
   const securedAt =
     nextStatus === "secured" || nextStatus === "shipped" || nextStatus === "complete"
@@ -320,13 +338,28 @@ export async function patchStoreOrder(params: {
   const completedAt =
     nextStatus === "complete" ? existing.completed_at ?? new Date().toISOString() : existing.completed_at;
 
+  const shippedAt =
+    params.shippedAt !== undefined
+      ? params.shippedAt
+      : nextStatus === "shipped" || nextStatus === "complete"
+        ? existing.shipped_at ?? new Date().toISOString()
+        : existing.shipped_at;
+
+  const receiptSentAt =
+    params.receiptSentAt !== undefined ? params.receiptSentAt : existing.receipt_sent_at;
+
   const { rows } = await sql<StoreOrderRecord>`
     UPDATE store_orders
     SET
       fulfillment_status = ${nextStatus},
       admin_note = ${nextNote},
+      fulfillment_tasks = ${JSON.stringify(nextTasks)}::jsonb,
+      shipping_courier = ${nextCourier},
+      shipping_tracking = ${nextTracking},
       secured_at = ${sqlTimestamp(securedAt)},
+      shipped_at = ${sqlTimestamp(shippedAt)},
       completed_at = ${sqlTimestamp(completedAt)},
+      receipt_sent_at = ${sqlTimestamp(receiptSentAt)},
       updated_at = NOW()
     WHERE id = ${params.id}
     RETURNING *
