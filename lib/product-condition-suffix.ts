@@ -1,10 +1,10 @@
-/** Product name suffix by category: MacBooks are new; other devices are Grade A pre-owned. */
+/** Product name suffix by category: MacBooks are new; other devices are UK Grade A pre-owned. */
 export const PRODUCT_CONDITION_SUFFIX = {
-  clean: "(Clean)",
+  clean: "(Like New)",
   new: "(New)",
 } as const;
 
-const CONDITION_SUFFIX_PATTERN = /\s*\((Clean|New)\)\s*$/i;
+const CONDITION_SUFFIX_PATTERN = /\s*\((Clean|Like New|New)\)\s*$/i;
 
 export function conditionSuffixForFilter(filterSlug: string | null | undefined): string {
   if (filterSlug === "new" || filterSlug === "macbook") {
@@ -13,7 +13,7 @@ export function conditionSuffixForFilter(filterSlug: string | null | undefined):
   return PRODUCT_CONDITION_SUFFIX.clean;
 }
 
-/** Pick (Clean) vs (New) suffix when a product has multiple filter tags. */
+/** Pick (Like New) vs (New) suffix when a product has multiple filter tags. */
 export function primaryConditionFilterSlug(
   filterSlugs: readonly string[]
 ): string | null {
@@ -45,7 +45,7 @@ export function normalizeProductName(
   return `${base} ${suffix}`;
 }
 
-/** Storefront name: filter tags win over a stale (Clean)/(New) suffix in the DB. */
+/** Storefront name: filter tags win over a stale condition suffix in the DB. */
 export function resolveProductDisplayName(
   name: string,
   filterSlug?: string | null,
@@ -61,7 +61,8 @@ export function conditionSuffixInName(name: string): string | null {
   const match = name.match(CONDITION_SUFFIX_PATTERN);
   if (!match) return null;
   const value = match[1].toLowerCase();
-  return value === "new" ? PRODUCT_CONDITION_SUFFIX.new : PRODUCT_CONDITION_SUFFIX.clean;
+  if (value === "new") return PRODUCT_CONDITION_SUFFIX.new;
+  return PRODUCT_CONDITION_SUFFIX.clean;
 }
 
 export function replaceConditionSuffix(
@@ -73,7 +74,7 @@ export function replaceConditionSuffix(
   return name.replace(suffix, replacement);
 }
 
-/** Hide badge when it duplicates the (Clean)/(New) suffix already in the product name. */
+/** Hide badge when it duplicates the condition suffix already in the product name. */
 export function storefrontProductBadge(input: {
   badge?: string | null;
   name: string;
@@ -88,14 +89,17 @@ export function storefrontProductBadge(input: {
   if (normalizedBadge === "new" && suffix === PRODUCT_CONDITION_SUFFIX.new) {
     return undefined;
   }
-  if (normalizedBadge === "clean" && suffix === PRODUCT_CONDITION_SUFFIX.clean) {
+  if (
+    (normalizedBadge === "clean" || normalizedBadge === "like new") &&
+    suffix === PRODUCT_CONDITION_SUFFIX.clean
+  ) {
     return undefined;
   }
 
   return badge;
 }
 
-/** Storefront title: base name, optional storage, optional color, then (Clean)/(New). */
+/** Storefront title: base name, optional storage, optional color, then condition suffix. */
 export function buildVariantDisplayName(input: {
   name: string;
   filterSlug?: string | null;

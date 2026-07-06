@@ -10,7 +10,7 @@ describe("resolveStorefrontProductSlug", () => {
       resolveStorefrontProductSlug({
         id: "14",
         dbSlug: "apple-iphone-13",
-        name: "Apple iPhone 13 (Clean)",
+        name: "Apple iPhone 13 (Like New)",
       })
     ).toBe("apple-iphone-13");
   });
@@ -20,7 +20,7 @@ describe("resolveStorefrontProductSlug", () => {
       resolveStorefrontProductSlug({
         id: "6",
         dbSlug: null,
-        name: "Apple iPhone 13 (Clean)",
+        name: "Apple iPhone 13 (Like New)",
       })
     ).toBe("apple-iphone-13");
   });

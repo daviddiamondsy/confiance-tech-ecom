@@ -86,7 +86,7 @@ describe("admin-product-copy-ai", () => {
         },
       },
       {
-        productName: "Apple iPhone 14 Pro 256GB (Clean)",
+        productName: "Apple iPhone 14 Pro 256GB (Like New)",
         filterSlugs: ["clean"],
       }
     );

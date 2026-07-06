@@ -38,8 +38,8 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
   return [
     {
       id: "6",
-      name: "Apple iPhone 13 (Clean)",
-      price: catalogPrice("Apple iPhone 13 (Clean)", 1500),
+      name: "Apple iPhone 13 (Like New)",
+      price: catalogPrice("Apple iPhone 13 (Like New)", 1500),
       image: PRODUCT_IMAGES.iphone13,
       badge: "Popular",
       description:
@@ -65,14 +65,14 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Connectivity: "5G, Wi-Fi 6, Bluetooth 5.0",
       },
       storageOptions: [
-        { storage: "128GB", price: catalogPrice("Apple iPhone 13 (Clean)", 1500) },
-        { storage: "256GB", price: catalogPrice("Apple iPhone 13 (Clean)", 1700) },
+        { storage: "128GB", price: catalogPrice("Apple iPhone 13 (Like New)", 1500) },
+        { storage: "256GB", price: catalogPrice("Apple iPhone 13 (Like New)", 1700) },
       ],
     },
     {
       id: "7",
-      name: "Apple iPhone 14 Pro 256GB (Clean)",
-      price: catalogPrice("Apple iPhone 14 Pro 256GB (Clean)", 3000),
+      name: "Apple iPhone 14 Pro 256GB (Like New)",
+      price: catalogPrice("Apple iPhone 14 Pro 256GB (Like New)", 3000),
       image: PRODUCT_IMAGES.iphone14Pro,
       description:
         "The iPhone 14 Pro introduces Dynamic Island, Always-On display, A16 Bionic chip, and a 48MP Pro camera system. " +
@@ -99,8 +99,8 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
     },
     {
       id: "8",
-      name: "Apple iPhone 15 Pro Max (Clean)",
-      price: catalogPrice("Apple iPhone 15 Pro Max (Clean)", 4600),
+      name: "Apple iPhone 15 Pro Max (Like New)",
+      price: catalogPrice("Apple iPhone 15 Pro Max (Like New)", 4600),
       image: PRODUCT_IMAGES.iphone15ProMax,
       description:
         "The iPhone 15 Pro Max features a titanium design, A17 Pro chip, Action button, and the most advanced camera system on iPhone. " +
@@ -125,14 +125,14 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Connectivity: "5G, Wi-Fi 6E, Bluetooth 5.3",
       },
       storageOptions: [
-        { storage: "256GB", price: catalogPrice("Apple iPhone 15 Pro Max (Clean)", 4600) },
-        { storage: "512GB", price: catalogPrice("Apple iPhone 15 Pro Max (Clean)", 5100) },
+        { storage: "256GB", price: catalogPrice("Apple iPhone 15 Pro Max (Like New)", 4600) },
+        { storage: "512GB", price: catalogPrice("Apple iPhone 15 Pro Max (Like New)", 5100) },
       ],
     },
     {
       id: "15",
-      name: "Apple iPhone 12 (Clean)",
-      price: catalogPrice("Apple iPhone 12 (Clean)", 1200),
+      name: "Apple iPhone 12 (Like New)",
+      price: catalogPrice("Apple iPhone 12 (Like New)", 1200),
       image: PRODUCT_IMAGES.iphone12,
       description:
         "The iPhone 12 features a 6.1-inch Super Retina XDR display, A14 Bionic chip, and a dual 12MP camera system with Night mode and Dolby Vision recording. Ceramic Shield front cover, 5G, and MagSafe support in a flat-edge design. " +
@@ -160,14 +160,14 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         "Water resistance": "IP68",
       },
       storageOptions: [
-        { storage: "128GB", price: catalogPrice("Apple iPhone 12 (Clean)", 1200) },
-        { storage: "256GB", price: catalogPrice("Apple iPhone 12 (Clean)", 1400) },
+        { storage: "128GB", price: catalogPrice("Apple iPhone 12 (Like New)", 1200) },
+        { storage: "256GB", price: catalogPrice("Apple iPhone 12 (Like New)", 1400) },
       ],
     },
     {
       id: "9",
-      name: "Apple iPhone 12 Pro Max (Clean)",
-      price: catalogPrice("Apple iPhone 12 Pro Max (Clean)", 2000),
+      name: "Apple iPhone 12 Pro Max (Like New)",
+      price: catalogPrice("Apple iPhone 12 Pro Max (Like New)", 2000),
       image: PRODUCT_IMAGES.iphone12ProMax,
       description:
         "The iPhone 12 Pro Max features a 6.7-inch Super Retina XDR display, A14 Bionic chip, and a pro camera system with LiDAR. " +
@@ -192,14 +192,14 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Connectivity: "5G, Wi-Fi 6, Bluetooth 5.0",
       },
       storageOptions: [
-        { storage: "256GB", price: catalogPrice("Apple iPhone 12 Pro Max (Clean)", 2000) },
-        { storage: "512GB", price: catalogPrice("Apple iPhone 12 Pro Max (Clean)", 2200) },
+        { storage: "256GB", price: catalogPrice("Apple iPhone 12 Pro Max (Like New)", 2000) },
+        { storage: "512GB", price: catalogPrice("Apple iPhone 12 Pro Max (Like New)", 2200) },
       ],
     },
     {
       id: "10",
-      name: "Apple iPhone 14 Pro Max (Clean)",
-      price: catalogPrice("Apple iPhone 14 Pro Max (Clean)", 3500),
+      name: "Apple iPhone 14 Pro Max (Like New)",
+      price: catalogPrice("Apple iPhone 14 Pro Max (Like New)", 3500),
       image: PRODUCT_IMAGES.iphone14ProMax,
       badge: "Popular",
       description:
@@ -225,14 +225,14 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Connectivity: "5G, Wi-Fi 6, Bluetooth 5.3",
       },
       storageOptions: [
-        { storage: "256GB", price: catalogPrice("Apple iPhone 14 Pro Max (Clean)", 3500) },
-        { storage: "512GB", price: catalogPrice("Apple iPhone 14 Pro Max (Clean)", 3900) },
+        { storage: "256GB", price: catalogPrice("Apple iPhone 14 Pro Max (Like New)", 3500) },
+        { storage: "512GB", price: catalogPrice("Apple iPhone 14 Pro Max (Like New)", 3900) },
       ],
     },
     {
       id: "12",
-      name: "Apple iPhone 13 Pro Max (Clean)",
-      price: catalogPrice("Apple iPhone 13 Pro Max (Clean)", 2550),
+      name: "Apple iPhone 13 Pro Max (Like New)",
+      price: catalogPrice("Apple iPhone 13 Pro Max (Like New)", 2550),
       image: PRODUCT_IMAGES.iphone13ProMax,
       badge: "Popular",
       description:
@@ -258,8 +258,8 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Connectivity: "5G, Wi-Fi 6, Bluetooth 5.0",
       },
       storageOptions: [
-        { storage: "256GB", price: catalogPrice("Apple iPhone 13 Pro Max (Clean)", 2550) },
-        { storage: "512GB", price: catalogPrice("Apple iPhone 13 Pro Max (Clean)", 3000) },
+        { storage: "256GB", price: catalogPrice("Apple iPhone 13 Pro Max (Like New)", 2550) },
+        { storage: "512GB", price: catalogPrice("Apple iPhone 13 Pro Max (Like New)", 3000) },
       ],
     },
     {
@@ -292,8 +292,8 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
     },
     {
       id: "13",
-      name: "Samsung Galaxy S24 Ultra (Clean)",
-      price: catalogPrice("Samsung Galaxy S24 Ultra (Clean)", 4200),
+      name: "Samsung Galaxy S24 Ultra (Like New)",
+      price: catalogPrice("Samsung Galaxy S24 Ultra (Like New)", 4200),
       image: PRODUCT_IMAGES.galaxyS24Ultra,
       badge: "Popular",
       description:
@@ -318,14 +318,14 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Connectivity: "5G, Wi-Fi 7, Bluetooth 5.3",
       },
       storageOptions: [
-        { storage: "256GB", price: catalogPrice("Samsung Galaxy S24 Ultra (Clean)", 4200) },
-        { storage: "512GB", price: catalogPrice("Samsung Galaxy S24 Ultra (Clean)", 4400) },
+        { storage: "256GB", price: catalogPrice("Samsung Galaxy S24 Ultra (Like New)", 4200) },
+        { storage: "512GB", price: catalogPrice("Samsung Galaxy S24 Ultra (Like New)", 4400) },
       ],
     },
     {
       id: "14",
-      name: "Samsung Galaxy S25 Ultra (Clean)",
-      price: catalogPrice("Samsung Galaxy S25 Ultra (Clean)", 5300),
+      name: "Samsung Galaxy S25 Ultra (Like New)",
+      price: catalogPrice("Samsung Galaxy S25 Ultra (Like New)", 5300),
       image: PRODUCT_IMAGES.galaxyS25Ultra,
       badge: "Popular",
       description:
@@ -350,8 +350,8 @@ export function buildCatalogProducts(): CatalogProductSeed[] {
         Connectivity: "5G, Wi-Fi 7, Bluetooth 5.3",
       },
       storageOptions: [
-        { storage: "256GB", price: catalogPrice("Samsung Galaxy S25 Ultra (Clean)", 5300) },
-        { storage: "512GB", price: catalogPrice("Samsung Galaxy S25 Ultra (Clean)", 5400) },
+        { storage: "256GB", price: catalogPrice("Samsung Galaxy S25 Ultra (Like New)", 5300) },
+        { storage: "512GB", price: catalogPrice("Samsung Galaxy S25 Ultra (Like New)", 5400) },
       ],
     },
     {

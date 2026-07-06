@@ -24,7 +24,7 @@ const sampleProducts: Product[] = [
   {
     id: "galaxy-s24",
     slug: "galaxy-s24",
-    name: "Samsung Galaxy S24 (Clean)",
+    name: "Samsung Galaxy S24 (Like New)",
     price: 620000,
     image: "/s24.jpg",
     description: "Samsung flagship",

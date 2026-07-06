@@ -16,6 +16,7 @@
     "crop:logo": "python3 scripts/crop-logo.py",
     "db:backfill-specifications": "tsx scripts/db-backfill-specifications.ts",
     "db:backfill-iphone-unlocked": "tsx scripts/db-backfill-iphone-unlocked.ts",
+    "db:backfill-like-new-names": "tsx scripts/db-backfill-like-new-names.ts",
     "db:setup": "npm run db:migrate && npm run db:seed",
     "prepare": "husky",
     "hooks:install": "husky"

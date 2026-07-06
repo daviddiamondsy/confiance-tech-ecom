@@ -6,7 +6,7 @@ import type { Product } from "@/lib/product-utils";
 const iphone13: Product = {
   id: "14",
   slug: "samsung-galaxy-s25-ultra",
-  name: "Apple iPhone 13 (Clean)",
+  name: "Apple iPhone 13 (Like New)",
   price: 409999,
   image: "/iphone-13.png",
   description: "iPhone 13",
@@ -21,7 +21,7 @@ const iphone13: Product = {
 const s25Ultra: Product = {
   id: "1",
   slug: "samsung-galaxy-s25-ultra",
-  name: "Samsung Galaxy S25 Ultra (Clean)",
+  name: "Samsung Galaxy S25 Ultra (Like New)",
   price: 1299999,
   image: "/s25.png",
   description: "S25",
@@ -60,7 +60,7 @@ describe("resolveCheckoutPrice", () => {
 
     expect(resolved).toMatchObject({
       productId: "14",
-      productName: "Apple iPhone 13 (Clean)",
+      productName: "Apple iPhone 13 (Like New)",
       price: 459999,
     });
     expect(console.warn).toHaveBeenCalled();
