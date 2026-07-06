@@ -30,7 +30,7 @@ describe("iphone-product-copy", () => {
 
   it("leaves non-iPhone products unchanged", () => {
     const copy = ensureIphoneProductCopy({
-      name: "Samsung Galaxy S24 Ultra (Clean)",
+      name: "Samsung Galaxy S24 Ultra (Like New)",
       features: ["200MP Camera"],
       specifications: { Connectivity: "5G" },
     });

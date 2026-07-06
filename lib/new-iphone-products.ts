@@ -27,11 +27,11 @@ function catalogPrice(productName: string, yuan: number): number {
 
 /** iPhone 15 + iPhone 17 products to add to Postgres (ids 16-20). */
 export function buildNewIphoneProducts(): NewIphoneProduct[] {
-  const iphone15Name = "Apple iPhone 15 256GB (Clean)";
-  const iphone17CleanName = "Apple iPhone 17 (Clean)";
+  const iphone15Name = "Apple iPhone 15 256GB (Like New)";
+  const iphone17CleanName = "Apple iPhone 17 (Like New)";
   const iphone17NewName = "Apple iPhone 17 (New)";
-  const iphone17ProName = "Apple iPhone 17 Pro (Clean)";
-  const iphone17ProMaxName = "Apple iPhone 17 Pro Max (Clean)";
+  const iphone17ProName = "Apple iPhone 17 Pro (Like New)";
+  const iphone17ProMaxName = "Apple iPhone 17 Pro Max (Like New)";
 
   return [
     {

@@ -10,7 +10,7 @@ export const CLEAN_PRODUCT_FILTER_SLUG = "clean";
 
 export const DEFAULT_PRODUCT_FILTER_TAGS: ProductFilterTag[] = [
   { slug: NEW_PRODUCT_FILTER_SLUG, label: "New" },
-  { slug: CLEAN_PRODUCT_FILTER_SLUG, label: "Clean" },
+  { slug: CLEAN_PRODUCT_FILTER_SLUG, label: "Like New" },
 ];
 
 export function filterTagLabel(

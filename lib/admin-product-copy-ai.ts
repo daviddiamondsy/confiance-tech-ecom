@@ -133,7 +133,7 @@ function buildUserPrompt(input: GenerateProductCopyInput): string {
     `Condition tag: ${condition}`,
     input.storage?.trim() ? `Default storage label: ${input.storage.trim()}` : null,
     isIphone
-      ? "Device family: iPhone (include Unlocked, and 90+ battery health claims for Clean units)"
+      ? "Device family: iPhone (include Unlocked, and 90+ battery health claims for Like New units)"
       : null,
   ].filter(Boolean);
 
@@ -155,9 +155,9 @@ Rules:
 - specifications: 5-8 rows as label/value pairs (Display, Processor, Camera, Battery, Connectivity). Use title case labels.
 - Do NOT include a Storage specification row (storage is managed separately).
 - For all iPhones: include "Unlocked" in features and mention Unlocked in the Connectivity specification value.
-- For Clean / UK Grade A iPhones: include "90+ Battery Health" in features and a Battery health spec row with value "90%+".
+- For Like New / UK Grade A iPhones: include "90+ Battery Health" in features and a Battery health spec row with value "90%+".
 - For New products: emphasize brand new, factory-fresh, inspected and certified.
-- For Clean products: emphasize UK Grade A, accessories included, inspected and certified.
+- For Like New products: emphasize UK Grade A, accessories included, inspected and certified.
 - Be accurate to the real product model. Do not invent wrong chip names or screen sizes.
 - Never use em dashes. Use periods or hyphens instead.
 - Plain text only. No markdown.`;

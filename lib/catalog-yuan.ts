@@ -21,7 +21,7 @@ export const CATALOG_YUAN: Record<
   "21": { yuan: 750 },
 };
 
-/** Catalog filter tag slug per product id (New vs Clean). */
+/** Catalog filter tag slug per product id (New vs Like New). */
 export const CATALOG_FILTERS: Record<string, string> = {
   "6": "clean",
   "7": "clean",

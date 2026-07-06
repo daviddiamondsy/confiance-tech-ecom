@@ -22,8 +22,11 @@ export async function ensureProductFiltersSchema(): Promise<void> {
   await sql`
     INSERT INTO product_filters (slug, label, sort_order) VALUES
       ('new', 'New', 0),
-      ('clean', 'Clean', 1)
+      ('clean', 'Like New', 1)
     ON CONFLICT (slug) DO NOTHING
+  `;
+  await sql`
+    UPDATE product_filters SET label = 'Like New' WHERE slug = 'clean'
   `;
   await sql`
     UPDATE products
@@ -39,20 +42,31 @@ export async function ensureProductFiltersSchema(): Promise<void> {
   await ensureProductFilterAssignmentsSchema();
 }
 
-/** Fix product names when filter_slug was migrated without updating (Clean)/(New) suffix. */
-export async function syncProductNamesWithFilterSlugs(): Promise<void> {
+/** Fix product names when filter_slug was migrated without updating condition suffix. */
+export async function syncProductNamesWithFilterSlugs(): Promise<number> {
   const { rows } = await sql<{ id: string; name: string; filter_slug: string | null }>`
     SELECT id, name, filter_slug FROM products WHERE filter_slug IS NOT NULL
   `;
 
+  let updated = 0;
   for (const row of rows) {
     const fixed = normalizeProductName(stripConditionSuffix(row.name), row.filter_slug);
     if (fixed !== row.name) {
       await sql`
         UPDATE products SET name = ${fixed}, updated_at = NOW() WHERE id = ${row.id}
       `;
+      updated += 1;
     }
   }
+  return updated;
+}
+
+/** Rename legacy (Clean) suffixes to (Like New) on all Grade A catalog rows. */
+export async function backfillLikeNewProductNames(): Promise<number> {
+  await sql`
+    UPDATE product_filters SET label = 'Like New' WHERE slug = 'clean'
+  `;
+  return syncProductNamesWithFilterSlugs();
 }
 
 /** Adds products.filter_slug when the products table already exists. */

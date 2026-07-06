@@ -113,7 +113,7 @@ export default function ProductFormFields({
           required
         />
         <p className="text-xs text-slate-500 mt-1">
-          “(Clean)” or “(New)” is added from the filter tag (New vs Clean).
+          “(Like New)” or “(New)” is added from the filter tag (Like New vs New).
         </p>
         <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2">
           <button
@@ -263,7 +263,7 @@ export default function ProductFormFields({
             })}
           </div>
           <p className="text-xs text-slate-500 mt-2">
-            Select one or more. “(Clean)” or “(New)” in the product name comes from New vs Clean tags.
+            Select one or more. “(Like New)” or “(New)” in the product name comes from filter tags.
           </p>
         </fieldset>
       </div>
