@@ -1,0 +1,613 @@
+[
+  {
+    "product": "Samsung Galaxy S25 Ultra (Clean)",
+    "current_yuan": 5300,
+    "current_ngn": "\u20a61,309,999",
+    "grade_filter": "A and above (A, A+, AA, AA+)",
+    "variants": [
+      {
+        "storage": "256GB",
+        "cov_tech_gbp": 570.0,
+        "grade": "BBTI A Marginal VAT",
+        "grade_letter": "A",
+        "product_code": 499962,
+        "units_available": 115.0,
+        "price_range_gbp": "\u00a3570.00-\u00a3590.00",
+        "in_stock": true,
+        "status": "OK",
+        "wholesale_ngn": 1054500,
+        "suggested_yuan": 5094,
+        "suggested_ngn": 1249999,
+        "suggested_ngn_formatted": "\u20a61,249,999",
+        "markup_used": 1.15,
+        "shipping_ngn": 35000,
+        "cost_before_markup": 1089500,
+        "current_yuan": 5300,
+        "current_ngn": 1299999,
+        "current_ngn_formatted": "\u20a61,299,999",
+        "price_change_ngn": -50000
+      },
+      {
+        "storage": "512GB",
+        "cov_tech_gbp": 615.0,
+        "grade": "BBTI A Marginal VAT",
+        "grade_letter": "A",
+        "product_code": 499979,
+        "units_available": 42.0,
+        "price_range_gbp": "\u00a3615.00-\u00a3635.00",
+        "in_stock": true,
+        "status": "OK",
+        "wholesale_ngn": 1137750,
+        "suggested_yuan": 5496,
+        "suggested_ngn": 1349999,
+        "suggested_ngn_formatted": "\u20a61,349,999",
+        "markup_used": 1.15,
+        "shipping_ngn": 35000,
+        "cost_before_markup": 1172750,
+        "current_yuan": 5400,
+        "current_ngn": 1329999,
+        "current_ngn_formatted": "\u20a61,329,999",
+        "price_change_ngn": 20000
+      }
+    ],
+    "total_skus": 42,
+    "total_units": 277.0,
+    "status": "FOUND",
+    "pricing": {
+      "supplier": "Cov Tech (GBP)",
+      "gbp_to_ngn_rate": 1850,
+      "shipping_ngn": 35000,
+      "shipping_breakdown": {
+        "china_shipping_yuan": 0,
+        "international_shipping_ngn": 25000,
+        "local_delivery_ngn": 10000
+      },
+      "markup_below_724500_wholesale": 1.2,
+      "markup_at_or_above_724500_wholesale": 1.15,
+      "expensive_wholesale_ngn_threshold": 724500,
+      "charm_pricing": "nearest x9,999",
+      "formula": "charm(round(markup \u00d7 (gbp \u00d7 1850 + intl + local))) \u2014 no china shipping, no yuan conversion",
+      "current_supplier_formula": "charm(round(markup \u00d7 (yuan \u00d7 207 + 10\u00d7207 + intl + local)))"
+    }
+  },
+  {
+    "product": "Samsung Galaxy S24 Ultra (Clean)",
+    "current_yuan": 4200,
+    "current_ngn": "\u20a61,049,999",
+    "grade_filter": "A and above (A, A+, AA, AA+)",
+    "variants": [
+      {
+        "storage": "256GB",
+        "cov_tech_gbp": 420.0,
+        "grade": "BBTI A Marginal VAT",
+        "grade_letter": "A",
+        "product_code": 476236,
+        "units_available": 51.0,
+        "price_range_gbp": "\u00a3420.00-\u00a3435.00",
+        "in_stock": true,
+        "status": "OK",
+        "wholesale_ngn": 777000,
+        "suggested_yuan": 3754,
+        "suggested_ngn": 929999,
+        "suggested_ngn_formatted": "\u20a6929,999",
+        "markup_used": 1.15,
+        "shipping_ngn": 35000,
+        "cost_before_markup": 812000,
+        "current_yuan": 4200,
+        "current_ngn": 1039999,
+        "current_ngn_formatted": "\u20a61,039,999",
+        "price_change_ngn": -110000
+      },
+      {
+        "storage": "512GB",
+        "cov_tech_gbp": 460.0,
+        "grade": "BBTI A Marginal VAT",
+        "grade_letter": "A",
+        "product_code": 476361,
+        "units_available": 19.0,
+        "price_range_gbp": "\u00a3460.00-\u00a3475.00",
+        "in_stock": true,
+        "status": "OK",
+        "wholesale_ngn": 851000,
+        "suggested_yuan": 4111,
+        "suggested_ngn": 1019999,
+        "suggested_ngn_formatted": "\u20a61,019,999",
+        "markup_used": 1.15,
+        "shipping_ngn": 35000,
+        "cost_before_markup": 886000,
+        "current_yuan": 4400,
+        "current_ngn": 1089999,
+        "current_ngn_formatted": "\u20a61,089,999",
+        "price_change_ngn": -70000
+      }
+    ],
+    "total_skus": 32,
+    "total_units": 133.0,
+    "status": "FOUND",
+    "pricing": {
+      "supplier": "Cov Tech (GBP)",
+      "gbp_to_ngn_rate": 1850,
+      "shipping_ngn": 35000,
+      "shipping_breakdown": {
+        "china_shipping_yuan": 0,
+        "international_shipping_ngn": 25000,
+        "local_delivery_ngn": 10000
+      },
+      "markup_below_724500_wholesale": 1.2,
+      "markup_at_or_above_724500_wholesale": 1.15,
+      "expensive_wholesale_ngn_threshold": 724500,
+      "charm_pricing": "nearest x9,999",
+      "formula": "charm(round(markup \u00d7 (gbp \u00d7 1850 + intl + local))) \u2014 no china shipping, no yuan conversion",
+      "current_supplier_formula": "charm(round(markup \u00d7 (yuan \u00d7 207 + 10\u00d7207 + intl + local)))"
+    }
+  },
+  {
+    "product": "Apple iPhone 14 Pro 256GB (Clean)",
+    "current_yuan": 3000,
+    "current_ngn": "\u20a6789,999",
+    "grade_filter": "A and above (A, A+, AA, AA+)",
+    "variants": [
+      {
+        "storage": "256GB",
+        "cov_tech_gbp": 345.0,
+        "grade": "BBTI A RC Marginal VAT",
+        "grade_letter": "A",
+        "product_code": 449241,
+        "units_available": 10.0,
+        "price_range_gbp": "\u00a3345.00-\u00a3380.00",
+        "in_stock": true,
+        "status": "OK",
+        "wholesale_ngn": 638250,
+        "suggested_yuan": 3083,
+        "suggested_ngn": 809999,
+        "suggested_ngn_formatted": "\u20a6809,999",
+        "markup_used": 1.2,
+        "shipping_ngn": 35000,
+        "cost_before_markup": 673250,
+        "current_yuan": 3000,
+        "current_ngn": 789999,
+        "current_ngn_formatted": "\u20a6789,999",
+        "price_change_ngn": 20000
+      }
+    ],
+    "total_skus": 13,
+    "total_units": 23.0,
+    "status": "FOUND",
+    "pricing": {
+      "supplier": "Cov Tech (GBP)",
+      "gbp_to_ngn_rate": 1850,
+      "shipping_ngn": 35000,
+      "shipping_breakdown": {
+        "china_shipping_yuan": 0,
+        "international_shipping_ngn": 25000,
+        "local_delivery_ngn": 10000
+      },
+      "markup_below_724500_wholesale": 1.2,
+      "markup_at_or_above_724500_wholesale": 1.15,
+      "expensive_wholesale_ngn_threshold": 724500,
+      "charm_pricing": "nearest x9,999",
+      "formula": "charm(round(markup \u00d7 (gbp \u00d7 1850 + intl + local))) \u2014 no china shipping, no yuan conversion",
+      "current_supplier_formula": "charm(round(markup \u00d7 (yuan \u00d7 207 + 10\u00d7207 + intl + local)))"
+    }
+  },
+  {
+    "product": "Apple iPhone 15 Pro Max (Clean)",
+    "current_yuan": 4600,
+    "current_ngn": "\u20a61,139,999",
+    "grade_filter": "A and above (A, A+, AA, AA+)",
+    "variants": [
+      {
+        "storage": "256GB",
+        "cov_tech_gbp": 485.0,
+        "grade": "BBTI AA RC Marginal VAT",
+        "grade_letter": "AA",
+        "product_code": 497361,
+        "units_available": 267.0,
+        "price_range_gbp": "\u00a3485.00-\u00a3545.00",
+        "in_stock": true,
+        "status": "OK",
+        "wholesale_ngn": 897250,
+        "suggested_yuan": 4335,
+        "suggested_ngn": 1069999,
+        "suggested_ngn_formatted": "\u20a61,069,999",
+        "markup_used": 1.15,
+        "shipping_ngn": 35000,
+        "cost_before_markup": 932250,
+        "current_yuan": 4600,
+        "current_ngn": 1139999,
+        "current_ngn_formatted": "\u20a61,139,999",
+        "price_change_ngn": -70000
+      },
+      {
+        "storage": "512GB",
+        "cov_tech_gbp": 515.0,
+        "grade": "BBTI AA RC Marginal VAT",
+        "grade_letter": "AA",
+        "product_code": 497397,
+        "units_available": 20.0,
+        "price_range_gbp": "\u00a3515.00-\u00a3575.00",
+        "in_stock": true,
+        "status": "OK",
+        "wholesale_ngn": 952750,
+        "suggested_yuan": 4603,
+        "suggested_ngn": 1139999,
+        "suggested_ngn_formatted": "\u20a61,139,999",
+        "markup_used": 1.15,
+        "shipping_ngn": 35000,
+        "cost_before_markup": 987750,
+        "current_yuan": 5100,
+        "current_ngn": 1259999,
+        "current_ngn_formatted": "\u20a61,259,999",
+        "price_change_ngn": -120000
+      }
+    ],
+    "total_skus": 34,
+    "total_units": 344.0,
+    "status": "FOUND",
+    "pricing": {
+      "supplier": "Cov Tech (GBP)",
+      "gbp_to_ngn_rate": 1850,
+      "shipping_ngn": 35000,
+      "shipping_breakdown": {
+        "china_shipping_yuan": 0,
+        "international_shipping_ngn": 25000,
+        "local_delivery_ngn": 10000
+      },
+      "markup_below_724500_wholesale": 1.2,
+      "markup_at_or_above_724500_wholesale": 1.15,
+      "expensive_wholesale_ngn_threshold": 724500,
+      "charm_pricing": "nearest x9,999",
+      "formula": "charm(round(markup \u00d7 (gbp \u00d7 1850 + intl + local))) \u2014 no china shipping, no yuan conversion",
+      "current_supplier_formula": "charm(round(markup \u00d7 (yuan \u00d7 207 + 10\u00d7207 + intl + local)))"
+    }
+  },
+  {
+    "product": "Apple iPhone 12 Pro Max (Clean)",
+    "current_yuan": 2000,
+    "current_ngn": "\u20a6539,999",
+    "grade_filter": "A and above (A, A+, AA, AA+)",
+    "variants": [],
+    "status": "NOT IN COV TECH STOCK",
+    "pricing": {
+      "supplier": "Cov Tech (GBP)",
+      "gbp_to_ngn_rate": 1850,
+      "shipping_ngn": 35000,
+      "shipping_breakdown": {
+        "china_shipping_yuan": 0,
+        "international_shipping_ngn": 25000,
+        "local_delivery_ngn": 10000
+      },
+      "markup_below_724500_wholesale": 1.2,
+      "markup_at_or_above_724500_wholesale": 1.15,
+      "expensive_wholesale_ngn_threshold": 724500,
+      "charm_pricing": "nearest x9,999",
+      "formula": "charm(round(markup \u00d7 (gbp \u00d7 1850 + intl + local))) \u2014 no china shipping, no yuan conversion",
+      "current_supplier_formula": "charm(round(markup \u00d7 (yuan \u00d7 207 + 10\u00d7207 + intl + local)))"
+    }
+  },
+  {
+    "product": "Apple iPhone 14 Pro Max (Clean)",
+    "current_yuan": 3500,
+    "current_ngn": "\u20a6879,999",
+    "grade_filter": "A and above (A, A+, AA, AA+)",
+    "variants": [
+      {
+        "storage": "256GB",
+        "cov_tech_gbp": null,
+        "status": "NO SKU AT STORAGE TIER"
+      },
+      {
+        "storage": "512GB",
+        "cov_tech_gbp": null,
+        "status": "NO SKU AT STORAGE TIER"
+      }
+    ],
+    "total_skus": 4,
+    "total_units": 5.0,
+    "status": "FOUND BUT NO GRADE A+ AT TARGET STORAGE",
+    "pricing": {
+      "supplier": "Cov Tech (GBP)",
+      "gbp_to_ngn_rate": 1850,
+      "shipping_ngn": 35000,
+      "shipping_breakdown": {
+        "china_shipping_yuan": 0,
+        "international_shipping_ngn": 25000,
+        "local_delivery_ngn": 10000
+      },
+      "markup_below_724500_wholesale": 1.2,
+      "markup_at_or_above_724500_wholesale": 1.15,
+      "expensive_wholesale_ngn_threshold": 724500,
+      "charm_pricing": "nearest x9,999",
+      "formula": "charm(round(markup \u00d7 (gbp \u00d7 1850 + intl + local))) \u2014 no china shipping, no yuan conversion",
+      "current_supplier_formula": "charm(round(markup \u00d7 (yuan \u00d7 207 + 10\u00d7207 + intl + local)))"
+    }
+  },
+  {
+    "product": "Apple iPhone 13 Pro Max (Clean)",
+    "current_yuan": 2550,
+    "current_ngn": "\u20a6679,999",
+    "grade_filter": "A and above (A, A+, AA, AA+)",
+    "variants": [],
+    "status": "NOT IN COV TECH STOCK",
+    "pricing": {
+      "supplier": "Cov Tech (GBP)",
+      "gbp_to_ngn_rate": 1850,
+      "shipping_ngn": 35000,
+      "shipping_breakdown": {
+        "china_shipping_yuan": 0,
+        "international_shipping_ngn": 25000,
+        "local_delivery_ngn": 10000
+      },
+      "markup_below_724500_wholesale": 1.2,
+      "markup_at_or_above_724500_wholesale": 1.15,
+      "expensive_wholesale_ngn_threshold": 724500,
+      "charm_pricing": "nearest x9,999",
+      "formula": "charm(round(markup \u00d7 (gbp \u00d7 1850 + intl + local))) \u2014 no china shipping, no yuan conversion",
+      "current_supplier_formula": "charm(round(markup \u00d7 (yuan \u00d7 207 + 10\u00d7207 + intl + local)))"
+    }
+  },
+  {
+    "product": "Apple iPhone 13 (Clean)",
+    "current_yuan": 1500,
+    "current_ngn": "\u20a6419,999",
+    "grade_filter": "A and above (A, A+, AA, AA+)",
+    "variants": [
+      {
+        "storage": "128GB",
+        "cov_tech_gbp": 205.0,
+        "grade": "BBTI A Marginal VAT",
+        "grade_letter": "A",
+        "product_code": 432534,
+        "units_available": 380.0,
+        "price_range_gbp": "\u00a3205.00-\u00a3215.00",
+        "in_stock": true,
+        "status": "OK",
+        "wholesale_ngn": 379250,
+        "suggested_yuan": 1832,
+        "suggested_ngn": 499999,
+        "suggested_ngn_formatted": "\u20a6499,999",
+        "markup_used": 1.2,
+        "shipping_ngn": 35000,
+        "cost_before_markup": 414250,
+        "current_yuan": 1500,
+        "current_ngn": 419999,
+        "current_ngn_formatted": "\u20a6419,999",
+        "price_change_ngn": 80000
+      },
+      {
+        "storage": "256GB",
+        "cov_tech_gbp": 235.0,
+        "grade": "BBTI AA Marginal VAT",
+        "grade_letter": "AA",
+        "product_code": 497552,
+        "units_available": 7.0,
+        "price_range_gbp": "\u00a3235.00-\u00a3235.00",
+        "in_stock": true,
+        "status": "OK",
+        "wholesale_ngn": 434750,
+        "suggested_yuan": 2100,
+        "suggested_ngn": 559999,
+        "suggested_ngn_formatted": "\u20a6559,999",
+        "markup_used": 1.2,
+        "shipping_ngn": 35000,
+        "cost_before_markup": 469750,
+        "current_yuan": 1700,
+        "current_ngn": 469999,
+        "current_ngn_formatted": "\u20a6469,999",
+        "price_change_ngn": 90000
+      }
+    ],
+    "total_skus": 35,
+    "total_units": 1208.0,
+    "status": "FOUND",
+    "pricing": {
+      "supplier": "Cov Tech (GBP)",
+      "gbp_to_ngn_rate": 1850,
+      "shipping_ngn": 35000,
+      "shipping_breakdown": {
+        "china_shipping_yuan": 0,
+        "international_shipping_ngn": 25000,
+        "local_delivery_ngn": 10000
+      },
+      "markup_below_724500_wholesale": 1.2,
+      "markup_at_or_above_724500_wholesale": 1.15,
+      "expensive_wholesale_ngn_threshold": 724500,
+      "charm_pricing": "nearest x9,999",
+      "formula": "charm(round(markup \u00d7 (gbp \u00d7 1850 + intl + local))) \u2014 no china shipping, no yuan conversion",
+      "current_supplier_formula": "charm(round(markup \u00d7 (yuan \u00d7 207 + 10\u00d7207 + intl + local)))"
+    }
+  },
+  {
+    "product": "Apple iPhone 12 (Clean)",
+    "current_yuan": 1200,
+    "current_ngn": "\u20a6339,999",
+    "grade_filter": "A and above (A, A+, AA, AA+)",
+    "variants": [
+      {
+        "storage": "128GB",
+        "cov_tech_gbp": null,
+        "status": "NO SKU AT STORAGE TIER"
+      },
+      {
+        "storage": "256GB",
+        "cov_tech_gbp": null,
+        "status": "NO SKU AT STORAGE TIER"
+      }
+    ],
+    "total_skus": 2,
+    "total_units": 2.0,
+    "status": "FOUND BUT NO GRADE A+ AT TARGET STORAGE",
+    "pricing": {
+      "supplier": "Cov Tech (GBP)",
+      "gbp_to_ngn_rate": 1850,
+      "shipping_ngn": 35000,
+      "shipping_breakdown": {
+        "china_shipping_yuan": 0,
+        "international_shipping_ngn": 25000,
+        "local_delivery_ngn": 10000
+      },
+      "markup_below_724500_wholesale": 1.2,
+      "markup_at_or_above_724500_wholesale": 1.15,
+      "expensive_wholesale_ngn_threshold": 724500,
+      "charm_pricing": "nearest x9,999",
+      "formula": "charm(round(markup \u00d7 (gbp \u00d7 1850 + intl + local))) \u2014 no china shipping, no yuan conversion",
+      "current_supplier_formula": "charm(round(markup \u00d7 (yuan \u00d7 207 + 10\u00d7207 + intl + local)))"
+    }
+  },
+  {
+    "product": "Apple iPhone 15 256GB (Clean)",
+    "current_yuan": 3100,
+    "current_ngn": "\u20a6819,999",
+    "grade_filter": "A and above (A, A+, AA, AA+)",
+    "variants": [
+      {
+        "storage": "256GB",
+        "cov_tech_gbp": null,
+        "status": "NO GRADE A OR ABOVE",
+        "best_available_grade": "C+",
+        "best_available_price_gbp": 325.0,
+        "units_at_lower_grade": 40.0
+      }
+    ],
+    "total_skus": 26,
+    "total_units": 338.0,
+    "status": "FOUND BUT NO GRADE A+ AT TARGET STORAGE",
+    "pricing": {
+      "supplier": "Cov Tech (GBP)",
+      "gbp_to_ngn_rate": 1850,
+      "shipping_ngn": 35000,
+      "shipping_breakdown": {
+        "china_shipping_yuan": 0,
+        "international_shipping_ngn": 25000,
+        "local_delivery_ngn": 10000
+      },
+      "markup_below_724500_wholesale": 1.2,
+      "markup_at_or_above_724500_wholesale": 1.15,
+      "expensive_wholesale_ngn_threshold": 724500,
+      "charm_pricing": "nearest x9,999",
+      "formula": "charm(round(markup \u00d7 (gbp \u00d7 1850 + intl + local))) \u2014 no china shipping, no yuan conversion",
+      "current_supplier_formula": "charm(round(markup \u00d7 (yuan \u00d7 207 + 10\u00d7207 + intl + local)))"
+    }
+  },
+  {
+    "product": "Apple iPhone 17 (New)",
+    "current_yuan": 5600,
+    "current_ngn": "\u20a61,379,999",
+    "grade_filter": "A and above (A, A+, AA, AA+)",
+    "variants": [
+      {
+        "storage": "256GB",
+        "cov_tech_gbp": 640.0,
+        "grade": "BBTI AA+ Marginal VAT",
+        "grade_letter": "AA+",
+        "product_code": 518250,
+        "units_available": 1.0,
+        "price_range_gbp": "\u00a3640.00-\u00a3640.00",
+        "in_stock": true,
+        "status": "OK",
+        "wholesale_ngn": 1184000,
+        "suggested_yuan": 5720,
+        "suggested_ngn": 1399999,
+        "suggested_ngn_formatted": "\u20a61,399,999",
+        "markup_used": 1.15,
+        "shipping_ngn": 35000,
+        "cost_before_markup": 1219000,
+        "current_yuan": 5600,
+        "current_ngn": 1379999,
+        "current_ngn_formatted": "\u20a61,379,999",
+        "price_change_ngn": 20000
+      }
+    ],
+    "total_skus": 1,
+    "total_units": 1.0,
+    "status": "FOUND",
+    "pricing": {
+      "supplier": "Cov Tech (GBP)",
+      "gbp_to_ngn_rate": 1850,
+      "shipping_ngn": 35000,
+      "shipping_breakdown": {
+        "china_shipping_yuan": 0,
+        "international_shipping_ngn": 25000,
+        "local_delivery_ngn": 10000
+      },
+      "markup_below_724500_wholesale": 1.2,
+      "markup_at_or_above_724500_wholesale": 1.15,
+      "expensive_wholesale_ngn_threshold": 724500,
+      "charm_pricing": "nearest x9,999",
+      "formula": "charm(round(markup \u00d7 (gbp \u00d7 1850 + intl + local))) \u2014 no china shipping, no yuan conversion",
+      "current_supplier_formula": "charm(round(markup \u00d7 (yuan \u00d7 207 + 10\u00d7207 + intl + local)))"
+    }
+  },
+  {
+    "product": "Apple iPhone 17 Pro (Clean)",
+    "current_yuan": 7000,
+    "current_ngn": "\u20a61,719,999",
+    "grade_filter": "A and above (A, A+, AA, AA+)",
+    "variants": [],
+    "status": "NOT IN COV TECH STOCK",
+    "pricing": {
+      "supplier": "Cov Tech (GBP)",
+      "gbp_to_ngn_rate": 1850,
+      "shipping_ngn": 35000,
+      "shipping_breakdown": {
+        "china_shipping_yuan": 0,
+        "international_shipping_ngn": 25000,
+        "local_delivery_ngn": 10000
+      },
+      "markup_below_724500_wholesale": 1.2,
+      "markup_at_or_above_724500_wholesale": 1.15,
+      "expensive_wholesale_ngn_threshold": 724500,
+      "charm_pricing": "nearest x9,999",
+      "formula": "charm(round(markup \u00d7 (gbp \u00d7 1850 + intl + local))) \u2014 no china shipping, no yuan conversion",
+      "current_supplier_formula": "charm(round(markup \u00d7 (yuan \u00d7 207 + 10\u00d7207 + intl + local)))"
+    }
+  },
+  {
+    "product": "Apple iPhone 17 Pro Max (Clean)",
+    "current_yuan": 7800,
+    "current_ngn": "\u20a61,909,999",
+    "grade_filter": "A and above (A, A+, AA, AA+)",
+    "variants": [],
+    "status": "NOT IN COV TECH STOCK",
+    "pricing": {
+      "supplier": "Cov Tech (GBP)",
+      "gbp_to_ngn_rate": 1850,
+      "shipping_ngn": 35000,
+      "shipping_breakdown": {
+        "china_shipping_yuan": 0,
+        "international_shipping_ngn": 25000,
+        "local_delivery_ngn": 10000
+      },
+      "markup_below_724500_wholesale": 1.2,
+      "markup_at_or_above_724500_wholesale": 1.15,
+      "expensive_wholesale_ngn_threshold": 724500,
+      "charm_pricing": "nearest x9,999",
+      "formula": "charm(round(markup \u00d7 (gbp \u00d7 1850 + intl + local))) \u2014 no china shipping, no yuan conversion",
+      "current_supplier_formula": "charm(round(markup \u00d7 (yuan \u00d7 207 + 10\u00d7207 + intl + local)))"
+    }
+  },
+  {
+    "product": "AirPod 4 (New)",
+    "current_yuan": 750,
+    "current_ngn": "\u20a6229,999",
+    "grade_filter": "A and above (A, A+, AA, AA+)",
+    "variants": [],
+    "status": "NOT IN COV TECH STOCK",
+    "pricing": {
+      "supplier": "Cov Tech (GBP)",
+      "gbp_to_ngn_rate": 1850,
+      "shipping_ngn": 35000,
+      "shipping_breakdown": {
+        "china_shipping_yuan": 0,
+        "international_shipping_ngn": 25000,
+        "local_delivery_ngn": 10000
+      },
+      "markup_below_724500_wholesale": 1.2,
+      "markup_at_or_above_724500_wholesale": 1.15,
+      "expensive_wholesale_ngn_threshold": 724500,
+      "charm_pricing": "nearest x9,999",
+      "formula": "charm(round(markup \u00d7 (gbp \u00d7 1850 + intl + local))) \u2014 no china shipping, no yuan conversion",
+      "current_supplier_formula": "charm(round(markup \u00d7 (yuan \u00d7 207 + 10\u00d7207 + intl + local)))"
+    }
+  }
+]
