@@ -8,11 +8,49 @@ import { isPostgresConfigured } from "@/lib/db/client";
 import { computeCheckoutAmount, recordReferralOnDealCreated } from "@/lib/referral/service";
 import { getStoreCreditBalance, getReferralCodeByCode } from "@/lib/db/referral-repository";
 import { ensureReferralReady } from "@/lib/referral/db-ready";
-import { recordHoldamOrder } from "@/lib/orders/service";
+import { recordDirectOrder, recordHoldamOrder } from "@/lib/orders/service";
 import {
   deriveOrderSource,
   readBotStoreKeyFromRequest,
 } from "@/lib/orders/derive-order-source";
+import { isHoldamBypassEnabled } from "@/lib/holdam/config";
+import type { OrderEmailReferralDetails } from "@/lib/order-email";
+
+async function buildReferralEmailDetails(params: {
+  referralAdjustment:
+    | Awaited<ReturnType<typeof computeCheckoutAmount>>["adjustment"]
+    | undefined;
+  amountNgn: number;
+  checkoutAmountNgn: number;
+}): Promise<OrderEmailReferralDetails | undefined> {
+  const { referralAdjustment, amountNgn, checkoutAmountNgn } = params;
+  if (
+    !referralAdjustment ||
+    !(
+      referralAdjustment.referralCode ||
+      referralAdjustment.refereeDiscountNgn > 0 ||
+      referralAdjustment.storeCreditAppliedNgn > 0 ||
+      checkoutAmountNgn !== amountNgn
+    )
+  ) {
+    return undefined;
+  }
+
+  let referrerName: string | null | undefined;
+  if (referralAdjustment.referralCode && isPostgresConfigured()) {
+    const codeRow = await getReferralCodeByCode(referralAdjustment.referralCode);
+    referrerName = codeRow?.referrer_name;
+  }
+
+  return {
+    referralCode: referralAdjustment.referralCode,
+    referrerName,
+    catalogPriceNgn: amountNgn,
+    checkoutAmountNgn,
+    refereeDiscountNgn: referralAdjustment.refereeDiscountNgn,
+    storeCreditAppliedNgn: referralAdjustment.storeCreditAppliedNgn,
+  };
+}
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
@@ -36,12 +74,15 @@ export async function POST(req: NextRequest) {
       requestBotKey: readBotStoreKeyFromRequest(req),
     });
 
+    const holdamBypass = isHoldamBypassEnabled();
+
     console.log("[API][create-holdam-deal] ===== START =====");
     console.log("[API][create-holdam-deal] Received request", {
       productId,
       productName,
       productPrice,
       orderSource,
+      holdamBypass,
       hasCustomerData: Boolean(customerData),
       timestamp: new Date().toISOString(),
     });
@@ -58,46 +99,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    const apiKey = process.env.HOLDAM_API_KEY;
-    const baseUrl = process.env.HOLDAM_BASE_URL || "https://escrow-backend-production-e42c.up.railway.app/v1";
-    
-    console.log("[API][create-holdam-deal] Configuration check", {
-      hasApiKey: !!apiKey,
-      apiKeyPrefix: apiKey ? `${apiKey.substring(0, 8)}...` : 'none',
-      baseUrl,
-    });
-
-    if (!apiKey) {
-      console.error("[API][create-holdam-deal] Missing HOLDAM_API_KEY");
-      return NextResponse.json(
-        { error: "Payment service not configured", details: "Missing HOLDAM_API_KEY" },
-        { status: 500 }
-      );
-    }
-
-    const holdam = new Holdam(apiKey, {
-      baseUrl,
-    });
-
-    const siteBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://confiance.tech";
-
-    console.log("[API][create-holdam-deal] Holdam SDK params:", {
-      totalAmount: productPrice,
-      currency: "NGN",
-      buyerPhone: customerData.phone,
-    });
-
-    // Split customer name into first and last name
-    const nameParts = customerData.name.trim().split(' ');
-    const buyerFirstName = nameParts[0] || customerData.name;
-    const buyerLastName = nameParts.slice(1).join(' ') || '';
-
-    console.log("[API][create-holdam-deal] Buyer name parsing", {
-      originalName: customerData.name,
-      buyerFirstName,
-      buyerLastName,
-    });
 
     const catalogPrice = await resolveCheckoutPrice({
       productId: productId ? String(productId) : undefined,
@@ -158,6 +159,121 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const referralEmailDetails = await buildReferralEmailDetails({
+      referralAdjustment,
+      amountNgn,
+      checkoutAmountNgn,
+    });
+
+    if (holdamBypass) {
+      console.log("[API][create-holdam-deal] Holdam bypass enabled; recording order only");
+
+      let orderId: number | undefined;
+
+      if (isPostgresConfigured()) {
+        try {
+          const row = await recordDirectOrder({
+            source: orderSource,
+            productId: resolvedProductId,
+            productName: resolvedProductName,
+            catalogPriceNgn: amountNgn,
+            checkoutAmountNgn,
+            productStorage: orderStorage,
+            productColor: orderColor,
+            customerName: customerData.name,
+            customerPhone: customerData.phone,
+            customerAddress: customerData.address,
+            customerState: customerData.state,
+            referralCode: referralAdjustment?.referralCode,
+            refereeDiscountNgn: referralAdjustment?.refereeDiscountNgn,
+            storeCreditAppliedNgn: referralAdjustment?.storeCreditAppliedNgn,
+          });
+          orderId = row.id;
+        } catch (orderError) {
+          console.error("[API][create-holdam-deal] Direct order record failed", orderError);
+          return NextResponse.json(
+            { error: "Could not save order. Please try again." },
+            { status: 500 }
+          );
+        }
+      }
+
+      try {
+        await sendOrderEmail({
+          productId: resolvedProductId,
+          productName: resolvedProductName,
+          productPrice: amountNgn,
+          productStorage: orderStorage,
+          productColor: orderColor,
+          customerName: customerData.name,
+          customerPhone: customerData.phone,
+          customerAddress: customerData.address,
+          customerState: customerData.state,
+          paymentStatus: "pending",
+          referral: referralEmailDetails,
+        });
+        console.log("[API][create-holdam-deal] Order email sent (Holdam bypass)", {
+          orderId,
+          durationMs: Date.now() - startTime,
+        });
+      } catch (emailError) {
+        console.error("[API][create-holdam-deal] Order email failed (Holdam bypass)", {
+          orderId,
+          emailError,
+        });
+      }
+
+      console.log("[API][create-holdam-deal] ===== SUCCESS (HOLDAM BYPASS) =====");
+
+      return NextResponse.json({
+        success: true,
+        holdamBypass: true,
+        orderId,
+        pricing: referralAdjustment
+          ? {
+              catalogPriceNgn: amountNgn,
+              checkoutAmountNgn,
+              refereeDiscountNgn: referralAdjustment.refereeDiscountNgn,
+              storeCreditAppliedNgn: referralAdjustment.storeCreditAppliedNgn,
+              storeCreditBalanceNgn,
+            }
+          : undefined,
+      });
+    }
+
+    const apiKey = process.env.HOLDAM_API_KEY;
+    const baseUrl = process.env.HOLDAM_BASE_URL || "https://escrow-backend-production-e42c.up.railway.app/v1";
+
+    console.log("[API][create-holdam-deal] Configuration check", {
+      hasApiKey: !!apiKey,
+      apiKeyPrefix: apiKey ? `${apiKey.substring(0, 8)}...` : "none",
+      baseUrl,
+    });
+
+    if (!apiKey) {
+      console.error("[API][create-holdam-deal] Missing HOLDAM_API_KEY");
+      return NextResponse.json(
+        { error: "Payment service not configured", details: "Missing HOLDAM_API_KEY" },
+        { status: 500 }
+      );
+    }
+
+    const holdam = new Holdam(apiKey, {
+      baseUrl,
+    });
+
+    const siteBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://confiance.tech";
+
+    console.log("[API][create-holdam-deal] Holdam SDK params:", {
+      totalAmount: checkoutAmountNgn,
+      currency: "NGN",
+      buyerPhone: customerData.phone,
+    });
+
+    const nameParts = customerData.name.trim().split(" ");
+    const buyerFirstName = nameParts[0] || customerData.name;
+    const buyerLastName = nameParts.slice(1).join(" ") || "";
+
     const deliverWithinDays = resolveDeliveryDays(undefined);
     const businessName =
       process.env.HOLDAM_BUSINESS_NAME?.trim() || "Confiance Tech";
@@ -193,7 +309,10 @@ export async function POST(req: NextRequest) {
       },
     };
 
-    console.log("[API][create-holdam-deal] Calling Holdam SDK with request:", JSON.stringify(dealRequest, null, 2));
+    console.log(
+      "[API][create-holdam-deal] Calling Holdam SDK with request:",
+      JSON.stringify(dealRequest, null, 2)
+    );
     const sdkCallStart = Date.now();
 
     const deal = await holdam.deals.create(dealRequest);
@@ -240,16 +359,6 @@ export async function POST(req: NextRequest) {
       duration: `${sdkCallDuration}ms`,
     });
 
-    console.log("[API][create-holdam-deal] Deal response:", JSON.stringify(deal, null, 2));
-    console.log("[API][create-holdam-deal] Deal keys:", Object.keys(deal));
-
-    // Do not block redirect to checkout — email runs in background
-    let referrerName: string | null | undefined;
-    if (referralAdjustment?.referralCode && isPostgresConfigured()) {
-      const codeRow = await getReferralCodeByCode(referralAdjustment.referralCode);
-      referrerName = codeRow?.referrer_name;
-    }
-
     try {
       await sendOrderEmail({
         productId: resolvedProductId,
@@ -263,28 +372,13 @@ export async function POST(req: NextRequest) {
         customerState: customerData.state,
         paymentStatus: "pending",
         dealId: deal.data.id,
-        referral:
-          referralAdjustment &&
-          (referralAdjustment.referralCode ||
-            referralAdjustment.refereeDiscountNgn > 0 ||
-            referralAdjustment.storeCreditAppliedNgn > 0 ||
-            checkoutAmountNgn !== amountNgn)
-            ? {
-                referralCode: referralAdjustment.referralCode,
-                referrerName,
-                catalogPriceNgn: amountNgn,
-                checkoutAmountNgn,
-                refereeDiscountNgn: referralAdjustment.refereeDiscountNgn,
-                storeCreditAppliedNgn: referralAdjustment.storeCreditAppliedNgn,
-              }
-            : undefined,
+        referral: referralEmailDetails,
       });
       console.log("[API][create-holdam-deal] Order email sent", {
         dealId: deal.data.id,
         durationMs: Date.now() - startTime,
       });
     } catch (emailError) {
-      // Checkout must still proceed if Resend fails.
       console.error("[API][create-holdam-deal] Order email failed (deal still created)", {
         dealId: deal.data.id,
         emailError,
@@ -294,8 +388,8 @@ export async function POST(req: NextRequest) {
     const dealData = deal.data;
     const checkoutUrl = dealData.checkoutUrl;
 
-    console.log("[API][create-holdam-deal] Returning response:", { 
-      dealId: dealData.id, 
+    console.log("[API][create-holdam-deal] Returning response:", {
+      dealId: dealData.id,
       checkoutUrl,
       totalDuration: `${Date.now() - startTime}ms`,
     });
@@ -303,6 +397,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      holdamBypass: false,
       dealId: dealData.id,
       deal: dealData,
       checkoutUrl,
