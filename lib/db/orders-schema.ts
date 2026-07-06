@@ -48,4 +48,10 @@ export async function ensureOrdersSchema(): Promise<void> {
     SET source = 'website', updated_at = NOW()
     WHERE source = 'holdam'
   `;
+
+  await sqlDdl`ALTER TABLE store_orders ADD COLUMN IF NOT EXISTS fulfillment_tasks JSONB NOT NULL DEFAULT '{}'`;
+  await sqlDdl`ALTER TABLE store_orders ADD COLUMN IF NOT EXISTS shipping_courier TEXT`;
+  await sqlDdl`ALTER TABLE store_orders ADD COLUMN IF NOT EXISTS shipping_tracking TEXT`;
+  await sqlDdl`ALTER TABLE store_orders ADD COLUMN IF NOT EXISTS shipped_at TIMESTAMPTZ`;
+  await sqlDdl`ALTER TABLE store_orders ADD COLUMN IF NOT EXISTS receipt_sent_at TIMESTAMPTZ`;
 }
