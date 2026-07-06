@@ -109,6 +109,8 @@ export interface AdminOrderRow {
   merchantDealUrl: string | null;
 }
 
+export type CreateDirectOrderParams = Omit<CreateHoldamOrderParams, "dealId">;
+
 export interface CreateHoldamOrderParams {
   dealId: string;
   /** Checkout channel; defaults to website. */

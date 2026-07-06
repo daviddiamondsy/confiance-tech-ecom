@@ -1,6 +1,7 @@
 import {
   getStoreOrderByDealId,
   getStoreOrderById,
+  insertDirectOrder,
   insertHoldamOrder,
   insertManualOrder,
   listStoreOrders,
@@ -17,6 +18,7 @@ import {
 } from "@/lib/orders/status";
 import type {
   AdminOrderRow,
+  CreateDirectOrderParams,
   CreateHoldamOrderParams,
   CreateManualOrderParams,
   OrderFulfillmentStatus,
@@ -74,6 +76,13 @@ export function toAdminOrderRow(row: StoreOrderRecord): AdminOrderRow {
 export async function recordHoldamOrder(params: CreateHoldamOrderParams): Promise<void> {
   await ensureOrdersReady();
   await insertHoldamOrder(params);
+}
+
+export async function recordDirectOrder(
+  params: CreateDirectOrderParams
+): Promise<StoreOrderRecord> {
+  await ensureOrdersReady();
+  return insertDirectOrder(params);
 }
 
 export async function processOrderWebhook(params: {

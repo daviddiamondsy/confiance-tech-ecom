@@ -1,5 +1,6 @@
 import { sql } from "@/lib/db/client";
 import type {
+  CreateDirectOrderParams,
   CreateHoldamOrderParams,
   CreateManualOrderParams,
   OrderFulfillmentStatus,
@@ -65,6 +66,53 @@ export async function insertHoldamOrder(params: CreateHoldamOrderParams): Promis
         ELSE store_orders.source
       END,
       updated_at = NOW()
+    RETURNING *
+  `;
+
+  return mapRow(rows[0]);
+}
+
+/** Storefront order without a Holdam deal (BYPASS_HOLDAM). */
+export async function insertDirectOrder(params: CreateDirectOrderParams): Promise<StoreOrderRecord> {
+  const customerPhone = normalizeNigerianPhone(params.customerPhone) || params.customerPhone.trim();
+  const source = params.source ?? "website";
+
+  const { rows } = await sql<StoreOrderRecord>`
+    INSERT INTO store_orders (
+      source,
+      fulfillment_status,
+      product_id,
+      product_name,
+      product_price_ngn,
+      product_storage,
+      product_color,
+      catalog_price_ngn,
+      checkout_amount_ngn,
+      customer_name,
+      customer_phone,
+      customer_address,
+      customer_state,
+      referral_code,
+      referee_discount_ngn,
+      store_credit_applied_ngn
+    ) VALUES (
+      ${source},
+      'pending_payment',
+      ${params.productId ?? null},
+      ${params.productName},
+      ${params.catalogPriceNgn},
+      ${params.productStorage ?? null},
+      ${params.productColor ?? null},
+      ${params.catalogPriceNgn},
+      ${params.checkoutAmountNgn},
+      ${params.customerName.trim()},
+      ${customerPhone},
+      ${params.customerAddress.trim()},
+      ${params.customerState.trim()},
+      ${params.referralCode ?? null},
+      ${params.refereeDiscountNgn ?? 0},
+      ${params.storeCreditAppliedNgn ?? 0}
+    )
     RETURNING *
   `;
 
