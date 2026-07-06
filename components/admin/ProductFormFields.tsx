@@ -248,7 +248,7 @@ export default function ProductFormFields({
         >
           {INTERNATIONAL_SHIPPING_NGN_OPTIONS.map((amount) => (
             <option key={amount} value={amount}>
-              ₦{amount.toLocaleString()}
+              {amount === 0 ? "₦0 (none)" : `₦${amount.toLocaleString()}`}
             </option>
           ))}
         </select>
