@@ -15,6 +15,10 @@ const SOURCES: Array<{ file: string; url: string }> = [
     url: "https://ng.jumia.is/unsafe/fit-in/680x680/filters:fill(white)/product/64/4190114/1.jpg?0866",
   },
   {
+    file: "iphone-15-pro-max.png",
+    url: "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/refurb-iphone-15-pro-max-naturaltitanium-202412?wid=940",
+  },
+  {
     file: "iphone-17.png",
     url: "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-17-finish-select-black-202509_GEO_US?wid=940",
   },
