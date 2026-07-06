@@ -22,13 +22,20 @@ export async function PUT(req: NextRequest) {
 
   const body = await req.json();
   const yuanToNaira = Number(body.yuanToNaira);
+  const gbpToNaira = Number(body.gbpToNaira);
+  const usdToNaira = Number(body.usdToNaira);
   const sellingMarkup = Number(body.sellingMarkup);
   const expensiveYuanThresholdRaw = body.expensiveYuanThreshold;
+  const expensiveWholesaleNgnThresholdRaw = body.expensiveWholesaleNgnThreshold;
   const expensiveSellingMarkupRaw = body.expensiveSellingMarkup;
   const expensiveYuanThreshold =
     expensiveYuanThresholdRaw === "" || expensiveYuanThresholdRaw == null
       ? null
       : Number(expensiveYuanThresholdRaw);
+  const expensiveWholesaleNgnThreshold =
+    expensiveWholesaleNgnThresholdRaw === "" || expensiveWholesaleNgnThresholdRaw == null
+      ? null
+      : Number(expensiveWholesaleNgnThresholdRaw);
   const expensiveSellingMarkup =
     expensiveSellingMarkupRaw === "" || expensiveSellingMarkupRaw == null
       ? null
@@ -37,6 +44,10 @@ export async function PUT(req: NextRequest) {
   if (
     !Number.isFinite(yuanToNaira) ||
     yuanToNaira <= 0 ||
+    !Number.isFinite(gbpToNaira) ||
+    gbpToNaira <= 0 ||
+    !Number.isFinite(usdToNaira) ||
+    usdToNaira <= 0 ||
     !Number.isFinite(sellingMarkup) ||
     sellingMarkup <= 0
   ) {
@@ -51,6 +62,16 @@ export async function PUT(req: NextRequest) {
   }
 
   if (
+    expensiveWholesaleNgnThreshold != null &&
+    (!Number.isFinite(expensiveWholesaleNgnThreshold) || expensiveWholesaleNgnThreshold <= 0)
+  ) {
+    return NextResponse.json(
+      { error: "Invalid expensive wholesale NGN threshold" },
+      { status: 400 }
+    );
+  }
+
+  if (
     expensiveSellingMarkup != null &&
     (!Number.isFinite(expensiveSellingMarkup) || expensiveSellingMarkup <= 0)
   ) {
@@ -59,15 +80,25 @@ export async function PUT(req: NextRequest) {
 
   if (expensiveYuanThreshold != null && expensiveSellingMarkup == null) {
     return NextResponse.json(
-      { error: "Expensive markup multiplier is required when threshold is set" },
+      { error: "Expensive markup multiplier is required when yuan threshold is set" },
+      { status: 400 }
+    );
+  }
+
+  if (expensiveWholesaleNgnThreshold != null && expensiveSellingMarkup == null) {
+    return NextResponse.json(
+      { error: "Expensive markup multiplier is required when wholesale threshold is set" },
       { status: 400 }
     );
   }
 
   const config = await updatePricingConfig({
     yuanToNaira,
+    gbpToNaira,
+    usdToNaira,
     sellingMarkup,
     expensiveYuanThreshold,
+    expensiveWholesaleNgnThreshold,
     expensiveSellingMarkup,
   });
 

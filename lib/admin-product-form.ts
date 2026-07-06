@@ -14,10 +14,17 @@ import {
   type InternationalShippingNgn,
   type LocalDeliveryNgn,
 } from "@/lib/product-shipping";
-import { priceFromYuan, sellingMarkupForYuan, type PricingConfig } from "@/lib/pricing";
+import {
+  parseCostCurrency,
+  priceFromSupplierCost,
+  sellingMarkupForSupplierCost,
+  type PricingConfig,
+  type SupplierCostCurrency,
+} from "@/lib/pricing";
 
 export interface ProductFormState {
   name: string;
+  costCurrency: SupplierCostCurrency;
   yuanCost: string;
   image: string;
   description: string;
@@ -189,16 +196,24 @@ export function primaryYuanFromForm(form: Pick<ProductFormState, "yuanCost" | "s
 
 export interface VariantPricePreview {
   storage: string;
-  yuan: number;
+  cost: number;
+  currency: SupplierCostCurrency;
   price: number;
   markup: number;
 }
 
-/** Live NGN estimates for each storage:yuan line (or single yuan cost). */
+/** Live NGN estimates for each storage:cost line (or single supplier cost). */
 export function previewVariantPricesFromForm(
   form: ProductFormState,
   pricing: PricingConfig
 ): VariantPricePreview[] {
+  let currency: SupplierCostCurrency;
+  try {
+    currency = parseCostCurrency(form.costCurrency);
+  } catch {
+    return [];
+  }
+
   let shipping;
   try {
     shipping = {
@@ -214,23 +229,25 @@ export function previewVariantPricesFromForm(
   if (variants?.length) {
     return variants.map((variant) => ({
       storage: variant.storage,
-      yuan: variant.yuan,
-      price: priceFromYuan(variant.yuan, pricing, shipping),
-      markup: sellingMarkupForYuan(variant.yuan, pricing),
+      cost: variant.yuan,
+      currency,
+      price: priceFromSupplierCost(variant.yuan, currency, pricing, shipping),
+      markup: sellingMarkupForSupplierCost(variant.yuan, currency, pricing),
     }));
   }
 
-  const yuan = Number(form.yuanCost);
-  if (!Number.isFinite(yuan) || yuan <= 0) {
+  const cost = Number(form.yuanCost);
+  if (!Number.isFinite(cost) || cost <= 0) {
     return [];
   }
 
   return [
     {
       storage: form.storage.trim() || "Default",
-      yuan,
-      price: priceFromYuan(yuan, pricing, shipping),
-      markup: sellingMarkupForYuan(yuan, pricing),
+      cost,
+      currency,
+      price: priceFromSupplierCost(cost, currency, pricing, shipping),
+      markup: sellingMarkupForSupplierCost(cost, currency, pricing),
     },
   ];
 }
@@ -335,6 +352,7 @@ export function mergeSpecificationsWithStorage(
 export function adminProductToForm(product: {
   name: string;
   yuanCost: number | null;
+  costCurrency?: SupplierCostCurrency;
   image: string;
   description: string;
   filterSlug: string | null;
@@ -353,6 +371,7 @@ export function adminProductToForm(product: {
 
   return {
     name: stripConditionSuffix(product.name),
+    costCurrency: product.costCurrency ?? "cny",
     yuanCost: hasVariants ? "" : String(product.yuanCost ?? ""),
     image: product.image,
     description: product.description,
@@ -379,6 +398,7 @@ export function adminProductToForm(product: {
 
 export const emptyProductForm: ProductFormState = {
   name: "",
+  costCurrency: "cny",
   yuanCost: "",
   image: "/product-images/",
   description: "",

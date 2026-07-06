@@ -27,6 +27,7 @@ import {
   type InternationalShippingNgn,
   type LocalDeliveryNgn,
 } from "@/lib/product-shipping";
+import { parseCostCurrency } from "@/lib/pricing";
 import { revalidateStorefrontCatalog } from "@/lib/storefront-revalidation";
 
 function parseProductShippingInput(
@@ -83,6 +84,12 @@ export async function POST(req: NextRequest) {
   const filterSlugs = parseFilterSlugsInput(body.filterSlugs, body.filterSlug);
   const yuanRaw = body.yuanCost != null ? String(body.yuanCost).trim() : "";
   const yuanCost = yuanRaw ? Number(yuanRaw) : undefined;
+  let costCurrency;
+  try {
+    costCurrency = parseCostCurrency(body.costCurrency ?? "cny");
+  } catch {
+    return NextResponse.json({ error: "Invalid supplier cost currency" }, { status: 400 });
+  }
   const badge = body.badge ? String(body.badge).trim() : undefined;
   const storage = body.storage ? String(body.storage).trim() : undefined;
   const colors = parseColorsInput(body.colors);
@@ -116,12 +123,12 @@ export async function POST(req: NextRequest) {
   if (!hasVariants) {
     if (yuanCost == null || !Number.isFinite(yuanCost) || yuanCost <= 0) {
       return NextResponse.json(
-        { error: "yuanCost is required when storage variants are not set" },
+        { error: "Supplier cost is required when storage variants are not set" },
         { status: 400 }
       );
     }
   } else if (yuanCost != null && (!Number.isFinite(yuanCost) || yuanCost <= 0)) {
-    return NextResponse.json({ error: "yuanCost must be a positive number" }, { status: 400 });
+    return NextResponse.json({ error: "Supplier cost must be a positive number" }, { status: 400 });
   }
 
   let shipping: {
@@ -149,6 +156,7 @@ export async function POST(req: NextRequest) {
     const created = await createAdminProduct({
       name,
       yuanCost,
+      costCurrency,
       image,
       description,
       filterSlugs,
@@ -171,7 +179,7 @@ export async function POST(req: NextRequest) {
       }
       if (error.message === "INVALID_YUAN") {
         return NextResponse.json(
-          { error: "Set yuan cost or at least one storage:yuan variant" },
+          { error: "Set supplier cost or at least one storage:cost variant" },
           { status: 400 }
         );
       }
@@ -253,6 +261,9 @@ function buildUpdateInput(body: Record<string, unknown>): UpdateProductInput {
   if (body.storageVariants !== undefined) {
     input.storageVariants = parseStorageVariantsField(body.storageVariants);
   }
+  if (body.costCurrency !== undefined) {
+    input.costCurrency = parseCostCurrency(body.costCurrency);
+  }
   if (body.chinaShippingYuan !== undefined) {
     input.chinaShippingYuan = parseChinaShippingYuan(body.chinaShippingYuan);
   }
@@ -287,7 +298,10 @@ export async function PUT(req: NextRequest) {
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "INVALID_YUAN") {
-        return NextResponse.json({ error: "yuanCost must be a positive number" }, { status: 400 });
+        return NextResponse.json({ error: "Supplier cost must be a positive number" }, { status: 400 });
+      }
+      if (error.message === "INVALID_COST_CURRENCY") {
+        return NextResponse.json({ error: "Invalid supplier cost currency" }, { status: 400 });
       }
       if (error.message === "INVALID_STORAGE_VARIANTS") {
         return NextResponse.json(
@@ -342,7 +356,10 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ error: "Product not found" }, { status: 404 });
       }
       if (error.message === "INVALID_YUAN") {
-        return NextResponse.json({ error: "yuanCost must be a positive number" }, { status: 400 });
+        return NextResponse.json({ error: "Supplier cost must be a positive number" }, { status: 400 });
+      }
+      if (error.message === "INVALID_COST_CURRENCY") {
+        return NextResponse.json({ error: "Invalid supplier cost currency" }, { status: 400 });
       }
       if (
         error.message === "INVALID_CHINA_SHIPPING" ||

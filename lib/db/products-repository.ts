@@ -9,7 +9,7 @@ import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
 import { slugForProductId, slugifyProductName, catalogProductIdForSlug, resolveStorefrontProductSlug } from "@/lib/product-slug";
 import { fetchColorsByProductIds, fetchColorsForProduct } from "@/lib/db/colors-repository";
 import { fetchPricingConfig } from "@/lib/db/pricing-config-repository";
-import { priceFromYuan, type PricingConfig } from "@/lib/pricing";
+import { priceFromSupplierCost, parseCostCurrency, type PricingConfig, type SupplierCostCurrency } from "@/lib/pricing";
 import {
   defaultShippingForProductName,
   productShippingFromRow,
@@ -44,6 +44,7 @@ interface ProductRow {
   name: string;
   price: number;
   yuan_cost: string | null;
+  cost_currency: string | null;
   original_price: number | null;
   image: string;
   badge: string | null;
@@ -74,7 +75,7 @@ async function fetchAllProductRows(): Promise<ProductRow[]> {
   try {
     const { rows } = await sql<ProductRow>`
       SELECT
-        id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
+        id, slug, filter_slug, name, price, yuan_cost, cost_currency, original_price, image, badge,
         description, features, specifications, sort_order,
         china_shipping_yuan, international_shipping_ngn, local_delivery_ngn
       FROM products
@@ -89,7 +90,7 @@ async function fetchAllProductRows(): Promise<ProductRow[]> {
     );
     const { rows } = await sql<ProductRowWithoutShipping>`
       SELECT
-        id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
+        id, slug, filter_slug, name, price, yuan_cost, cost_currency, original_price, image, badge,
         description, features, specifications, sort_order
       FROM products
       ORDER BY sort_order ASC, id ASC
@@ -102,7 +103,7 @@ async function fetchProductRowById(id: string): Promise<ProductRow | undefined> 
   try {
     const { rows } = await sql<ProductRow>`
       SELECT
-        id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
+        id, slug, filter_slug, name, price, yuan_cost, cost_currency, original_price, image, badge,
         description, features, specifications, sort_order,
         china_shipping_yuan, international_shipping_ngn, local_delivery_ngn
       FROM products
@@ -114,7 +115,7 @@ async function fetchProductRowById(id: string): Promise<ProductRow | undefined> 
     if (!isMissingShippingColumnsError(error)) throw error;
     const { rows } = await sql<ProductRowWithoutShipping>`
       SELECT
-        id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
+        id, slug, filter_slug, name, price, yuan_cost, cost_currency, original_price, image, badge,
         description, features, specifications, sort_order
       FROM products
       WHERE id = ${id}
@@ -130,7 +131,7 @@ async function fetchProductRowBySlug(slug: string): Promise<ProductRow | undefin
   try {
     const { rows } = await sql<ProductRow>`
       SELECT
-        id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
+        id, slug, filter_slug, name, price, yuan_cost, cost_currency, original_price, image, badge,
         description, features, specifications, sort_order,
         china_shipping_yuan, international_shipping_ngn, local_delivery_ngn
       FROM products
@@ -142,7 +143,7 @@ async function fetchProductRowBySlug(slug: string): Promise<ProductRow | undefin
     if (!isMissingShippingColumnsError(error)) throw error;
     const { rows } = await sql<ProductRowWithoutShipping>`
       SELECT
-        id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge,
+        id, slug, filter_slug, name, price, yuan_cost, cost_currency, original_price, image, badge,
         description, features, specifications, sort_order
       FROM products
       WHERE LOWER(slug) = ${normalized}
@@ -161,14 +162,24 @@ interface StorageRow {
   sort_order: number;
 }
 
+function resolveCostCurrency(raw: string | null | undefined): SupplierCostCurrency {
+  if (!raw) return "cny";
+  try {
+    return parseCostCurrency(raw);
+  } catch {
+    return "cny";
+  }
+}
+
 function resolvePrice(
-  yuanCost: number | null,
+  supplierCost: number | null,
   storedPrice: number,
   config: PricingConfig,
-  shipping: ProductShippingCosts
+  shipping: ProductShippingCosts,
+  costCurrency: SupplierCostCurrency = "cny"
 ): number {
-  if (yuanCost != null && !Number.isNaN(yuanCost)) {
-    return priceFromYuan(yuanCost, config, shipping);
+  if (supplierCost != null && !Number.isNaN(supplierCost)) {
+    return priceFromSupplierCost(supplierCost, costCurrency, config, shipping);
   }
   return storedPrice;
 }
@@ -208,6 +219,7 @@ function mapRowToProduct(
   const primaryFilterSlug =
     row.filter_slug ?? primaryConditionFilterSlug(resolvedFilterSlugs) ?? undefined;
   const baseYuan = row.yuan_cost != null ? Number(row.yuan_cost) : null;
+  const costCurrency = resolveCostCurrency(row.cost_currency);
   const storageOptions: StorageOption[] | undefined =
     storageRows.length > 0
       ? storageRows.map((option) => {
@@ -219,13 +231,14 @@ function mapRowToProduct(
           );
           return {
             storage: option.storage,
-            price: resolvePrice(yuan, option.price, config, shipping),
+            price: resolvePrice(yuan, option.price, config, shipping, costCurrency),
           };
         })
       : undefined;
 
   const listingPrice =
-    storageOptions?.[0]?.price ?? resolvePrice(baseYuan, row.price, config, shipping);
+    storageOptions?.[0]?.price ??
+    resolvePrice(baseYuan, row.price, config, shipping, costCurrency);
 
   return {
     id: row.id,
@@ -344,7 +357,7 @@ export async function upsertCatalogProducts(products: SeedProductInput[]): Promi
     const slug = product.slug || slugForProductId(product.id, product.name);
     await sql.query(
       `INSERT INTO products (
-        id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge, description,
+        id, slug, filter_slug, name, price, yuan_cost, cost_currency, original_price, image, badge, description,
         features, specifications, sort_order, updated_at
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12::jsonb, $13, NOW())
       ON CONFLICT (id) DO UPDATE SET
@@ -418,6 +431,7 @@ export async function fetchAdminProducts(): Promise<AdminProductRecord[]> {
 
   return rows.map((row) => {
     const yuanCost = row.yuan_cost != null ? Number(row.yuan_cost) : null;
+    const costCurrency = resolveCostCurrency(row.cost_currency);
     const shipping = productShippingFromRow(row);
     const options = storageByProduct.get(row.id) ?? [];
     const filterSlugs =
@@ -430,14 +444,16 @@ export async function fetchAdminProducts(): Promise<AdminProductRecord[]> {
           firstOption.yuan_cost != null ? Number(firstOption.yuan_cost) : yuanCost,
           firstOption.price,
           config,
-          shipping
+          shipping,
+          costCurrency
         )
-      : resolvePrice(yuanCost, row.price, config, shipping);
+      : resolvePrice(yuanCost, row.price, config, shipping, costCurrency);
     return {
       id: row.id,
       slug: row.slug ?? slugForProductId(row.id, row.name),
       name: resolveProductDisplayName(row.name, primaryFilterSlug, filterSlugs),
       yuanCost,
+      costCurrency,
       price: listPrice,
       filterSlug: primaryFilterSlug,
       filterSlugs,
@@ -485,6 +501,7 @@ export async function fetchAdminProductSummaries(): Promise<
 export interface CreateProductInput {
   name: string;
   yuanCost?: number;
+  costCurrency?: SupplierCostCurrency;
   image: string;
   description: string;
   filterSlugs: string[];
@@ -505,6 +522,7 @@ export interface AdminProductRecord {
   slug: string;
   name: string;
   yuanCost: number | null;
+  costCurrency: SupplierCostCurrency;
   price: number;
   filterSlug: string | null;
   filterSlugs: string[];
@@ -648,6 +666,7 @@ interface PersistProductRowFields {
   name: string;
   price: number;
   yuanCost: number;
+  costCurrency: SupplierCostCurrency;
   image: string;
   badge: string | null;
   description: string;
@@ -665,6 +684,7 @@ async function persistAdminProductRowUpdate(fields: PersistProductRowFields): Pr
     name,
     price,
     yuanCost,
+    costCurrency,
     image,
     badge,
     description,
@@ -680,6 +700,7 @@ async function persistAdminProductRowUpdate(fields: PersistProductRowFields): Pr
     name,
     price,
     yuanCost,
+    costCurrency,
     image,
     badge,
     description,
@@ -695,14 +716,15 @@ async function persistAdminProductRowUpdate(fields: PersistProductRowFields): Pr
         name = $4,
         price = $5,
         yuan_cost = $6,
-        image = $7,
-        badge = $8,
-        description = $9,
-        features = $10::jsonb,
-        specifications = $11::jsonb,
-        china_shipping_yuan = $12,
-        international_shipping_ngn = $13,
-        local_delivery_ngn = $14,
+        cost_currency = $7,
+        image = $8,
+        badge = $9,
+        description = $10,
+        features = $11::jsonb,
+        specifications = $12::jsonb,
+        china_shipping_yuan = $13,
+        international_shipping_ngn = $14,
+        local_delivery_ngn = $15,
         updated_at = NOW()
       WHERE id = $1`,
       [
@@ -721,13 +743,14 @@ async function persistAdminProductRowUpdate(fields: PersistProductRowFields): Pr
         name = $4,
         price = $5,
         yuan_cost = $6,
-        image = $7,
-        badge = $8,
-        description = $9,
-        features = $10::jsonb,
-        specifications = $11::jsonb,
-        china_shipping_yuan = $12,
-        international_shipping_ngn = $13,
+        cost_currency = $7,
+        image = $8,
+        badge = $9,
+        description = $10,
+        features = $11::jsonb,
+        specifications = $12::jsonb,
+        china_shipping_yuan = $13,
+        international_shipping_ngn = $14,
         updated_at = NOW()
       WHERE id = $1`,
       [...coreParams, shipping.chinaShippingYuan, shipping.internationalShippingNgn]
@@ -741,11 +764,12 @@ async function persistAdminProductRowUpdate(fields: PersistProductRowFields): Pr
         name = $4,
         price = $5,
         yuan_cost = $6,
-        image = $7,
-        badge = $8,
-        description = $9,
-        features = $10::jsonb,
-        specifications = $11::jsonb,
+        cost_currency = $7,
+        image = $8,
+        badge = $9,
+        description = $10,
+        features = $11::jsonb,
+        specifications = $12::jsonb,
         updated_at = NOW()
       WHERE id = $1`,
       coreParams
@@ -795,7 +819,8 @@ async function replaceProductStorageOptions(
   productId: string,
   variants: Array<{ storage: string; yuan: number }>,
   config: PricingConfig,
-  shipping: ProductShippingCosts
+  shipping: ProductShippingCosts,
+  costCurrency: SupplierCostCurrency = "cny"
 ): Promise<void> {
   await ensureCatalogSchema();
 
@@ -805,7 +830,7 @@ async function replaceProductStorageOptions(
 
   for (let index = 0; index < normalized.length; index += 1) {
     const variant = normalized[index];
-    const variantPrice = priceFromYuan(variant.yuan, config, shipping);
+    const variantPrice = priceFromSupplierCost(variant.yuan, costCurrency, config, shipping);
     await sql`
       INSERT INTO product_storage_options (product_id, storage, price, yuan_cost, sort_order)
       VALUES (
@@ -833,7 +858,8 @@ async function syncStorageOptionPrices(
   productId: string,
   yuanCost: number,
   config: PricingConfig,
-  shipping: ProductShippingCosts
+  shipping: ProductShippingCosts,
+  costCurrency: SupplierCostCurrency = "cny"
 ): Promise<void> {
   const { rows: storageRows } = await sql<StorageRow>`
     SELECT product_id, storage, price, yuan_cost, sort_order
@@ -849,7 +875,7 @@ async function syncStorageOptionPrices(
     yuan:
       storageOptionYuanCost(productId, option.storage, option.yuan_cost, yuanCost) ?? yuanCost,
   }));
-  await replaceProductStorageOptions(productId, variants, config, shipping);
+  await replaceProductStorageOptions(productId, variants, config, shipping, costCurrency);
 }
 
 export async function createAdminProduct(input: CreateProductInput): Promise<{
@@ -893,7 +919,8 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
           localDeliveryNgn: input.localDeliveryNgn,
         }
       : defaultShippingForProductName(name);
-  const price = priceFromYuan(baseYuan, config, shipping);
+  const costCurrency = input.costCurrency ?? "cny";
+  const price = priceFromSupplierCost(baseYuan, costCurrency, config, shipping);
   const isNew = isNewProductFromFilterSlugs(filterSlugs);
   const isIphone = /iphone/i.test(name);
   let features =
@@ -916,10 +943,10 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
 
   await sql.query(
     `INSERT INTO products (
-      id, slug, filter_slug, name, price, yuan_cost, original_price, image, badge, description,
+      id, slug, filter_slug, name, price, yuan_cost, cost_currency, original_price, image, badge, description,
       features, specifications, sort_order, china_shipping_yuan, international_shipping_ngn,
       local_delivery_ngn, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, $8, $9, $10::jsonb, $11::jsonb, $12, $13, $14, $15, NOW())`,
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, $8, $9, $10, $11::jsonb, $12::jsonb, $13, $14, $15, $16, NOW())`,
     [
       id,
       slug,
@@ -927,6 +954,7 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
       name,
       price,
       baseYuan,
+      costCurrency,
       input.image.trim(),
       input.badge?.trim() || null,
       input.description.trim(),
@@ -940,7 +968,7 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
   );
 
   if (storageVariants.length > 0) {
-    await replaceProductStorageOptions(id, storageVariants, config, shipping);
+    await replaceProductStorageOptions(id, storageVariants, config, shipping, costCurrency);
   }
 
   await replaceProductFilterSlugs(id, filterSlugs);
@@ -1008,12 +1036,14 @@ export async function updateAdminProduct(
   const shouldSyncStorage =
     input.storageVariants !== undefined ||
     input.storage !== undefined ||
-    input.yuanCost !== undefined;
+    input.yuanCost !== undefined ||
+    input.costCurrency !== undefined;
 
   const shouldSyncShipping =
     input.chinaShippingYuan !== undefined ||
     input.internationalShippingNgn !== undefined ||
-    input.localDeliveryNgn !== undefined;
+    input.localDeliveryNgn !== undefined ||
+    input.costCurrency !== undefined;
 
   let storageVariantsForSave: Array<{ storage: string; yuan: number }> | undefined;
   let yuanCost =
@@ -1055,8 +1085,11 @@ export async function updateAdminProduct(
     name,
   });
 
+  const costCurrency =
+    input.costCurrency ?? resolveCostCurrency(existing.cost_currency);
+
   const storage = storageInput;
-  const price = priceFromYuan(yuanCost, config, shipping);
+  const price = priceFromSupplierCost(yuanCost, costCurrency, config, shipping);
   let specifications = resolveProductSpecifications({
     specifications: input.specifications,
     storage,
@@ -1081,7 +1114,8 @@ export async function updateAdminProduct(
       productId,
       storageVariantsForSave ?? [],
       config,
-      shipping
+      shipping,
+      costCurrency
     );
   } else if (shouldSyncShipping) {
     const { rows: storageRows } = await sql<StorageRow>`
@@ -1097,7 +1131,7 @@ export async function updateAdminProduct(
         yuan:
           storageOptionYuanCost(productId, option.storage, option.yuan_cost, yuanCost) ?? yuanCost,
       }));
-      await replaceProductStorageOptions(productId, variants, config, shipping);
+      await replaceProductStorageOptions(productId, variants, config, shipping, costCurrency);
     }
   }
 
@@ -1112,6 +1146,7 @@ export async function updateAdminProduct(
     name,
     price,
     yuanCost,
+    costCurrency,
     image,
     badge,
     description,
@@ -1125,7 +1160,7 @@ export async function updateAdminProduct(
     await replaceProductColors(productId, input.colors);
   }
 
-  await syncStorageOptionPrices(productId, yuanCost, config, shipping);
+  await syncStorageOptionPrices(productId, yuanCost, config, shipping, costCurrency);
 
   const products = await fetchAdminProducts();
   const updated = products.find((product) => product.id === productId);
@@ -1284,7 +1319,7 @@ export async function insertProductIfAbsent(
 
   const config = await fetchPricingConfig();
   const shipping = defaultShippingForProductName(input.name);
-  const price = priceFromYuan(input.yuanCost, config, shipping);
+  const price = priceFromSupplierCost(input.yuanCost, "cny", config, shipping);
   const sortOrder = await nextSortOrder();
 
   await sql.query(
