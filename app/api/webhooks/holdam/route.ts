@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Holdam from "@holdam/ts";
 import { isPostgresConfigured } from "@/lib/db/client";
+import { isHoldamBypassEnabled } from "@/lib/holdam/config";
 import { parseHoldamWebhookData, resolveWebhookBuyerPhone } from "@/lib/holdam/webhook-payload";
 import { processReferralWebhook } from "@/lib/referral/service";
 import { ensureReferralReady } from "@/lib/referral/db-ready";
@@ -9,6 +10,11 @@ import { ensureOrdersReady } from "@/lib/orders/db-ready";
 
 export async function POST(req: NextRequest) {
   try {
+    if (isHoldamBypassEnabled()) {
+      console.log("[Webhook][holdam] Skipped; BYPASS_HOLDAM is enabled");
+      return NextResponse.json({ received: true, skipped: "holdam_bypass" });
+    }
+
     const apiKey = process.env.HOLDAM_API_KEY;
     const webhookSecret = process.env.HOLDAM_WEBHOOK_SECRET;
 
