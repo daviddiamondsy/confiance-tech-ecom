@@ -12,7 +12,7 @@ import {
 
 const faqs = [
   {
-    question: "What does brand new and UK Grade A mean?",
+    question: "What does brand new and Grade A mean?",
     answer: GRADE_A_FAQ_ANSWER,
   },
   {

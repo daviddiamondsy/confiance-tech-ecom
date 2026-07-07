@@ -25,7 +25,7 @@ export const STOREFRONT_TRUST_FEATURES: StorefrontTrustFeature[] = [
   },
   {
     icon: Shield,
-    title: "Brand New & UK Grade A",
+    title: "Brand New & Grade A",
     description: "Computing devices inspected before every shipment",
   },
 ];

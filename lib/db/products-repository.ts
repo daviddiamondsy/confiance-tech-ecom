@@ -964,8 +964,8 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
     (isNew
       ? ["Brand new product", "Inspected, tested, and certified"]
       : isIphone
-        ? [BATTERY_HEALTH_FEATURE, "UK Grade A condition with accessories included", "Inspected, tested, and certified"]
-        : ["UK Grade A condition with accessories included", "Inspected, tested, and certified"]);
+        ? [BATTERY_HEALTH_FEATURE, "Grade A condition with accessories included", "Inspected, tested, and certified"]
+        : ["Grade A condition with accessories included", "Inspected, tested, and certified"]);
   let specifications = resolveProductSpecifications({
     specifications: input.specifications,
     storage,

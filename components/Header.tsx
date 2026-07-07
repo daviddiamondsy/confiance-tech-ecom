@@ -44,7 +44,7 @@ export default function Header() {
       <div className="bg-gradient-to-r from-primary-600 via-violet-600 to-primary-600 text-white text-center py-1.5 px-4 text-xs font-medium">
         <span className="inline-flex items-center gap-1.5">
           <Zap className="h-3 w-3 text-yellow-300" />
-          Fast nationwide delivery · Brand new &amp; UK Grade A devices
+          Fast nationwide delivery · Brand new &amp; Grade A devices
           <Zap className="h-3 w-3 text-yellow-300" />
         </span>
       </div>

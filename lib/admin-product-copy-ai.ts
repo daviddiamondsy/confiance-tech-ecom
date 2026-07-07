@@ -140,7 +140,7 @@ function buildUserPrompt(input: GenerateProductCopyInput): string {
   return lines.join("\n");
 }
 
-const SYSTEM_PROMPT = `You write product copy for Confiance Tech, a Nigerian e-commerce store selling brand new and UK Grade A phones and laptops.
+const SYSTEM_PROMPT = `You write product copy for Confiance Tech, a Nigerian e-commerce store selling brand new and Grade A phones and laptops.
 
 Return JSON only with this shape:
 {
@@ -155,9 +155,9 @@ Rules:
 - specifications: 5-8 rows as label/value pairs (Display, Processor, Camera, Battery, Connectivity). Use title case labels.
 - Do NOT include a Storage specification row (storage is managed separately).
 - For all iPhones: include "Unlocked" in features and mention Unlocked in the Connectivity specification value.
-- For Like New / UK Grade A iPhones: include "90+ Battery Health" in features and a Battery health spec row with value "90%+".
+- For Like New / Grade A iPhones: include "90+ Battery Health" in features and a Battery health spec row with value "90%+".
 - For New products: emphasize brand new, factory-fresh, inspected and certified.
-- For Like New products: emphasize UK Grade A, accessories included, inspected and certified.
+- For Like New products: emphasize Grade A, accessories included, inspected and certified.
 - Be accurate to the real product model. Do not invent wrong chip names or screen sizes.
 - Never use em dashes. Use periods or hyphens instead.
 - Plain text only. No markdown.`;
@@ -275,7 +275,7 @@ export function finalizeGeneratedProductCopy(
     description = `${description} Brand new product. Inspected, tested, and certified.`.trim();
   } else if (condition === "clean" && !/grade a|accessories/i.test(description)) {
     description =
-      `${description} UK Grade A condition with accessories included. Inspected, tested, and certified.`.trim();
+      `${description} Grade A condition with accessories included. Inspected, tested, and certified.`.trim();
   }
 
   if (isIphone) {
