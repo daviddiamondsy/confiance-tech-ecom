@@ -2,16 +2,23 @@ import { stripConditionSuffix } from "@/lib/product-condition-suffix";
 
 import {
   formatChinaShippingYuan,
+  formatInternationalShippingCurrency,
   formatInternationalShippingNgn,
+  formatInternationalShippingUsd,
   formatLocalDeliveryNgn,
   parseChinaShippingYuan,
+  parseInternationalShippingCurrency,
   parseInternationalShippingNgn,
+  parseInternationalShippingUsd,
   parseLocalDeliveryNgn,
   DEFAULT_CHINA_SHIPPING_YUAN,
   DEFAULT_INTERNATIONAL_SHIPPING_NGN,
+  DEFAULT_INTERNATIONAL_SHIPPING_USD,
   DEFAULT_LOCAL_DELIVERY_NGN,
   type ChinaShippingYuan,
+  type InternationalShippingCurrency,
   type InternationalShippingNgn,
+  type InternationalShippingUsd,
   type LocalDeliveryNgn,
 } from "@/lib/product-shipping";
 import {
@@ -36,7 +43,9 @@ export interface ProductFormState {
   features: string;
   specifications: string;
   chinaShippingYuan: string;
+  internationalShippingCurrency: InternationalShippingCurrency;
   internationalShippingNgn: string;
+  internationalShippingUsd: string;
   localDeliveryNgn: string;
 }
 
@@ -218,7 +227,11 @@ export function previewVariantPricesFromForm(
   try {
     shipping = {
       chinaShippingYuan: parseChinaShippingYuan(form.chinaShippingYuan),
+      internationalShippingCurrency: parseInternationalShippingCurrency(
+        form.internationalShippingCurrency
+      ),
       internationalShippingNgn: parseInternationalShippingNgn(form.internationalShippingNgn),
+      internationalShippingUsd: parseInternationalShippingUsd(form.internationalShippingUsd),
       localDeliveryNgn: parseLocalDeliveryNgn(form.localDeliveryNgn),
     };
   } catch {
@@ -364,7 +377,9 @@ export function adminProductToForm(product: {
   features: string[];
   specifications: Record<string, string>;
   chinaShippingYuan: number;
+  internationalShippingCurrency: InternationalShippingCurrency;
   internationalShippingNgn: number;
+  internationalShippingUsd: number;
   localDeliveryNgn: number;
 }): ProductFormState {
   const hasVariants = product.storageVariants.length > 0;
@@ -389,8 +404,14 @@ export function adminProductToForm(product: {
     features: product.features.join("\n"),
     specifications: formatSpecificationsInput(product.specifications),
     chinaShippingYuan: formatChinaShippingYuan(product.chinaShippingYuan as ChinaShippingYuan),
+    internationalShippingCurrency: formatInternationalShippingCurrency(
+      product.internationalShippingCurrency ?? "ngn"
+    ) as InternationalShippingCurrency,
     internationalShippingNgn: formatInternationalShippingNgn(
       product.internationalShippingNgn as InternationalShippingNgn
+    ),
+    internationalShippingUsd: formatInternationalShippingUsd(
+      product.internationalShippingUsd as InternationalShippingUsd
     ),
     localDeliveryNgn: formatLocalDeliveryNgn(product.localDeliveryNgn as LocalDeliveryNgn),
   };
@@ -410,6 +431,8 @@ export const emptyProductForm: ProductFormState = {
   features: "",
   specifications: "",
   chinaShippingYuan: String(DEFAULT_CHINA_SHIPPING_YUAN),
+  internationalShippingCurrency: "ngn",
   internationalShippingNgn: String(DEFAULT_INTERNATIONAL_SHIPPING_NGN),
+  internationalShippingUsd: String(DEFAULT_INTERNATIONAL_SHIPPING_USD),
   localDeliveryNgn: String(DEFAULT_LOCAL_DELIVERY_NGN),
 };

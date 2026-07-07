@@ -18,6 +18,7 @@ describe("priceFromSupplierCost", () => {
 
   it("matches Cov Tech GBP formula for S25 Ultra 256GB", () => {
     const shipping = {
+      ...DEFAULT_PRODUCT_SHIPPING,
       chinaShippingYuan: 0 as const,
       internationalShippingNgn: 25_000 as const,
       localDeliveryNgn: 10_000 as const,
@@ -57,5 +58,24 @@ describe("priceFromSupplierCost", () => {
     });
 
     expect(withChina).toBe(withoutChina);
+  });
+
+  it("uses USD international shipping when currency is usd", () => {
+    const ngnShipping = priceFromSupplierCost(400, "usd", DEFAULT_PRICING_CONFIG, {
+      chinaShippingYuan: 0,
+      internationalShippingCurrency: "ngn",
+      internationalShippingNgn: 25_000,
+      internationalShippingUsd: 15,
+      localDeliveryNgn: 10_000,
+    });
+    const usdShipping = priceFromSupplierCost(400, "usd", DEFAULT_PRICING_CONFIG, {
+      chinaShippingYuan: 0,
+      internationalShippingCurrency: "usd",
+      internationalShippingNgn: 25_000,
+      internationalShippingUsd: 15,
+      localDeliveryNgn: 10_000,
+    });
+
+    expect(usdShipping).toBe(ngnShipping);
   });
 });

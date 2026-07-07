@@ -19,13 +19,13 @@ import {
   type UpdateProductInput,
 } from "@/lib/db/products-repository";
 import {
-  defaultShippingForProductName,
   parseChinaShippingYuan,
+  parseInternationalShippingCurrency,
   parseInternationalShippingNgn,
+  parseInternationalShippingUsd,
   parseLocalDeliveryNgn,
-  type ChinaShippingYuan,
-  type InternationalShippingNgn,
-  type LocalDeliveryNgn,
+  parseProductShippingCosts,
+  type ProductShippingCosts,
 } from "@/lib/product-shipping";
 import { parseCostCurrency } from "@/lib/pricing";
 import { revalidateStorefrontCatalog } from "@/lib/storefront-revalidation";
@@ -33,21 +33,19 @@ import { revalidateStorefrontCatalog } from "@/lib/storefront-revalidation";
 function parseProductShippingInput(
   body: Record<string, unknown>,
   productName: string
-): {
-  chinaShippingYuan: ChinaShippingYuan;
-  internationalShippingNgn: InternationalShippingNgn;
-  localDeliveryNgn: LocalDeliveryNgn;
-} {
-  const defaults = defaultShippingForProductName(productName);
-  const chinaRaw = body.chinaShippingYuan ?? defaults.chinaShippingYuan;
-  const internationalRaw = body.internationalShippingNgn ?? defaults.internationalShippingNgn;
-  const localDeliveryRaw = body.localDeliveryNgn ?? defaults.localDeliveryNgn;
+): ProductShippingCosts {
+  return parseProductShippingCosts(body, productName);
+}
 
-  return {
-    chinaShippingYuan: parseChinaShippingYuan(chinaRaw),
-    internationalShippingNgn: parseInternationalShippingNgn(internationalRaw),
-    localDeliveryNgn: parseLocalDeliveryNgn(localDeliveryRaw),
-  };
+function isInvalidShippingError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    (error.message === "INVALID_CHINA_SHIPPING" ||
+      error.message === "INVALID_INTERNATIONAL_SHIPPING" ||
+      error.message === "INVALID_INTERNATIONAL_SHIPPING_USD" ||
+      error.message === "INVALID_INTERNATIONAL_SHIPPING_CURRENCY" ||
+      error.message === "INVALID_LOCAL_DELIVERY")
+  );
 }
 
 function postgresRequired() {
@@ -131,21 +129,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Supplier cost must be a positive number" }, { status: 400 });
   }
 
-  let shipping: {
-    chinaShippingYuan: ChinaShippingYuan;
-    internationalShippingNgn: InternationalShippingNgn;
-    localDeliveryNgn: LocalDeliveryNgn;
-  };
+  let shipping: ProductShippingCosts;
 
   try {
     shipping = parseProductShippingInput(body, name);
   } catch (error) {
-    if (
-      error instanceof Error &&
-      (error.message === "INVALID_CHINA_SHIPPING" ||
-        error.message === "INVALID_INTERNATIONAL_SHIPPING" ||
-        error.message === "INVALID_LOCAL_DELIVERY")
-    ) {
+    if (isInvalidShippingError(error)) {
       return NextResponse.json({ error: "Invalid shipping option selected" }, { status: 400 });
     }
     throw error;
@@ -183,11 +172,7 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      if (
-        error.message === "INVALID_CHINA_SHIPPING" ||
-        error.message === "INVALID_INTERNATIONAL_SHIPPING" ||
-        error.message === "INVALID_LOCAL_DELIVERY"
-      ) {
+      if (isInvalidShippingError(error)) {
         return NextResponse.json({ error: "Invalid shipping option selected" }, { status: 400 });
       }
       if (error.message === "DUPLICATE_STORAGE_VARIANT") {
@@ -267,8 +252,16 @@ function buildUpdateInput(body: Record<string, unknown>): UpdateProductInput {
   if (body.chinaShippingYuan !== undefined) {
     input.chinaShippingYuan = parseChinaShippingYuan(body.chinaShippingYuan);
   }
+  if (body.internationalShippingCurrency !== undefined) {
+    input.internationalShippingCurrency = parseInternationalShippingCurrency(
+      body.internationalShippingCurrency
+    );
+  }
   if (body.internationalShippingNgn !== undefined) {
     input.internationalShippingNgn = parseInternationalShippingNgn(body.internationalShippingNgn);
+  }
+  if (body.internationalShippingUsd !== undefined) {
+    input.internationalShippingUsd = parseInternationalShippingUsd(body.internationalShippingUsd);
   }
   if (body.localDeliveryNgn !== undefined) {
     input.localDeliveryNgn = parseLocalDeliveryNgn(body.localDeliveryNgn);
@@ -312,11 +305,7 @@ export async function PUT(req: NextRequest) {
           { status: 400 }
         );
       }
-      if (
-        error.message === "INVALID_CHINA_SHIPPING" ||
-        error.message === "INVALID_INTERNATIONAL_SHIPPING" ||
-        error.message === "INVALID_LOCAL_DELIVERY"
-      ) {
+      if (isInvalidShippingError(error)) {
         return NextResponse.json({ error: "Invalid shipping option selected" }, { status: 400 });
       }
     }
@@ -361,11 +350,7 @@ export async function PUT(req: NextRequest) {
       if (error.message === "INVALID_COST_CURRENCY") {
         return NextResponse.json({ error: "Invalid supplier cost currency" }, { status: 400 });
       }
-      if (
-        error.message === "INVALID_CHINA_SHIPPING" ||
-        error.message === "INVALID_INTERNATIONAL_SHIPPING" ||
-        error.message === "INVALID_LOCAL_DELIVERY"
-      ) {
+      if (isInvalidShippingError(error)) {
         return NextResponse.json({ error: "Invalid shipping option selected" }, { status: 400 });
       }
     }

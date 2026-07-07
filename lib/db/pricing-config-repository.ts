@@ -127,10 +127,13 @@ export async function recalculateAllPrices(config: PricingConfig): Promise<void>
     yuan_cost: string | null;
     cost_currency: string | null;
     china_shipping_yuan: number;
+    international_shipping_currency: string;
     international_shipping_ngn: number;
+    international_shipping_usd: number;
     local_delivery_ngn: number;
   }>`
-    SELECT id, name, yuan_cost, cost_currency, china_shipping_yuan, international_shipping_ngn, local_delivery_ngn
+    SELECT id, name, yuan_cost, cost_currency, china_shipping_yuan, international_shipping_currency,
+      international_shipping_ngn, international_shipping_usd, local_delivery_ngn
     FROM products
     WHERE yuan_cost IS NOT NULL
   `;
@@ -154,7 +157,9 @@ export async function recalculateAllPrices(config: PricingConfig): Promise<void>
     product_yuan_cost: string | null;
     cost_currency: string | null;
     china_shipping_yuan: number;
+    international_shipping_currency: string;
     international_shipping_ngn: number;
+    international_shipping_usd: number;
     local_delivery_ngn: number;
     name: string;
   }>`
@@ -166,7 +171,9 @@ export async function recalculateAllPrices(config: PricingConfig): Promise<void>
       p.yuan_cost AS product_yuan_cost,
       p.cost_currency,
       p.china_shipping_yuan,
+      p.international_shipping_currency,
       p.international_shipping_ngn,
+      p.international_shipping_usd,
       p.local_delivery_ngn,
       p.name
     FROM product_storage_options o
