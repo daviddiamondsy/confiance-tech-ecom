@@ -31,6 +31,8 @@ export function isMissingShippingColumnsError(error: unknown): boolean {
   return (
     message.includes("china_shipping_yuan") ||
     message.includes("international_shipping_ngn") ||
+    message.includes("international_shipping_usd") ||
+    message.includes("international_shipping_currency") ||
     message.includes("local_delivery_ngn") ||
     (message.includes("column") && message.includes("does not exist"))
   );

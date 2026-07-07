@@ -1,5 +1,9 @@
 import type { ProductShippingCosts } from "@/lib/product-shipping";
-import { DEFAULT_PRODUCT_SHIPPING, totalShippingNgn } from "@/lib/product-shipping";
+import {
+  DEFAULT_PRODUCT_SHIPPING,
+  internationalShippingAmountNgn,
+  totalShippingNgn,
+} from "@/lib/product-shipping";
 
 export type SupplierCostCurrency = "cny" | "gbp" | "usd";
 
@@ -65,13 +69,13 @@ export function fxRateForCurrency(
 /** Shipping included in cost-before-markup. CNY includes china shipping; GBP/USD do not. */
 export function shippingNgnForCostCurrency(
   shipping: ProductShippingCosts,
-  yuanToNaira: number,
+  config: PricingConfig,
   currency: SupplierCostCurrency
 ): number {
   if (currency === "cny") {
-    return totalShippingNgn(shipping, yuanToNaira);
+    return totalShippingNgn(shipping, config.yuanToNaira, config.usdToNaira);
   }
-  return shipping.internationalShippingNgn + shipping.localDeliveryNgn;
+  return internationalShippingAmountNgn(shipping, config.usdToNaira) + shipping.localDeliveryNgn;
 }
 
 /** Wholesale NGN used for expensive-item tier (GBP/USD: cost x rate only; CNY: yuan x rate). */
@@ -91,7 +95,7 @@ export function costBeforeMarkupNgn(
 ): number {
   return (
     wholesaleNgnForTier(cost, currency, config) +
-    shippingNgnForCostCurrency(shipping, config.yuanToNaira, currency)
+    shippingNgnForCostCurrency(shipping, config, currency)
   );
 }
 

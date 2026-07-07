@@ -81,6 +81,14 @@ export async function ensureCatalogSchema(): Promise<void> {
   `;
   await sqlDdl`
     ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS international_shipping_currency TEXT NOT NULL DEFAULT 'ngn'
+  `;
+  await sqlDdl`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS international_shipping_usd INTEGER NOT NULL DEFAULT 15
+  `;
+  await sqlDdl`
+    ALTER TABLE products
     ALTER COLUMN local_delivery_ngn SET DEFAULT 10000
   `;
 

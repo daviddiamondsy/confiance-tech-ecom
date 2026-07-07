@@ -4,8 +4,11 @@ import {
   DEFAULT_LOCAL_DELIVERY_NGN,
   DEFAULT_PRODUCT_SHIPPING,
   INTERNATIONAL_SHIPPING_NGN_OPTIONS,
+  INTERNATIONAL_SHIPPING_USD_OPTIONS,
   LOCAL_DELIVERY_NGN_OPTIONS,
+  internationalShippingAmountNgn,
   parseInternationalShippingNgn,
+  parseInternationalShippingUsd,
   productShippingFromRow,
   totalShippingNgn,
 } from "@/lib/product-shipping";
@@ -16,14 +19,41 @@ describe("product-shipping international", () => {
     expect(INTERNATIONAL_SHIPPING_NGN_OPTIONS).toContain(0);
   });
 
+  it("accepts USD international shipping options", () => {
+    expect(parseInternationalShippingUsd(15)).toBe(15);
+    expect(INTERNATIONAL_SHIPPING_USD_OPTIONS).toContain(0);
+  });
+
+  it("converts USD international shipping to NGN", () => {
+    const shipping = {
+      ...DEFAULT_PRODUCT_SHIPPING,
+      internationalShippingCurrency: "usd" as const,
+      internationalShippingUsd: 15 as (typeof INTERNATIONAL_SHIPPING_USD_OPTIONS)[number],
+    };
+
+    expect(internationalShippingAmountNgn(shipping, 1650)).toBe(24_750);
+  });
+
   it("includes zero international in total shipping NGN", () => {
     const shipping = {
       ...DEFAULT_PRODUCT_SHIPPING,
       internationalShippingNgn: 0 as (typeof INTERNATIONAL_SHIPPING_NGN_OPTIONS)[number],
     };
 
-    expect(totalShippingNgn(shipping, 207)).toBe(
+    expect(totalShippingNgn(shipping, 207, 1650)).toBe(
       shipping.chinaShippingYuan * 207 + shipping.localDeliveryNgn
+    );
+  });
+
+  it("includes USD international in total shipping NGN", () => {
+    const shipping = {
+      ...DEFAULT_PRODUCT_SHIPPING,
+      internationalShippingCurrency: "usd" as const,
+      internationalShippingUsd: 25 as (typeof INTERNATIONAL_SHIPPING_USD_OPTIONS)[number],
+    };
+
+    expect(totalShippingNgn(shipping, 207, 1650)).toBe(
+      shipping.chinaShippingYuan * 207 + 25 * 1650 + shipping.localDeliveryNgn
     );
   });
 });
@@ -35,8 +65,10 @@ describe("product-shipping local delivery", () => {
       localDeliveryNgn: 15_000 as (typeof LOCAL_DELIVERY_NGN_OPTIONS)[number],
     };
 
-    expect(totalShippingNgn(shipping, 207)).toBe(
-      shipping.chinaShippingYuan * 207 + shipping.internationalShippingNgn + 15_000
+    expect(totalShippingNgn(shipping, 207, 1650)).toBe(
+      shipping.chinaShippingYuan * 207 +
+        shipping.internationalShippingNgn +
+        15_000
     );
   });
 

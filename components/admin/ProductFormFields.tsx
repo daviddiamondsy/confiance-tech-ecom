@@ -10,6 +10,7 @@ import {
 import {
   CHINA_SHIPPING_YUAN_OPTIONS,
   INTERNATIONAL_SHIPPING_NGN_OPTIONS,
+  INTERNATIONAL_SHIPPING_USD_OPTIONS,
   LOCAL_DELIVERY_NGN_OPTIONS,
 } from "@/lib/product-shipping";
 import {
@@ -45,6 +46,7 @@ export default function ProductFormFields({
 }: ProductFormFieldsProps) {
   const usesStorageVariants = usesStorageVariantsField(form);
   const usesChinaShipping = form.costCurrency === "cny";
+  const usesUsdInternationalShipping = form.internationalShippingCurrency === "usd";
   const costCurrency = form.costCurrency as SupplierCostCurrency;
   const costUnitLabel = costCurrencyLabel(costCurrency);
   const [generatingCopy, setGeneratingCopy] = useState(false);
@@ -234,21 +236,66 @@ export default function ProductFormFields({
 
       <div>
         <label
+          htmlFor={`${idPrefix}-international-shipping-currency`}
+          className="block text-sm font-medium text-slate-700 mb-2"
+        >
+          International shipping currency
+        </label>
+        <select
+          id={`${idPrefix}-international-shipping-currency`}
+          className="input-field"
+          value={form.internationalShippingCurrency}
+          onChange={(event) =>
+            onChange({
+              internationalShippingCurrency: event.target.value as "ngn" | "usd",
+            })
+          }
+          required
+        >
+          <option value="ngn">NGN (₦)</option>
+          <option value="usd">USD ($)</option>
+        </select>
+        <p className="text-xs text-slate-500 mt-1">
+          USD amounts convert to naira using the USD to naira rate in Pricing settings.
+        </p>
+      </div>
+
+      <div>
+        <label
           htmlFor={`${idPrefix}-international-shipping`}
           className="block text-sm font-medium text-slate-700 mb-2"
         >
-          International shipping (NGN)
+          International shipping ({usesUsdInternationalShipping ? "USD" : "NGN"})
         </label>
         <select
           id={`${idPrefix}-international-shipping`}
           className="input-field"
-          value={form.internationalShippingNgn}
-          onChange={(event) => onChange({ internationalShippingNgn: event.target.value })}
+          value={
+            usesUsdInternationalShipping
+              ? form.internationalShippingUsd
+              : form.internationalShippingNgn
+          }
+          onChange={(event) =>
+            onChange(
+              usesUsdInternationalShipping
+                ? { internationalShippingUsd: event.target.value }
+                : { internationalShippingNgn: event.target.value }
+            )
+          }
           required
         >
-          {INTERNATIONAL_SHIPPING_NGN_OPTIONS.map((amount) => (
+          {(usesUsdInternationalShipping
+            ? INTERNATIONAL_SHIPPING_USD_OPTIONS
+            : INTERNATIONAL_SHIPPING_NGN_OPTIONS
+          ).map((amount) => (
             <option key={amount} value={amount}>
-              {amount === 0 ? "₦0 (none)" : `₦${amount.toLocaleString()}`}
+              {usesUsdInternationalShipping
+                ? amount === 0
+                  ? "$0 (none)"
+                  : `$${amount}`
+                : amount === 0
+                  ? "₦0 (none)"
+                  : `₦${amount.toLocaleString()}`}
             </option>
           ))}
         </select>
