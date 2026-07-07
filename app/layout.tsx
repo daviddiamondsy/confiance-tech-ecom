@@ -15,7 +15,7 @@ import { COMPANY_NAME } from "@/lib/storefront-brand";
 const META_PIXEL_ID = "YOUR_PIXEL_ID_HERE";
 
 export const metadata: Metadata = {
-  title: `${COMPANY_NAME} - Brand New and UK Grade A Computing Devices`,
+  title: `${COMPANY_NAME} - Brand New and Grade A Computing Devices`,
   description: STOREFRONT_META_DESCRIPTION,
 };
 

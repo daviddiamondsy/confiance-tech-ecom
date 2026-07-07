@@ -1,4 +1,4 @@
-/** Product name suffix by category: MacBooks are new; other devices are UK Grade A pre-owned. */
+/** Product name suffix by category: MacBooks are new; other devices are Grade A pre-owned. */
 export const PRODUCT_CONDITION_SUFFIX = {
   clean: "(Like New)",
   new: "(New)",
