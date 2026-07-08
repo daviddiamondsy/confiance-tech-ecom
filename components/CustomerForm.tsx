@@ -57,6 +57,8 @@ interface CustomerFormProps {
   productSlug?: string;
   /** Days until delivery due (Holdam deliveryDueAt); defaults to HOLDAM_DELIVERY_DAYS server-side */
   deliveryDays?: number;
+  /** Door-to-door delivery fee in NGN to add on top of the product price at checkout. */
+  doorDeliveryFee?: number;
 }
 
 export default function CustomerForm({
@@ -70,6 +72,7 @@ export default function CustomerForm({
   productColor,
   productSlug,
   deliveryDays,
+  doorDeliveryFee,
 }: CustomerFormProps) {
   const [formData, setFormData] = useState(initialOrderFormData);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -154,6 +157,7 @@ export default function CustomerForm({
           productStorage,
           productColor,
           deliveryDays,
+          doorDeliveryFeeNgn: doorDeliveryFee ?? 0,
           customerData: formData,
           referralCode,
           applyStoreCredit: applyStoreCredit && storeCreditBalanceNgn > 0,
@@ -434,7 +438,7 @@ export default function CustomerForm({
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="e.g. 08012345678"
+              placeholder="Your phone number"
               required
               className="input-field"
             />

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { productPath } from "@/lib/product-slug";
 import { storefrontProductBadge } from "@/lib/product-condition-suffix";
+import { storefrontDisplayPrice } from "@/lib/storefront-display-price";
 
 interface Product {
   id: string;
@@ -55,7 +56,7 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
               </Link>
               <div className="flex items-baseline gap-2 mb-4">
                 <span className="text-xl font-bold text-slate-900">
-                  ₦{product.price.toLocaleString()}
+                  ₦{storefrontDisplayPrice(product.price).toLocaleString()}
                 </span>
                 {product.originalPrice && (
                   <span className="text-sm text-slate-400 line-through">
@@ -112,7 +113,7 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
 
         <div className="flex items-baseline gap-2 mb-4 mt-auto pt-2">
           <span className="text-xl font-bold text-slate-900">
-            ₦{product.price.toLocaleString()}
+            ₦{storefrontDisplayPrice(product.price).toLocaleString()}
           </span>
           {product.originalPrice && (
             <span className="text-sm text-slate-400 line-through">
