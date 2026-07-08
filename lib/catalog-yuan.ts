@@ -21,6 +21,11 @@ export const CATALOG_YUAN: Record<
   "21": { yuan: 750 },
 };
 
+import { ACCESSORIES_FILTER_SLUG } from "@/lib/product-filter-tags";
+
+/** Product ids that also belong in the Accessories homepage/catalog group. */
+export const CATALOG_ACCESSORY_PRODUCT_IDS = ["21"] as const;
+
 /** Catalog filter tag slug per product id (New vs Like New). */
 export const CATALOG_FILTERS: Record<string, string> = {
   "6": "clean",
@@ -40,6 +45,18 @@ export const CATALOG_FILTERS: Record<string, string> = {
   "20": "clean",
   "21": "new",
 };
+
+export function catalogFilterSlugsForProduct(productId: string): string[] {
+  const slugs: string[] = [];
+  const conditionSlug = CATALOG_FILTERS[productId];
+  if (conditionSlug) {
+    slugs.push(conditionSlug);
+  }
+  if ((CATALOG_ACCESSORY_PRODUCT_IDS as readonly string[]).includes(productId)) {
+    slugs.push(ACCESSORIES_FILTER_SLUG);
+  }
+  return slugs;
+}
 
 /** Default colors shown on product pages (display only). */
 export const DEFAULT_PRODUCT_COLORS: Record<string, string[]> = {

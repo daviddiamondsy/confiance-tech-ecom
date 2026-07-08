@@ -4,12 +4,11 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 type ThankYouPageProps = {
-  searchParams?: Promise<{ orderRef?: string }>;
+  searchParams?: { orderRef?: string };
 };
 
-export default async function ThankYouPage({ searchParams }: ThankYouPageProps) {
-  const params = searchParams ? await searchParams : undefined;
-  const orderRef = params?.orderRef?.trim() || null;
+export default function ThankYouPage({ searchParams }: ThankYouPageProps) {
+  const orderRef = searchParams?.orderRef?.trim() || null;
 
   return (
     <div className="min-h-screen bg-surface-muted">

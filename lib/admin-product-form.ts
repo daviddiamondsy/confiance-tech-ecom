@@ -30,6 +30,7 @@ import {
   type SupplierCostCurrency,
 } from "@/lib/pricing";
 import {
+  parsePriceMode,
   variantSpecKey,
   type PriceMode,
   type VariantDimension,
@@ -335,13 +336,22 @@ export function badgeValueForProductUpdate(raw: unknown): string | null {
   return String(raw).trim() || null;
 }
 
+export function resolveAdminPriceModeFromBody(body: {
+  useDirectNairaPrice?: unknown;
+  priceMode?: unknown;
+}): PriceMode {
+  if (body.useDirectNairaPrice === true) return "direct_ngn";
+  if (body.useDirectNairaPrice === false) return "calculated";
+  return parsePriceMode(body.priceMode);
+}
+
 /** Strip single-price fields when storage variants drive pricing. */
 export function productFormPayloadForSave(form: ProductFormState): ProductFormState {
   if (!usesStorageVariantsField(form)) {
     if (form.useDirectNairaPrice) {
       return { ...form, yuanCost: "" };
     }
-    return form;
+    return { ...form, directNairaPrice: "" };
   }
   return { ...form, yuanCost: "", storage: "", directNairaPrice: "" };
 }

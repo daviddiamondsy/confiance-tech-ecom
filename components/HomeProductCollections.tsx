@@ -2,7 +2,7 @@ import ProductCard from "@/components/ProductCard";
 import type { Product } from "@/lib/product-utils";
 import { getHomeCollectionProducts, HOME_COLLECTION_SIZE } from "@/lib/product-catalog-utils";
 import {
-  filterProductsByBrand,
+  filterProductsByCollection,
   getHomepageCollectionOptions,
   homepageCollectionHref,
 } from "@/lib/homepage-collections";
@@ -26,7 +26,7 @@ function ProductGrid({ items }: { items: Product[] }) {
 export default function HomeProductCollections({ products }: HomeProductCollectionsProps) {
   const collections = getHomepageCollectionOptions(products)
     .map((tag) => {
-      const brandProducts = filterProductsByBrand(products, tag.slug);
+      const brandProducts = filterProductsByCollection(products, tag.slug);
       return {
         tag,
         ...getHomeCollectionProducts(brandProducts, tag.slug),

@@ -8,6 +8,7 @@ import {
   parseSpecificationsInput,
   parseStorageVariantsField,
   parseDirectNairaPrice,
+  resolveAdminPriceModeFromBody,
 } from "@/lib/admin-product-form";
 import { parsePriceMode, parseVariantDimension } from "@/lib/variant-dimension";
 import { isPostgresConfigured } from "@/lib/db/client";
@@ -258,7 +259,10 @@ function buildUpdateInput(body: Record<string, unknown>): UpdateProductInput {
   if (body.useDirectNairaPrice !== undefined) {
     input.priceMode = parsePriceMode(body.useDirectNairaPrice ? "direct_ngn" : "calculated");
   }
-  if (body.directNairaPrice !== undefined) {
+  if (
+    body.directNairaPrice !== undefined &&
+    resolveAdminPriceModeFromBody(body) === "direct_ngn"
+  ) {
     const directNairaPrice = parseDirectNairaPrice(body.directNairaPrice);
     if (directNairaPrice == null) {
       throw new Error("INVALID_DIRECT_NAIRA");
