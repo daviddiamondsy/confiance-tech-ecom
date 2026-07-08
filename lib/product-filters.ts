@@ -1,6 +1,7 @@
 import { isPostgresConfigured } from "@/lib/db/client";
 import { fetchProductFiltersFromDb } from "@/lib/db/filters-repository";
 import {
+  CATALOG_PRODUCT_FILTER_SLUGS,
   CLEAN_PRODUCT_FILTER_SLUG,
   DEFAULT_PRODUCT_FILTER_TAGS,
   NEW_PRODUCT_FILTER_SLUG,
@@ -9,6 +10,7 @@ import {
 
 export type { ProductFilterTag } from "@/lib/product-filter-tags";
 export {
+  ACCESSORIES_FILTER_SLUG,
   CLEAN_PRODUCT_FILTER_SLUG,
   DEFAULT_PRODUCT_FILTER_TAGS,
   NEW_PRODUCT_FILTER_SLUG,
@@ -23,10 +25,10 @@ export async function getProductFilterTags(): Promise<ProductFilterTag[]> {
 
   try {
     const tags = await fetchProductFiltersFromDb();
-    const conditionTags = tags.filter((tag) =>
-      [NEW_PRODUCT_FILTER_SLUG, CLEAN_PRODUCT_FILTER_SLUG].includes(tag.slug)
+    const catalogTags = tags.filter((tag) =>
+      (CATALOG_PRODUCT_FILTER_SLUGS as readonly string[]).includes(tag.slug)
     );
-    return conditionTags.length > 0 ? conditionTags : DEFAULT_PRODUCT_FILTER_TAGS;
+    return catalogTags.length > 0 ? catalogTags : DEFAULT_PRODUCT_FILTER_TAGS;
   } catch (error) {
     console.error("[product-filters] fetch failed, using defaults", error);
     return DEFAULT_PRODUCT_FILTER_TAGS;

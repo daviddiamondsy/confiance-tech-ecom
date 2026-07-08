@@ -1,5 +1,5 @@
 import { buildCatalogProducts } from "@/lib/catalog-seed";
-import { CATALOG_FILTERS, DEFAULT_PRODUCT_COLORS } from "@/lib/catalog-yuan";
+import { CATALOG_FILTERS, DEFAULT_PRODUCT_COLORS, catalogFilterSlugsForProduct } from "@/lib/catalog-yuan";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { ensureIphoneProductCopy } from "@/lib/iphone-product-copy";
 import type { Product } from "@/lib/product-utils";
@@ -15,6 +15,7 @@ let cachedStaticProducts: Product[] | null = null;
 export function getStaticCatalogProducts(): Product[] {
   if (!cachedStaticProducts) {
     cachedStaticProducts = buildCatalogProducts().map((product) => {
+      const filterSlugs = catalogFilterSlugsForProduct(product.id);
       const filterSlug = CATALOG_FILTERS[product.id];
       const iphoneCopy = ensureIphoneProductCopy({
         name: product.name,
@@ -27,7 +28,7 @@ export function getStaticCatalogProducts(): Product[] {
         specifications: iphoneCopy.specifications,
         slug: slugForProductId(product.id, product.name),
         filterSlug,
-        filterSlugs: filterSlug ? [filterSlug] : undefined,
+        filterSlugs: filterSlugs.length > 0 ? filterSlugs : undefined,
         colorOptions: DEFAULT_PRODUCT_COLORS[product.id],
       };
     });

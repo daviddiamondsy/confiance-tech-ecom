@@ -1,8 +1,9 @@
-import { ensureProductFilterAssignmentsSchema, countProductsUsingFilter } from "@/lib/db/product-filter-assignments";
+import { ensureProductFilterAssignmentsSchema, countProductsUsingFilter, replaceProductFilterSlugs } from "@/lib/db/product-filter-assignments";
 import { sql, sqlDdl } from "@/lib/db/client";
 import { isPostgresErrorCode } from "@/lib/db/postgres-errors";
 import { slugifyProductName } from "@/lib/product-slug";
 import { normalizeProductName, stripConditionSuffix } from "@/lib/product-condition-suffix";
+import { catalogFilterSlugsForProduct, CATALOG_ACCESSORY_PRODUCT_IDS } from "@/lib/catalog-yuan";
 import type { ProductFilterTag } from "@/lib/product-filter-tags";
 
 /** Idempotent DDL for filter tags on databases that predate product_filters. */
@@ -22,7 +23,8 @@ export async function ensureProductFiltersSchema(): Promise<void> {
   await sql`
     INSERT INTO product_filters (slug, label, sort_order) VALUES
       ('new', 'New', 0),
-      ('clean', 'Like New', 1)
+      ('clean', 'Like New', 1),
+      ('accessories', 'Accessories', 2)
     ON CONFLICT (slug) DO NOTHING
   `;
   await sql`
@@ -40,6 +42,27 @@ export async function ensureProductFiltersSchema(): Promise<void> {
   `;
   await syncProductNamesWithFilterSlugs();
   await ensureProductFilterAssignmentsSchema();
+  await syncCatalogAccessoryFilterAssignments();
+}
+
+async function syncCatalogAccessoryFilterAssignments(): Promise<void> {
+  for (const productId of CATALOG_ACCESSORY_PRODUCT_IDS) {
+    const filterSlugs = catalogFilterSlugsForProduct(productId);
+    if (filterSlugs.length === 0) continue;
+
+    try {
+      const { rows } = await sql<{ id: string }>`
+        SELECT id FROM products WHERE id = ${productId} LIMIT 1
+      `;
+      if (rows.length === 0) continue;
+      await replaceProductFilterSlugs(productId, filterSlugs);
+    } catch (error) {
+      if (isPostgresErrorCode(error, "42P01")) {
+        return;
+      }
+      throw error;
+    }
+  }
 }
 
 /** Fix product names when filter_slug was migrated without updating condition suffix. */
