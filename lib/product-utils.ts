@@ -1,6 +1,10 @@
 import {
   buildVariantDisplayName,
 } from "@/lib/product-condition-suffix";
+import {
+  variantPickerLabel,
+  type VariantDimension,
+} from "@/lib/variant-dimension";
 
 export interface StorageOption {
   storage: string;
@@ -24,7 +28,11 @@ export interface Product {
   filterSlugs?: string[];
   images?: string[];
   video?: string;
-  variantDimension?: "storage" | "size";
+  variantDimension?: VariantDimension;
+}
+
+export function getVariantPickerLabel(product: Product): string {
+  return variantPickerLabel(product.variantDimension ?? "storage");
 }
 
 export function getSelectedVariant(
