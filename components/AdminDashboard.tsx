@@ -223,7 +223,10 @@ export default function AdminDashboard() {
     setCreateMessage("");
     setCreateError("");
 
-    const storageVariantsError = storageVariantsFieldError(productForm.storageVariants);
+    const storageVariantsError = storageVariantsFieldError(
+      productForm.storageVariants,
+      productForm.useDirectNairaPrice ? "naira" : "cost"
+    );
     if (storageVariantsError) {
       setCreateError(storageVariantsError);
       return;
@@ -494,7 +497,10 @@ export default function AdminDashboard() {
     const form = editForms[productId];
     if (!form) return;
 
-    const storageVariantsError = storageVariantsFieldError(form.storageVariants);
+    const storageVariantsError = storageVariantsFieldError(
+      form.storageVariants,
+      form.useDirectNairaPrice ? "naira" : "cost"
+    );
     if (storageVariantsError) {
       setEditMessages((prev) => ({ ...prev, [productId]: storageVariantsError }));
       setSavingEditId(null);

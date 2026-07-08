@@ -24,6 +24,7 @@ export interface Product {
   filterSlugs?: string[];
   images?: string[];
   video?: string;
+  variantDimension?: "storage" | "size";
 }
 
 export function getSelectedVariant(
@@ -47,7 +48,7 @@ export function getSelectedVariant(
   });
 
   return {
-    storage: storage ?? product.specifications.Storage,
+    storage: storage ?? product.specifications.Storage ?? product.specifications.Size,
     color,
     price,
     displayName,
@@ -55,6 +56,10 @@ export function getSelectedVariant(
 }
 
 export function getDisplaySpecs(product: Product, storage: string) {
-  if (!product.storageOptions) return product.specifications;
-  return { ...product.specifications, Storage: storage };
+  const specKey = product.variantDimension === "size" ? "Size" : "Storage";
+  if (!product.storageOptions) {
+    if (product.specifications[specKey]) return product.specifications;
+    return { ...product.specifications, [specKey]: storage };
+  }
+  return { ...product.specifications, [specKey]: storage };
 }
