@@ -1,25 +1,29 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import CustomerForm from "@/components/CustomerForm";
+import Link from "next/link";
 import ReferralDiscountBanner from "@/components/ReferralDiscountBanner";
 import ImageCarousel from "@/components/ImageCarousel";
 import ProductSpecifications from "@/components/ProductSpecifications";
 import TrustFeaturesGrid from "@/components/TrustFeaturesGrid";
-import { Check } from "lucide-react";
+import { Check, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import type { Product } from "@/lib/product-utils";
 import { getSelectedVariant, getDisplaySpecs } from "@/lib/product-utils";
 import { storefrontProductBadge } from "@/lib/product-condition-suffix";
 import { PRODUCT_DETAIL_TRUST_FEATURES } from "@/lib/storefront-trust-features";
 import { STOREFRONT_PRODUCT_DETAIL_TRUST_COPY } from "@/lib/device-quality-copy";
+import {
+  storefrontDisplayPrice,
+  STOREFRONT_DOOR_DELIVERY_FEE_NGN,
+} from "@/lib/storefront-display-price";
 
 interface ProductDetailViewProps {
   product: Product;
-  deliveryDays: number;
+  deliveryDays?: number;
 }
 
-export default function ProductDetailView({ product, deliveryDays }: ProductDetailViewProps) {
+export default function ProductDetailView({ product }: ProductDetailViewProps) {
   const [selectedStorageIndex, setSelectedStorageIndex] = useState(0);
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
 
@@ -34,6 +38,14 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
   );
 
   const badge = storefrontProductBadge(product);
+
+  const buyHref = useMemo(() => {
+    const params = new URLSearchParams();
+    if (variant.storage) params.set("storage", variant.storage);
+    if (variant.color) params.set("color", variant.color);
+    const qs = params.toString();
+    return `/order/${product.slug}${qs ? `?${qs}` : ""}`;
+  }, [product.slug, variant.storage, variant.color]);
 
   return (
     <>
@@ -85,7 +97,7 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                           selectedStorageIndex === index ? "text-primary-600" : "text-slate-500"
                         }`}
                       >
-                        ₦{option.price.toLocaleString()}
+                        ₦{storefrontDisplayPrice(option.price).toLocaleString()}
                       </span>
                     </button>
                   ))}
@@ -119,21 +131,24 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
 
             <div className="flex items-baseline gap-3 mb-2">
               <span className="text-3xl md:text-4xl font-bold text-slate-900">
-                ₦{variant.price.toLocaleString()}
+                ₦{storefrontDisplayPrice(variant.price).toLocaleString()}
               </span>
               {product.originalPrice && (
                 <span className="text-lg text-slate-400 line-through">
-                  ₦{product.originalPrice.toLocaleString()}
+                  ₦{storefrontDisplayPrice(product.originalPrice).toLocaleString()}
                 </span>
               )}
             </div>
             {product.originalPrice && (
-              <div className="mb-4">
+              <div className="mb-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 text-sm font-bold rounded-full">
-                  Save ₦{(product.originalPrice - variant.price).toLocaleString()}
+                  Save ₦{(storefrontDisplayPrice(product.originalPrice) - storefrontDisplayPrice(variant.price)).toLocaleString()}
                 </span>
               </div>
             )}
+            <p className="text-xs text-slate-400 mb-5">
+              +₦{STOREFRONT_DOOR_DELIVERY_FEE_NGN.toLocaleString()} door delivery (added at checkout)
+            </p>
 
             <p className="text-slate-600 leading-relaxed mb-6">{product.description}</p>
 
@@ -151,7 +166,15 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
               </ul>
             </div>
 
-            <TrustFeaturesGrid variant="product-detail" className="mb-8" />
+            <TrustFeaturesGrid variant="product-detail" className="mb-6" />
+
+            <Link
+              href={buyHref}
+              className="inline-flex items-center justify-center gap-2.5 w-full py-4 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold rounded-2xl transition-colors shadow-soft text-base"
+            >
+              <ShoppingBag className="h-5 w-5" />
+              Order Now - ₦{storefrontDisplayPrice(variant.price).toLocaleString()}
+            </Link>
           </div>
         </div>
       </div>
@@ -185,18 +208,22 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                 </div>
               </div>
 
-              <div className="my-16">
-                <CustomerForm
-                  title="Get This Product Today"
-                  subtitle="Limited stock available. Fill out the form now and we will contact you within 24 hours."
-                  productPrice={variant.price}
-                  productName={variant.displayName}
-                  productId={product.id}
-                  productSlug={product.slug}
-                  productStorage={variant.storage}
-                  productColor={variant.color}
-                  deliveryDays={deliveryDays}
-                />
+              <div id="order-form" className="my-16">
+                <div className="bg-gradient-to-r from-primary-600 to-violet-600 rounded-3xl p-8 text-white text-center shadow-glow">
+                  <h3 className="font-display text-2xl font-bold mb-2">Get This Product Today</h3>
+                  <p className="text-primary-100 mb-6 leading-relaxed">
+                    Limited stock available. Place your order now and get it delivered to your door.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Link
+                      href={buyHref}
+                      className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-primary-700 font-bold rounded-2xl hover:bg-primary-50 transition-colors shadow-soft"
+                    >
+                      <ShoppingBag className="h-5 w-5" />
+                      Order Now - ₦{storefrontDisplayPrice(variant.price).toLocaleString()}
+                    </Link>
+                  </div>
+                </div>
               </div>
 
               <div className="my-16">
@@ -268,18 +295,18 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
               </div>
 
               <div className="my-16">
-                <div className="bg-primary-50/80 rounded-2xl p-8 border border-primary-100">
-                  <CustomerForm
-                    title="Ready to Order?"
-                    subtitle={`Complete this form now to secure your ${variant.displayName}. Stock is limited - order today!`}
-                    productPrice={variant.price}
-                    productName={variant.displayName}
-                    productId={product.id}
-                    productSlug={product.slug}
-                    productStorage={variant.storage}
-                    productColor={variant.color}
-                    deliveryDays={deliveryDays}
-                  />
+                <div className="bg-primary-50/80 rounded-2xl p-8 border border-primary-100 text-center">
+                  <h3 className="font-display text-2xl font-bold text-slate-900 mb-2">Ready to Order?</h3>
+                  <p className="text-slate-600 mb-6 leading-relaxed">
+                    Stock is limited - secure your {variant.displayName} today.
+                  </p>
+                  <Link
+                    href={buyHref}
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary-600 text-white font-bold rounded-2xl hover:bg-primary-700 transition-colors shadow-glow"
+                  >
+                    <ShoppingBag className="h-5 w-5" />
+                    Place My Order - ₦{storefrontDisplayPrice(variant.price).toLocaleString()}
+                  </Link>
                 </div>
               </div>
             </div>
@@ -296,12 +323,12 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
                   <p className="text-sm text-primary-100 mb-4 leading-relaxed">
                     Our product specialists are ready to answer your questions.
                   </p>
-                  <a
-                    href="#order-form"
+                  <Link
+                    href={buyHref}
                     className="inline-flex items-center justify-center gap-2 w-full py-2.5 bg-white text-primary-700 text-sm font-semibold rounded-xl hover:bg-primary-50 transition-colors"
                   >
                     Order Now
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>

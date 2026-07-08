@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
       productPrice,
       productStorage,
       productColor,
+      doorDeliveryFeeNgn,
       customerData,
       referralCode,
       applyStoreCredit,
@@ -144,6 +145,11 @@ export async function POST(req: NextRequest) {
 
       checkoutAmountNgn = pricing.adjustment.finalAmountNgn;
       referralAdjustment = pricing.adjustment;
+    }
+
+    const resolvedDeliveryFeeNgn = Math.max(0, Number(doorDeliveryFeeNgn) || 0);
+    if (resolvedDeliveryFeeNgn > 0) {
+      checkoutAmountNgn = checkoutAmountNgn + resolvedDeliveryFeeNgn;
     }
 
     const clientPrice = Number(productPrice);
@@ -305,6 +311,7 @@ export async function POST(req: NextRequest) {
         customerAddress: customerData.address,
         customerState: customerData.state,
         buyerPhone: customerData.phone,
+        doorDeliveryFeeNgn: resolvedDeliveryFeeNgn,
         referralCode: referralAdjustment?.referralCode,
         refereeDiscountNgn: referralAdjustment?.refereeDiscountNgn ?? 0,
         storeCreditAppliedNgn: referralAdjustment?.storeCreditAppliedNgn ?? 0,

@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 const RESERVED_ROOT_SLUGS = new Set([
   "admin",
   "products",
+  "order",
   "thank-you",
   "payment-success",
   "api-docs",
