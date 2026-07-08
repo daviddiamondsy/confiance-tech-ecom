@@ -9,7 +9,7 @@ import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
 import { slugForProductId, slugifyProductName, catalogProductIdForSlug, resolveStorefrontProductSlug } from "@/lib/product-slug";
 import { fetchColorsByProductIds, fetchColorsForProduct } from "@/lib/db/colors-repository";
 import { fetchPricingConfig } from "@/lib/db/pricing-config-repository";
-import { priceFromSupplierCost, parseCostCurrency, type PricingConfig, type SupplierCostCurrency } from "@/lib/pricing";
+import { priceFromSupplierCost, parseCostCurrency, toCharmPrice, type PricingConfig, type SupplierCostCurrency } from "@/lib/pricing";
 import {
   defaultShippingForProductName,
   productShippingFromRow,
@@ -31,6 +31,8 @@ import {
 } from "@/lib/device-quality-copy";
 import { ensureIphoneProductCopy } from "@/lib/iphone-product-copy";
 import type { Product, StorageOption } from "@/lib/product-utils";
+import type { PriceMode, VariantDimension } from "@/lib/variant-dimension";
+import { parsePriceMode, parseVariantDimension, variantSpecKey } from "@/lib/variant-dimension";
 import {
   isNewProductFromFilterSlugs,
   normalizeProductName as applyConditionProductName,
@@ -60,6 +62,8 @@ interface ProductRow {
   international_shipping_ngn: number;
   international_shipping_usd: number;
   local_delivery_ngn: number;
+  variant_dimension: string;
+  price_mode: string;
 }
 
 type ProductRowWithoutShipping = Omit<
@@ -79,6 +83,8 @@ function withDefaultShipping(row: ProductRowWithoutShipping): ProductRow {
     international_shipping_ngn: DEFAULT_INTERNATIONAL_SHIPPING_NGN,
     international_shipping_usd: DEFAULT_INTERNATIONAL_SHIPPING_USD,
     local_delivery_ngn: DEFAULT_LOCAL_DELIVERY_NGN,
+    variant_dimension: "storage",
+    price_mode: "calculated",
   };
 }
 
@@ -89,7 +95,9 @@ async function fetchAllProductRows(): Promise<ProductRow[]> {
         id, slug, filter_slug, name, price, yuan_cost, cost_currency, original_price, image, badge,
         description, features, specifications, sort_order,
         china_shipping_yuan, international_shipping_currency, international_shipping_ngn,
-        international_shipping_usd, local_delivery_ngn
+        international_shipping_usd, local_delivery_ngn,
+        COALESCE(variant_dimension, 'storage') AS variant_dimension,
+        COALESCE(price_mode, 'calculated') AS price_mode
       FROM products
       ORDER BY sort_order ASC, id ASC
     `;
@@ -118,7 +126,9 @@ async function fetchProductRowById(id: string): Promise<ProductRow | undefined> 
         id, slug, filter_slug, name, price, yuan_cost, cost_currency, original_price, image, badge,
         description, features, specifications, sort_order,
         china_shipping_yuan, international_shipping_currency, international_shipping_ngn,
-        international_shipping_usd, local_delivery_ngn
+        international_shipping_usd, local_delivery_ngn,
+        COALESCE(variant_dimension, 'storage') AS variant_dimension,
+        COALESCE(price_mode, 'calculated') AS price_mode
       FROM products
       WHERE id = ${id}
       LIMIT 1
@@ -147,7 +157,9 @@ async function fetchProductRowBySlug(slug: string): Promise<ProductRow | undefin
         id, slug, filter_slug, name, price, yuan_cost, cost_currency, original_price, image, badge,
         description, features, specifications, sort_order,
         china_shipping_yuan, international_shipping_currency, international_shipping_ngn,
-        international_shipping_usd, local_delivery_ngn
+        international_shipping_usd, local_delivery_ngn,
+        COALESCE(variant_dimension, 'storage') AS variant_dimension,
+        COALESCE(price_mode, 'calculated') AS price_mode
       FROM products
       WHERE LOWER(slug) = ${normalized}
       LIMIT 1
@@ -273,6 +285,7 @@ function mapRowToProduct(
     colorOptions: colors.length > 0 ? colors : undefined,
     filterSlug: primaryFilterSlug,
     filterSlugs: resolvedFilterSlugs.length > 0 ? resolvedFilterSlugs : undefined,
+    variantDimension: parseVariantDimension(row.variant_dimension),
   };
 }
 
@@ -453,6 +466,9 @@ export async function fetchAdminProducts(): Promise<AdminProductRecord[]> {
     const primaryFilterSlug =
       row.filter_slug ?? primaryConditionFilterSlug(filterSlugs) ?? null;
     const firstOption = options[0];
+    const priceMode = parsePriceMode(row.price_mode);
+    const variantDimension = parseVariantDimension(row.variant_dimension);
+    const variantSpec = variantSpecKey(variantDimension);
     const listPrice = firstOption
       ? resolvePrice(
           firstOption.yuan_cost != null ? Number(firstOption.yuan_cost) : yuanCost,
@@ -469,12 +485,14 @@ export async function fetchAdminProducts(): Promise<AdminProductRecord[]> {
       yuanCost,
       costCurrency,
       price: listPrice,
+      priceMode,
+      variantDimension,
       filterSlug: primaryFilterSlug,
       filterSlugs,
       image: row.image,
       description: row.description,
       badge: row.badge,
-      storage: row.specifications?.Storage ?? null,
+      storage: row.specifications?.[variantSpec] ?? row.specifications?.Storage ?? null,
       features: row.features ?? [],
       specifications: row.specifications ?? {},
       chinaShippingYuan: shipping.chinaShippingYuan,
@@ -485,7 +503,11 @@ export async function fetchAdminProducts(): Promise<AdminProductRecord[]> {
       storageVariants: options.map((option) => ({
         storage: option.storage,
         yuan:
-          storageOptionYuanCost(row.id, option.storage, option.yuan_cost, yuanCost) ?? yuanCost ?? 0,
+          priceMode === "direct_ngn"
+            ? option.price
+            : storageOptionYuanCost(row.id, option.storage, option.yuan_cost, yuanCost) ??
+              yuanCost ??
+              0,
       })),
       colors: colorsByProduct.get(row.id) ?? [],
     };
@@ -518,6 +540,9 @@ export interface CreateProductInput {
   name: string;
   yuanCost?: number;
   costCurrency?: SupplierCostCurrency;
+  priceMode?: PriceMode;
+  directNairaPrice?: number;
+  variantDimension?: VariantDimension;
   image: string;
   description: string;
   filterSlugs: string[];
@@ -557,6 +582,8 @@ export interface AdminProductRecord {
   localDeliveryNgn: number;
   storageVariants: Array<{ storage: string; yuan: number }>;
   colors: string[];
+  priceMode: PriceMode;
+  variantDimension: VariantDimension;
 }
 
 export type UpdateProductInput = Partial<Omit<CreateProductInput, "slug" | "badge">> & {
@@ -600,10 +627,12 @@ async function uniqueSlug(baseSlug: string, excludeProductId?: string): Promise<
 function buildProductSpecs(input: {
   storage?: string;
   productName?: string;
+  variantDimension?: VariantDimension;
 }): Record<string, string> {
   const isIphone = Boolean(input.productName?.toLowerCase().includes("iphone"));
+  const variantKey = variantSpecKey(input.variantDimension ?? "storage");
   return {
-    ...(input.storage ? { Storage: input.storage } : {}),
+    ...(input.storage ? { [variantKey]: input.storage } : {}),
     ...(isIphone ? { "Battery health": BATTERY_HEALTH_SPEC } : {}),
   };
 }
@@ -613,16 +642,29 @@ function resolveProductSpecifications(input: {
   storage?: string;
   productName: string;
   existing?: Record<string, string>;
+  variantDimension?: VariantDimension;
 }): Record<string, string> {
   if (input.specifications !== undefined) {
-    return mergeSpecificationsWithStorage(input.specifications, input.storage);
+    return mergeSpecificationsWithStorage(
+      input.specifications,
+      input.storage,
+      input.variantDimension ?? "storage"
+    );
   }
 
   if (input.existing && Object.keys(input.existing).length > 0) {
-    return mergeSpecificationsWithStorage(input.existing, input.storage);
+    return mergeSpecificationsWithStorage(
+      input.existing,
+      input.storage,
+      input.variantDimension ?? "storage"
+    );
   }
 
-  return buildProductSpecs({ storage: input.storage, productName: input.productName });
+  return buildProductSpecs({
+    storage: input.storage,
+    productName: input.productName,
+    variantDimension: input.variantDimension,
+  });
 }
 
 function resolveStorageVariants(input: {
@@ -650,14 +692,54 @@ function resolveStorageVariants(input: {
 }
 
 function resolvePricingFromInput(input: {
+  priceMode?: PriceMode;
+  directNairaPrice?: number;
   yuanCost?: number;
   storage?: string;
   storageVariants?: Array<{ storage: string; yuan: number }>;
 }): {
+  priceMode: PriceMode;
   storageVariants: Array<{ storage: string; yuan: number }>;
-  baseYuan: number;
+  baseYuan?: number;
+  directNairaPrice?: number;
   storageLabel?: string;
 } {
+  const priceMode = input.priceMode ?? "calculated";
+
+  if (priceMode === "direct_ngn") {
+    const useVariantsOnly =
+      input.storageVariants !== undefined && input.storageVariants.length > 0;
+
+    const storageVariants = useVariantsOnly
+      ? input.storageVariants!
+      : resolveStorageVariants({
+          yuanCost: undefined,
+          storage: input.storage,
+          storageVariants: input.storageVariants,
+        });
+
+    if (storageVariants.length > 0) {
+      return {
+        priceMode,
+        storageVariants,
+        directNairaPrice: storageVariants[0]?.yuan,
+        storageLabel: storageVariants[0]?.storage,
+      };
+    }
+
+    const directNairaPrice = input.directNairaPrice;
+    if (directNairaPrice == null || !Number.isFinite(directNairaPrice) || directNairaPrice <= 0) {
+      throw new Error("INVALID_DIRECT_NAIRA");
+    }
+
+    return {
+      priceMode,
+      storageVariants: [],
+      directNairaPrice,
+      storageLabel: input.storage?.trim() || undefined,
+    };
+  }
+
   const useVariantsOnly =
     input.storageVariants !== undefined && input.storageVariants.length > 0;
 
@@ -673,6 +755,7 @@ function resolvePricingFromInput(input: {
   }
 
   return {
+    priceMode,
     storageVariants,
     baseYuan,
     storageLabel: storageVariants[0]?.storage ?? (input.storage?.trim() || undefined),
@@ -685,7 +768,7 @@ interface PersistProductRowFields {
   primaryFilterSlug: string | null;
   name: string;
   price: number;
-  yuanCost: number;
+  yuanCost: number | null;
   costCurrency: SupplierCostCurrency;
   image: string;
   badge: string | null;
@@ -693,6 +776,8 @@ interface PersistProductRowFields {
   features: string[];
   specifications: Record<string, string>;
   shipping: ProductShippingCosts;
+  variantDimension: VariantDimension;
+  priceMode: PriceMode;
 }
 
 /** UPDATE with shipping columns; retries after schema migration, then falls back like reads. */
@@ -711,6 +796,8 @@ async function persistAdminProductRowUpdate(fields: PersistProductRowFields): Pr
     features,
     specifications,
     shipping,
+    variantDimension,
+    priceMode,
   } = fields;
 
   const coreParams = [
@@ -726,6 +813,8 @@ async function persistAdminProductRowUpdate(fields: PersistProductRowFields): Pr
     description,
     JSON.stringify(features),
     JSON.stringify(specifications),
+    variantDimension,
+    priceMode,
   ];
 
   const runFullUpdate = () =>
@@ -742,11 +831,13 @@ async function persistAdminProductRowUpdate(fields: PersistProductRowFields): Pr
         description = $10,
         features = $11::jsonb,
         specifications = $12::jsonb,
-        china_shipping_yuan = $13,
-        international_shipping_currency = $14,
-        international_shipping_ngn = $15,
-        international_shipping_usd = $16,
-        local_delivery_ngn = $17,
+        variant_dimension = $13,
+        price_mode = $14,
+        china_shipping_yuan = $15,
+        international_shipping_currency = $16,
+        international_shipping_ngn = $17,
+        international_shipping_usd = $18,
+        local_delivery_ngn = $19,
         updated_at = NOW()
       WHERE id = $1`,
       [
@@ -852,7 +943,8 @@ async function replaceProductStorageOptions(
   variants: Array<{ storage: string; yuan: number }>,
   config: PricingConfig,
   shipping: ProductShippingCosts,
-  costCurrency: SupplierCostCurrency = "cny"
+  costCurrency: SupplierCostCurrency = "cny",
+  priceMode: PriceMode = "calculated"
 ): Promise<void> {
   await ensureCatalogSchema();
 
@@ -862,14 +954,18 @@ async function replaceProductStorageOptions(
 
   for (let index = 0; index < normalized.length; index += 1) {
     const variant = normalized[index];
-    const variantPrice = priceFromSupplierCost(variant.yuan, costCurrency, config, shipping);
+    const variantPrice =
+      priceMode === "direct_ngn"
+        ? toCharmPrice(Math.round(variant.yuan))
+        : priceFromSupplierCost(variant.yuan, costCurrency, config, shipping);
+    const variantYuanCost = priceMode === "direct_ngn" ? null : variant.yuan;
     await sql`
       INSERT INTO product_storage_options (product_id, storage, price, yuan_cost, sort_order)
       VALUES (
         ${productId},
         ${variant.storage},
         ${variantPrice},
-        ${variant.yuan},
+        ${variantYuanCost},
         ${index}
       )
     `;
@@ -891,7 +987,8 @@ async function syncStorageOptionPrices(
   yuanCost: number,
   config: PricingConfig,
   shipping: ProductShippingCosts,
-  costCurrency: SupplierCostCurrency = "cny"
+  costCurrency: SupplierCostCurrency = "cny",
+  priceMode: PriceMode = "calculated"
 ): Promise<void> {
   const { rows: storageRows } = await sql<StorageRow>`
     SELECT product_id, storage, price, yuan_cost, sort_order
@@ -905,9 +1002,18 @@ async function syncStorageOptionPrices(
   const variants = storageRows.map((option) => ({
     storage: option.storage,
     yuan:
-      storageOptionYuanCost(productId, option.storage, option.yuan_cost, yuanCost) ?? yuanCost,
+      priceMode === "direct_ngn"
+        ? option.price
+        : storageOptionYuanCost(productId, option.storage, option.yuan_cost, yuanCost) ?? yuanCost,
   }));
-  await replaceProductStorageOptions(productId, variants, config, shipping, costCurrency);
+  await replaceProductStorageOptions(
+    productId,
+    variants,
+    config,
+    shipping,
+    costCurrency,
+    priceMode
+  );
 }
 
 export async function createAdminProduct(input: CreateProductInput): Promise<{
@@ -935,12 +1041,15 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
   const baseSlug = input.slug?.trim() || slugifyProductName(name);
   const slug = await uniqueSlug(baseSlug);
 
+  const variantDimension = input.variantDimension ?? "storage";
   const pricing = resolvePricingFromInput({
+    priceMode: input.priceMode,
+    directNairaPrice: input.directNairaPrice,
     yuanCost: input.yuanCost,
     storage: input.storage,
     storageVariants: input.storageVariants,
   });
-  const { storageVariants, baseYuan, storageLabel: storage } = pricing;
+  const { storageVariants, baseYuan, directNairaPrice, storageLabel: storage, priceMode } = pricing;
   const shipping =
     input.chinaShippingYuan != null &&
     input.internationalShippingNgn != null &&
@@ -956,7 +1065,11 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
         }
       : defaultShippingForProductName(name);
   const costCurrency = input.costCurrency ?? "cny";
-  const price = priceFromSupplierCost(baseYuan, costCurrency, config, shipping);
+  const price =
+    priceMode === "direct_ngn"
+      ? toCharmPrice(Math.round(directNairaPrice!))
+      : priceFromSupplierCost(baseYuan!, costCurrency, config, shipping);
+  const persistedYuanCost = priceMode === "direct_ngn" ? null : baseYuan;
   const isNew = isNewProductFromFilterSlugs(filterSlugs);
   const isIphone = /iphone/i.test(name);
   let features =
@@ -970,6 +1083,7 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
     specifications: input.specifications,
     storage,
     productName: name,
+    variantDimension,
   });
   ({ features, specifications } = ensureIphoneProductCopy({
     name,
@@ -981,15 +1095,16 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
     `INSERT INTO products (
       id, slug, filter_slug, name, price, yuan_cost, cost_currency, original_price, image, badge, description,
       features, specifications, sort_order, china_shipping_yuan, international_shipping_currency,
-      international_shipping_ngn, international_shipping_usd, local_delivery_ngn, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, $8, $9, $10, $11::jsonb, $12::jsonb, $13, $14, $15, $16, $17, $18, NOW())`,
+      international_shipping_ngn, international_shipping_usd, local_delivery_ngn,
+      variant_dimension, price_mode, updated_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, $8, $9, $10, $11::jsonb, $12::jsonb, $13, $14, $15, $16, $17, $18, $19, $20, NOW())`,
     [
       id,
       slug,
       primaryFilterSlug,
       name,
       price,
-      baseYuan,
+      persistedYuanCost,
       costCurrency,
       input.image.trim(),
       input.badge?.trim() || null,
@@ -1002,11 +1117,20 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
       shipping.internationalShippingNgn,
       shipping.internationalShippingUsd,
       shipping.localDeliveryNgn,
+      variantDimension,
+      priceMode,
     ]
   );
 
   if (storageVariants.length > 0) {
-    await replaceProductStorageOptions(id, storageVariants, config, shipping, costCurrency);
+    await replaceProductStorageOptions(
+      id,
+      storageVariants,
+      config,
+      shipping,
+      costCurrency,
+      priceMode
+    );
   }
 
   await replaceProductFilterSlugs(id, filterSlugs);
@@ -1021,7 +1145,7 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
     id,
     slug,
     name,
-    yuanCost: baseYuan,
+    yuanCost: persistedYuanCost ?? 0,
     price,
     filterSlug: primaryFilterSlug,
     filterSlugs,
@@ -1075,7 +1199,9 @@ export async function updateAdminProduct(
     input.storageVariants !== undefined ||
     input.storage !== undefined ||
     input.yuanCost !== undefined ||
-    input.costCurrency !== undefined;
+    input.costCurrency !== undefined ||
+    input.priceMode !== undefined ||
+    input.directNairaPrice !== undefined;
 
   const shouldSyncShipping =
     input.chinaShippingYuan !== undefined ||
@@ -1085,33 +1211,54 @@ export async function updateAdminProduct(
     input.localDeliveryNgn !== undefined ||
     input.costCurrency !== undefined;
 
+  const variantDimension =
+    input.variantDimension ?? parseVariantDimension(existing.variant_dimension);
+  const existingPriceMode = parsePriceMode(existing.price_mode);
+  const priceMode = input.priceMode ?? existingPriceMode;
+
   let storageVariantsForSave: Array<{ storage: string; yuan: number }> | undefined;
-  let yuanCost =
+  let yuanCost: number | null | undefined =
     input.yuanCost ??
-    (existing.yuan_cost != null ? Number(existing.yuan_cost) : undefined);
+    (existing.yuan_cost != null ? Number(existing.yuan_cost) : null);
+  let directNairaPrice = input.directNairaPrice;
+  const variantSpec = variantSpecKey(variantDimension);
   let storageInput =
     input.storage !== undefined
       ? input.storage?.trim() || undefined
-      : existing.specifications?.Storage;
+      : existing.specifications?.[variantSpec] ?? existing.specifications?.Storage;
 
   if (shouldSyncStorage) {
-    if (input.storageVariants !== undefined && input.storageVariants.length > 0) {
-      storageVariantsForSave = finalizeStorageVariantsForSave(input.storageVariants);
-      yuanCost = storageVariantsForSave[0]?.yuan;
-      storageInput = storageVariantsForSave[0]?.storage;
-    } else {
-      const pricing = resolvePricingFromInput({
-        yuanCost,
-        storage: storageInput,
-        storageVariants: input.storageVariants,
-      });
-      storageVariantsForSave = pricing.storageVariants;
-      yuanCost = pricing.baseYuan;
-      storageInput = pricing.storageLabel;
+    const pricing = resolvePricingFromInput({
+      priceMode,
+      directNairaPrice,
+      yuanCost: yuanCost ?? undefined,
+      storage: storageInput,
+      storageVariants: input.storageVariants,
+    });
+    storageVariantsForSave = pricing.storageVariants;
+    yuanCost = pricing.baseYuan ?? null;
+    directNairaPrice = pricing.directNairaPrice;
+    storageInput = pricing.storageLabel;
+    if (pricing.priceMode === "direct_ngn") {
+      yuanCost = null;
     }
   }
 
-  if (yuanCost == null || !Number.isFinite(yuanCost) || yuanCost <= 0) {
+  if (priceMode === "direct_ngn") {
+    if (
+      directNairaPrice == null &&
+      (storageVariantsForSave == null || storageVariantsForSave.length === 0)
+    ) {
+      directNairaPrice = existing.price;
+    }
+    if (
+      directNairaPrice == null ||
+      !Number.isFinite(directNairaPrice) ||
+      directNairaPrice <= 0
+    ) {
+      throw new Error("INVALID_DIRECT_NAIRA");
+    }
+  } else if (yuanCost == null || !Number.isFinite(yuanCost) || yuanCost <= 0) {
     throw new Error("INVALID_YUAN");
   }
 
@@ -1135,12 +1282,16 @@ export async function updateAdminProduct(
     input.costCurrency ?? resolveCostCurrency(existing.cost_currency);
 
   const storage = storageInput;
-  const price = priceFromSupplierCost(yuanCost, costCurrency, config, shipping);
+  const price =
+    priceMode === "direct_ngn"
+      ? toCharmPrice(Math.round(directNairaPrice!))
+      : priceFromSupplierCost(yuanCost!, costCurrency, config, shipping);
   let specifications = resolveProductSpecifications({
     specifications: input.specifications,
     storage,
     productName: name,
     existing: existing.specifications,
+    variantDimension,
   });
   ({ features, specifications } = ensureIphoneProductCopy({
     name,
@@ -1161,7 +1312,8 @@ export async function updateAdminProduct(
       storageVariantsForSave ?? [],
       config,
       shipping,
-      costCurrency
+      costCurrency,
+      priceMode
     );
   } else if (shouldSyncShipping) {
     const { rows: storageRows } = await sql<StorageRow>`
@@ -1175,9 +1327,19 @@ export async function updateAdminProduct(
       const variants = storageRows.map((option) => ({
         storage: option.storage,
         yuan:
-          storageOptionYuanCost(productId, option.storage, option.yuan_cost, yuanCost) ?? yuanCost,
+          priceMode === "direct_ngn"
+            ? option.price
+            : storageOptionYuanCost(productId, option.storage, option.yuan_cost, yuanCost!) ??
+              yuanCost!,
       }));
-      await replaceProductStorageOptions(productId, variants, config, shipping, costCurrency);
+      await replaceProductStorageOptions(
+        productId,
+        variants,
+        config,
+        shipping,
+        costCurrency,
+        priceMode
+      );
     }
   }
 
@@ -1191,7 +1353,7 @@ export async function updateAdminProduct(
     primaryFilterSlug: primaryFilterSlug || null,
     name,
     price,
-    yuanCost,
+    yuanCost: priceMode === "direct_ngn" ? null : yuanCost ?? null,
     costCurrency,
     image,
     badge,
@@ -1199,6 +1361,8 @@ export async function updateAdminProduct(
     features,
     specifications,
     shipping,
+    variantDimension,
+    priceMode,
   });
 
   if (input.colors !== undefined) {
@@ -1206,7 +1370,16 @@ export async function updateAdminProduct(
     await replaceProductColors(productId, input.colors);
   }
 
-  await syncStorageOptionPrices(productId, yuanCost, config, shipping, costCurrency);
+  if (priceMode === "calculated" && yuanCost != null) {
+    await syncStorageOptionPrices(
+      productId,
+      yuanCost,
+      config,
+      shipping,
+      costCurrency,
+      priceMode
+    );
+  }
 
   const products = await fetchAdminProducts();
   const updated = products.find((product) => product.id === productId);

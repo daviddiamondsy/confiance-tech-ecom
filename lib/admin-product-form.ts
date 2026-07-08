@@ -25,14 +25,23 @@ import {
   parseCostCurrency,
   priceFromSupplierCost,
   sellingMarkupForSupplierCost,
+  toCharmPrice,
   type PricingConfig,
   type SupplierCostCurrency,
 } from "@/lib/pricing";
+import {
+  variantSpecKey,
+  type PriceMode,
+  type VariantDimension,
+} from "@/lib/variant-dimension";
 
 export interface ProductFormState {
   name: string;
   costCurrency: SupplierCostCurrency;
   yuanCost: string;
+  useDirectNairaPrice: boolean;
+  directNairaPrice: string;
+  variantDimension: VariantDimension;
   image: string;
   description: string;
   filterSlugs: string[];
@@ -86,18 +95,21 @@ export function splitStorageVariantLines(raw: string): string[] {
     .filter(Boolean);
 }
 
-function parseStorageVariantPart(part: string): { storage: string; yuan: number } | null {
+function parseStorageVariantPart(
+  part: string,
+  valueKind: "cost" | "naira"
+): { storage: string; value: number } | null {
   const trimmed = part.trim();
   if (!trimmed) return null;
 
   let storage = "";
-  let yuanRaw = "";
+  let valueRaw = "";
 
   for (const separator of [":", "\t"]) {
     const index = trimmed.indexOf(separator);
     if (index !== -1) {
       storage = trimmed.slice(0, index).trim();
-      yuanRaw = trimmed.slice(index + 1).trim();
+      valueRaw = trimmed.slice(index + 1).trim();
       break;
     }
   }
@@ -106,28 +118,37 @@ function parseStorageVariantPart(part: string): { storage: string; yuan: number 
     const spaced = trimmed.match(/^(.+?)[\s-]+(\d+(?:\.\d+)?)$/);
     if (spaced) {
       storage = spaced[1].trim();
-      yuanRaw = spaced[2];
+      valueRaw = spaced[2];
     }
   }
 
-  if (!storage || !yuanRaw) return null;
+  if (!storage || !valueRaw) return null;
 
-  const yuan = Number(yuanRaw);
-  if (!Number.isFinite(yuan) || yuan <= 0) return null;
+  const value = Number(valueRaw.replace(/,/g, ""));
+  if (!Number.isFinite(value) || value <= 0) return null;
+  if (valueKind === "naira" && value < 1000) return null;
 
-  return { storage: normalizeStorageLabel(storage), yuan };
+  return { storage: normalizeStorageLabel(storage), value };
 }
 
-export function parseStorageVariants(raw: unknown): Array<{ storage: string; yuan: number }> | undefined {
+export function parseStorageVariants(
+  raw: unknown,
+  valueKind: "cost" | "naira" = "cost"
+): Array<{ storage: string; yuan: number }> | undefined {
   if (typeof raw !== "string" || !raw.trim()) return undefined;
 
   const parts = splitStorageVariantLines(raw);
 
   const variants = parts
-    .map((part) => parseStorageVariantPart(part))
-    .filter((variant): variant is { storage: string; yuan: number } => variant != null);
+    .map((part) => parseStorageVariantPart(part, valueKind))
+    .filter((variant): variant is { storage: string; value: number } => variant != null)
+    .map((variant) => ({ storage: variant.storage, yuan: variant.value }));
 
   return variants.length > 0 ? variants : undefined;
+}
+
+export function variantValueKindForForm(form: Pick<ProductFormState, "useDirectNairaPrice">): "cost" | "naira" {
+  return form.useDirectNairaPrice ? "naira" : "cost";
 }
 
 /** Normalize, dedupe, and validate variant rows before persisting. */
@@ -152,40 +173,55 @@ export function finalizeStorageVariantsForSave(
   return normalized;
 }
 
-export function storageVariantsFieldError(raw: string): string | null {
+export function storageVariantsFieldError(
+  raw: string,
+  valueKind: "cost" | "naira" = "cost"
+): string | null {
   if (!raw.trim()) return null;
 
   const parts = splitStorageVariantLines(raw);
-  const variants = parseStorageVariants(raw);
+  const variants = parseStorageVariants(raw, valueKind);
+
+  const example =
+    valueKind === "naira"
+      ? "128GB:850000 and 256GB:950000"
+      : "128GB:1500 and 256GB:1700";
+  const formatHint =
+    valueKind === "naira"
+      ? "variant:price in naira"
+      : "storage:yuan";
 
   if (!variants?.length) {
-    return "Use one variant per line with storage:yuan (e.g. 128GB:1500 and 256GB:1700).";
+    return `Use one variant per line with ${formatHint} (e.g. ${example}).`;
   }
 
   if (variants.length !== parts.length) {
-    return `Could not parse ${parts.length - variants.length} line(s). Each line needs storage:yuan (e.g. 256GB:1700).`;
+    return `Could not parse ${parts.length - variants.length} line(s). Each line needs ${formatHint} (e.g. ${example}).`;
   }
 
   try {
     finalizeStorageVariantsForSave(variants);
   } catch (error) {
     if (error instanceof Error && error.message === "DUPLICATE_STORAGE_VARIANT") {
-      return "Each storage size must be unique (e.g. 128GB and 256GB, not 128GB twice).";
+      return "Each variant must be unique (e.g. 128GB and 256GB, not 128GB twice).";
     }
-    return "Use one variant per line with storage:yuan (e.g. 128GB:1500 and 256GB:1700).";
+    return `Use one variant per line with ${formatHint} (e.g. ${example}).`;
   }
 
   return null;
 }
 
 /** Parse storage variants from admin form; rejects non-empty invalid input. */
-export function parseStorageVariantsField(raw: unknown): Array<{ storage: string; yuan: number }> | undefined {
+export function parseStorageVariantsField(
+  raw: unknown,
+  valueKind: "cost" | "naira" = "cost"
+): Array<{ storage: string; yuan: number }> | undefined {
   if (raw === undefined) return undefined;
   if (typeof raw !== "string") {
     throw new Error("INVALID_STORAGE_VARIANTS");
   }
   if (!raw.trim()) return [];
-  const variants = parseStorageVariants(raw);
+  const variants = parseStorageVariants(raw, valueKind);
   if (!variants?.length) {
     throw new Error("INVALID_STORAGE_VARIANTS");
   }
@@ -216,6 +252,34 @@ export function previewVariantPricesFromForm(
   form: ProductFormState,
   pricing: PricingConfig
 ): VariantPricePreview[] {
+  const valueKind = variantValueKindForForm(form);
+
+  if (form.useDirectNairaPrice) {
+    const variants = parseStorageVariants(form.storageVariants, "naira");
+    if (variants?.length) {
+      return variants.map((variant) => ({
+        storage: variant.storage,
+        cost: variant.yuan,
+        currency: form.costCurrency,
+        price: toCharmPrice(Math.round(variant.yuan)),
+        markup: 0,
+      }));
+    }
+
+    const naira = Number(form.directNairaPrice.replace(/,/g, ""));
+    if (!Number.isFinite(naira) || naira <= 0) return [];
+
+    return [
+      {
+        storage: form.storage.trim() || "Default",
+        cost: naira,
+        currency: form.costCurrency,
+        price: toCharmPrice(Math.round(naira)),
+        markup: 0,
+      },
+    ];
+  }
+
   let currency: SupplierCostCurrency;
   try {
     currency = parseCostCurrency(form.costCurrency);
@@ -238,7 +302,7 @@ export function previewVariantPricesFromForm(
     return [];
   }
 
-  const variants = parseStorageVariants(form.storageVariants);
+  const variants = parseStorageVariants(form.storageVariants, "cost");
   if (variants?.length) {
     return variants.map((variant) => ({
       storage: variant.storage,
@@ -273,15 +337,31 @@ export function badgeValueForProductUpdate(raw: unknown): string | null {
 
 /** Strip single-price fields when storage variants drive pricing. */
 export function productFormPayloadForSave(form: ProductFormState): ProductFormState {
-  if (!usesStorageVariantsField(form)) return form;
-  return { ...form, yuanCost: "", storage: "" };
+  if (!usesStorageVariantsField(form)) {
+    if (form.useDirectNairaPrice) {
+      return { ...form, yuanCost: "" };
+    }
+    return form;
+  }
+  return { ...form, yuanCost: "", storage: "", directNairaPrice: "" };
 }
 
 export function formatStorageVariants(
-  variants: Array<{ storage: string; yuan: number }> | undefined
+  variants: Array<{ storage: string; yuan: number }> | undefined,
+  priceMode: PriceMode = "calculated"
 ): string {
   if (!variants?.length) return "";
+  if (priceMode === "direct_ngn") {
+    return variants.map((variant) => `${variant.storage}:${variant.yuan}`).join("\n");
+  }
   return variants.map((variant) => `${variant.storage}:${variant.yuan}`).join("\n");
+}
+
+export function parseDirectNairaPrice(raw: unknown): number | undefined {
+  if (raw === undefined || raw === null || raw === "") return undefined;
+  const naira = Number(String(raw).replace(/,/g, "").trim());
+  if (!Number.isFinite(naira) || naira <= 0) return undefined;
+  return Math.round(naira);
 }
 
 export function parseColorsInput(raw: unknown): string[] | undefined {
@@ -320,7 +400,7 @@ export function parseSpecificationsInput(raw: unknown): Record<string, string> |
 
     const key = trimmed.slice(0, colonIndex).trim();
     const value = trimmed.slice(colonIndex + 1).trim();
-    if (key && key !== "Storage") {
+    if (key && key !== "Storage" && key !== "Size") {
       specs[key] = value;
     }
   }
@@ -334,7 +414,7 @@ export function formatSpecificationsInput(
   if (!specs) return "";
 
   return Object.entries(specs)
-    .filter(([key]) => key !== "Storage")
+    .filter(([key]) => key !== "Storage" && key !== "Size")
     .map(([key, value]) => `${key}: ${value}`)
     .join("\n");
 }
@@ -353,11 +433,23 @@ export function applyGeneratedProductCopyToForm(copy: {
 
 export function mergeSpecificationsWithStorage(
   specs: Record<string, string> | undefined,
-  storage: string | undefined
+  storage: string | undefined,
+  dimension: VariantDimension = "storage"
+): Record<string, string> {
+  return mergeSpecificationsWithVariant(specs, storage, dimension);
+}
+
+export function mergeSpecificationsWithVariant(
+  specs: Record<string, string> | undefined,
+  variantValue: string | undefined,
+  dimension: VariantDimension = "storage"
 ): Record<string, string> {
   const merged = { ...(specs ?? {}) };
-  if (storage?.trim()) {
-    merged.Storage = storage.trim();
+  const key = variantSpecKey(dimension);
+  delete merged.Storage;
+  delete merged.Size;
+  if (variantValue?.trim()) {
+    merged[key] = variantValue.trim();
   }
   return merged;
 }
@@ -366,6 +458,9 @@ export function adminProductToForm(product: {
   name: string;
   yuanCost: number | null;
   costCurrency?: SupplierCostCurrency;
+  priceMode?: PriceMode;
+  variantDimension?: VariantDimension;
+  price: number;
   image: string;
   description: string;
   filterSlug: string | null;
@@ -383,11 +478,18 @@ export function adminProductToForm(product: {
   localDeliveryNgn: number;
 }): ProductFormState {
   const hasVariants = product.storageVariants.length > 0;
+  const priceMode = product.priceMode ?? "calculated";
+  const useDirectNairaPrice = priceMode === "direct_ngn";
+  const variantDimension = product.variantDimension ?? "storage";
 
   return {
     name: stripConditionSuffix(product.name),
     costCurrency: product.costCurrency ?? "cny",
-    yuanCost: hasVariants ? "" : String(product.yuanCost ?? ""),
+    yuanCost: hasVariants || useDirectNairaPrice ? "" : String(product.yuanCost ?? ""),
+    useDirectNairaPrice,
+    directNairaPrice:
+      useDirectNairaPrice && !hasVariants ? String(product.price) : "",
+    variantDimension,
     image: product.image,
     description: product.description,
     filterSlugs: product.filterSlugs?.length
@@ -398,7 +500,8 @@ export function adminProductToForm(product: {
     badge: product.badge ?? "",
     storage: hasVariants ? "" : product.storage ?? "",
     storageVariants: formatStorageVariants(
-      hasVariants ? product.storageVariants : undefined
+      hasVariants ? product.storageVariants : undefined,
+      priceMode
     ),
     colors: product.colors.join(", "),
     features: product.features.join("\n"),
@@ -421,6 +524,9 @@ export const emptyProductForm: ProductFormState = {
   name: "",
   costCurrency: "cny",
   yuanCost: "",
+  useDirectNairaPrice: false,
+  directNairaPrice: "",
+  variantDimension: "storage",
   image: "/product-images/",
   description: "",
   filterSlugs: [],

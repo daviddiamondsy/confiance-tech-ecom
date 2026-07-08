@@ -7,7 +7,9 @@ import {
   parseFilterSlugsInput,
   parseSpecificationsInput,
   parseStorageVariantsField,
+  parseDirectNairaPrice,
 } from "@/lib/admin-product-form";
+import { parsePriceMode, parseVariantDimension } from "@/lib/variant-dimension";
 import { isPostgresConfigured } from "@/lib/db/client";
 import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
 import { getPostgresErrorMessage } from "@/lib/db/postgres-errors";
@@ -80,8 +82,13 @@ export async function POST(req: NextRequest) {
   const image = String(body.image ?? "").trim();
   const description = String(body.description ?? "").trim();
   const filterSlugs = parseFilterSlugsInput(body.filterSlugs, body.filterSlug);
+  const useDirectNairaPrice = Boolean(body.useDirectNairaPrice);
+  const priceMode = parsePriceMode(useDirectNairaPrice ? "direct_ngn" : "calculated");
+  const variantDimension = parseVariantDimension(body.variantDimension);
+  const valueKind = useDirectNairaPrice ? "naira" : "cost";
   const yuanRaw = body.yuanCost != null ? String(body.yuanCost).trim() : "";
   const yuanCost = yuanRaw ? Number(yuanRaw) : undefined;
+  const directNairaPrice = parseDirectNairaPrice(body.directNairaPrice);
   let costCurrency;
   try {
     costCurrency = parseCostCurrency(body.costCurrency ?? "cny");
@@ -96,13 +103,14 @@ export async function POST(req: NextRequest) {
 
   let storageVariants: Array<{ storage: string; yuan: number }> | undefined;
   try {
-    storageVariants = parseStorageVariantsField(body.storageVariants);
+    storageVariants = parseStorageVariantsField(body.storageVariants, valueKind);
   } catch (error) {
     if (error instanceof Error && error.message === "INVALID_STORAGE_VARIANTS") {
       return NextResponse.json(
         {
-          error:
-            "Storage variants must use storage:yuan on each line (e.g. 128GB:1400 and 256GB:1500)",
+          error: useDirectNairaPrice
+            ? "Variants must use label:price in naira on each line (e.g. 10\":45000)"
+            : "Storage variants must use storage:yuan on each line (e.g. 128GB:1400 and 256GB:1500)",
         },
         { status: 400 }
       );
@@ -118,7 +126,14 @@ export async function POST(req: NextRequest) {
   }
 
   const hasVariants = (storageVariants?.length ?? 0) > 0;
-  if (!hasVariants) {
+  if (useDirectNairaPrice) {
+    if (!hasVariants && directNairaPrice == null) {
+      return NextResponse.json(
+        { error: "Enter a Nigeria price or at least one size:price variant line" },
+        { status: 400 }
+      );
+    }
+  } else if (!hasVariants) {
     if (yuanCost == null || !Number.isFinite(yuanCost) || yuanCost <= 0) {
       return NextResponse.json(
         { error: "Supplier cost is required when storage variants are not set" },
@@ -145,6 +160,9 @@ export async function POST(req: NextRequest) {
     const created = await createAdminProduct({
       name,
       yuanCost,
+      directNairaPrice,
+      priceMode,
+      variantDimension,
       costCurrency,
       image,
       description,
@@ -169,6 +187,12 @@ export async function POST(req: NextRequest) {
       if (error.message === "INVALID_YUAN") {
         return NextResponse.json(
           { error: "Set supplier cost or at least one storage:cost variant" },
+          { status: 400 }
+        );
+      }
+      if (error.message === "INVALID_DIRECT_NAIRA") {
+        return NextResponse.json(
+          { error: "Enter a valid Nigeria price (whole naira, at least 1000)" },
           { status: 400 }
         );
       }
@@ -227,7 +251,22 @@ function buildUpdateInput(body: Record<string, unknown>): UpdateProductInput {
         throw new Error("INVALID_YUAN");
       }
       input.yuanCost = yuanCost;
+    } else {
+      input.yuanCost = undefined;
     }
+  }
+  if (body.useDirectNairaPrice !== undefined) {
+    input.priceMode = parsePriceMode(body.useDirectNairaPrice ? "direct_ngn" : "calculated");
+  }
+  if (body.directNairaPrice !== undefined) {
+    const directNairaPrice = parseDirectNairaPrice(body.directNairaPrice);
+    if (directNairaPrice == null) {
+      throw new Error("INVALID_DIRECT_NAIRA");
+    }
+    input.directNairaPrice = directNairaPrice;
+  }
+  if (body.variantDimension !== undefined) {
+    input.variantDimension = parseVariantDimension(body.variantDimension);
   }
   if (body.colors !== undefined) {
     input.colors = parseColorsInput(body.colors) ?? [];
@@ -244,7 +283,12 @@ function buildUpdateInput(body: Record<string, unknown>): UpdateProductInput {
     }
   }
   if (body.storageVariants !== undefined) {
-    input.storageVariants = parseStorageVariantsField(body.storageVariants);
+    const valueKind = parsePriceMode(
+      body.useDirectNairaPrice ? "direct_ngn" : body.priceMode ?? "calculated"
+    ) === "direct_ngn"
+      ? "naira"
+      : "cost";
+    input.storageVariants = parseStorageVariantsField(body.storageVariants, valueKind);
   }
   if (body.costCurrency !== undefined) {
     input.costCurrency = parseCostCurrency(body.costCurrency);
@@ -292,6 +336,12 @@ export async function PUT(req: NextRequest) {
     if (error instanceof Error) {
       if (error.message === "INVALID_YUAN") {
         return NextResponse.json({ error: "Supplier cost must be a positive number" }, { status: 400 });
+      }
+      if (error.message === "INVALID_DIRECT_NAIRA") {
+        return NextResponse.json(
+          { error: "Enter a valid Nigeria price (whole naira, at least 1000)" },
+          { status: 400 }
+        );
       }
       if (error.message === "INVALID_COST_CURRENCY") {
         return NextResponse.json({ error: "Invalid supplier cost currency" }, { status: 400 });
@@ -346,6 +396,12 @@ export async function PUT(req: NextRequest) {
       }
       if (error.message === "INVALID_YUAN") {
         return NextResponse.json({ error: "Supplier cost must be a positive number" }, { status: 400 });
+      }
+      if (error.message === "INVALID_DIRECT_NAIRA") {
+        return NextResponse.json(
+          { error: "Enter a valid Nigeria price (whole naira, at least 1000)" },
+          { status: 400 }
+        );
       }
       if (error.message === "INVALID_COST_CURRENCY") {
         return NextResponse.json({ error: "Invalid supplier cost currency" }, { status: 400 });

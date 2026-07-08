@@ -64,7 +64,9 @@ export default function ProductDetailView({ product, deliveryDays }: ProductDeta
 
             {product.storageOptions && product.storageOptions.length > 0 && (
               <div className="mb-5">
-                <p className="input-label">Storage</p>
+                <p className="input-label">
+                  {product.variantDimension === "size" ? "Size" : "Storage"}
+                </p>
                 <div className="flex flex-wrap gap-2.5">
                   {product.storageOptions.map((option, index) => (
                     <button
