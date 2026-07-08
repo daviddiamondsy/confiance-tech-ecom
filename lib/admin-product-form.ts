@@ -25,7 +25,7 @@ import {
   parseCostCurrency,
   priceFromSupplierCost,
   sellingMarkupForSupplierCost,
-  toCharmPrice,
+  sellingPriceFromDirectNaira,
   type PricingConfig,
   type SupplierCostCurrency,
 } from "@/lib/pricing";
@@ -261,7 +261,7 @@ export function previewVariantPricesFromForm(
         storage: variant.storage,
         cost: variant.yuan,
         currency: form.costCurrency,
-        price: toCharmPrice(Math.round(variant.yuan)),
+        price: sellingPriceFromDirectNaira(variant.yuan),
         markup: 0,
       }));
     }
@@ -274,7 +274,7 @@ export function previewVariantPricesFromForm(
         storage: form.storage.trim() || "Default",
         cost: naira,
         currency: form.costCurrency,
-        price: toCharmPrice(Math.round(naira)),
+        price: sellingPriceFromDirectNaira(naira),
         markup: 0,
       },
     ];
@@ -488,7 +488,9 @@ export function adminProductToForm(product: {
     yuanCost: hasVariants || useDirectNairaPrice ? "" : String(product.yuanCost ?? ""),
     useDirectNairaPrice,
     directNairaPrice:
-      useDirectNairaPrice && !hasVariants ? String(product.price) : "",
+      useDirectNairaPrice && !hasVariants
+        ? String(product.yuanCost ?? product.price)
+        : "",
     variantDimension,
     image: product.image,
     description: product.description,

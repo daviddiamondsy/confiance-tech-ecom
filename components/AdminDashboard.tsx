@@ -679,7 +679,7 @@ export default function AdminDashboard() {
         <section className="card-elevated p-6">
           <h2 className="font-display text-lg font-bold text-slate-900 mb-1">Pricing formula</h2>
           <p className="text-sm text-slate-600 mb-6">
-            CNY: markup x (yuan x rate + china + intl + local), charm pricing (ends in 9999).
+            CNY: markup x (yuan x rate + china + intl + local), charm pricing (nearest …9999 from ₦100k).
             GBP/USD: markup x (amount x rate + intl + local), no china shipping. International
             shipping can be entered in NGN or USD (USD converts at the pricing rate). Expensive CNY items
             use the lower markup at or above the yuan threshold. Expensive GBP/USD items use it when
