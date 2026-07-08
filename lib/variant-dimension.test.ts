@@ -49,6 +49,6 @@ describe("direct naira variant parsing", () => {
       },
       DEFAULT_PRICING_CONFIG
     );
-    expect(previews[0]?.price).toBe(45000);
+    expect(previews[0]?.price).toBe(44999);
   });
 });

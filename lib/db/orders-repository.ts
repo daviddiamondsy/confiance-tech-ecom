@@ -198,6 +198,23 @@ export async function getStoreOrderByDealId(dealId: string): Promise<StoreOrderR
   return rows[0] ? mapRow(rows[0]) : null;
 }
 
+export async function listStoreOrdersByCustomerPhone(
+  phone: string,
+  limit = 3
+): Promise<StoreOrderRecord[]> {
+  const customerPhone = normalizeNigerianPhone(phone);
+  if (!customerPhone) return [];
+
+  const { rows } = await sql<StoreOrderRecord>`
+    SELECT *
+    FROM store_orders
+    WHERE customer_phone = ${customerPhone}
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+  `;
+  return rows.map(mapRow);
+}
+
 export async function getPendingCheckoutOrderByPhone(phone: string): Promise<StoreOrderRecord | null> {
   const customerPhone = normalizeNigerianPhone(phone);
   if (!customerPhone) return null;

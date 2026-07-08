@@ -136,8 +136,8 @@ export function sellingMarkupForYuan(
 
 /**
  * Selling price in NGN from supplier cost in CNY, GBP, or USD.
- * CNY: markup x (yuan x rate + china + intl + local), charm pricing from ₦100k.
- * GBP/USD: markup x (amount x rate + intl + local), charm pricing from ₦100k (no china shipping).
+ * CNY: markup x (yuan x rate + china + intl + local), charm pricing (…999 below ₦100k, …9999 from ₦100k).
+ * GBP/USD: markup x (amount x rate + intl + local), same charm tiers (no china shipping).
  */
 export function priceFromSupplierCost(
   cost: number,
@@ -163,18 +163,30 @@ export function priceFromYuan(
   return priceFromSupplierCost(yuan, "cny", config, shipping);
 }
 
-/** Charm pricing applies at and above this NGN amount. */
+/** Below this amount, charm pricing snaps to the nearest …999; at/above uses …9999. */
 export const CHARM_PRICING_MIN_NGN = 100_000;
 
+function nearestCharmEnding(
+  price: number,
+  ending: number,
+  step: number
+): number {
+  const lower = Math.floor((price - ending) / step) * step + ending;
+  const upper = lower + step;
+  return price - lower <= upper - price ? lower : upper;
+}
+
 /**
- * Charm pricing: nearest amount ending in 9999 (ties round down).
- * Amounts below {@link CHARM_PRICING_MIN_NGN} are kept as entered.
+ * Charm pricing by tier:
+ * - Below ₦100k: nearest amount ending in 999 (e.g. 43,000 → 42,999).
+ * - At/above ₦100k: nearest amount ending in 9999 (ties round down).
  */
 export function toCharmPrice(price: number): number {
-  if (price < CHARM_PRICING_MIN_NGN) return price;
-  const lower = Math.floor((price - 9999) / 10_000) * 10_000 + 9999;
-  const upper = lower + 10_000;
-  return price - lower <= upper - price ? lower : upper;
+  if (price < 999) return price;
+  if (price < CHARM_PRICING_MIN_NGN) {
+    return nearestCharmEnding(price, 999, 1_000);
+  }
+  return nearestCharmEnding(price, 9999, 10_000);
 }
 
 /** Raw direct-naira input before charm pricing; legacy rows may only have the stored selling price. */

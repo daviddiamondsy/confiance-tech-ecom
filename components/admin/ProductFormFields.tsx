@@ -208,7 +208,7 @@ export default function ProductFormFields({
           <span>
             <span className="font-medium text-slate-800 block">Set Nigeria price directly</span>
             <span className="text-xs text-slate-500 block mt-1">
-              Skips supplier cost and markup calculation. Charm pricing (nearest …9999) applies on save from ₦100k.
+              Skips supplier cost and markup calculation. Charm pricing applies on save (…999 below ₦100k, …9999 from ₦100k).
             </span>
           </span>
         </label>

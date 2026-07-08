@@ -14,6 +14,7 @@ import {
   readBotStoreKeyFromRequest,
 } from "@/lib/orders/derive-order-source";
 import { isHoldamBypassEnabled } from "@/lib/holdam/config";
+import { formatStoreOrderReference } from "@/lib/orders/reference-id";
 import type { OrderEmailReferralDetails } from "@/lib/order-email";
 
 async function buildReferralEmailDetails(params: {
@@ -210,6 +211,7 @@ export async function POST(req: NextRequest) {
           customerAddress: customerData.address,
           customerState: customerData.state,
           paymentStatus: "pending",
+          orderId,
           referral: referralEmailDetails,
         });
         console.log("[API][create-holdam-deal] Order email sent (Holdam bypass)", {
@@ -229,6 +231,7 @@ export async function POST(req: NextRequest) {
         success: true,
         holdamBypass: true,
         orderId,
+        orderReference: orderId != null ? formatStoreOrderReference(orderId) : undefined,
         pricing: referralAdjustment
           ? {
               catalogPriceNgn: amountNgn,
