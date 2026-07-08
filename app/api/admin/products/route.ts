@@ -31,7 +31,20 @@ import {
   type ProductShippingCosts,
 } from "@/lib/product-shipping";
 import { parseCostCurrency } from "@/lib/pricing";
+import { resolveStorefrontProductSlug } from "@/lib/product-slug";
 import { revalidateStorefrontCatalog } from "@/lib/storefront-revalidation";
+
+function storefrontSlugForRevalidation(product: {
+  id: string;
+  slug: string;
+  name: string;
+}): string {
+  return resolveStorefrontProductSlug({
+    id: product.id,
+    dbSlug: product.slug,
+    name: product.name,
+  });
+}
 
 function parseProductShippingInput(
   body: Record<string, unknown>,
@@ -178,7 +191,9 @@ export async function POST(req: NextRequest) {
     });
     const products = await fetchAdminProducts();
     const product = products.find((item) => item.id === created.id);
-    revalidateStorefrontCatalog(product?.slug ?? created.slug);
+    revalidateStorefrontCatalog(
+      storefrontSlugForRevalidation(product ?? { id: created.id, slug: created.slug, name: created.name })
+    );
     return NextResponse.json({ product: product ?? created }, { status: 201 });
   } catch (error) {
     if (error instanceof Error) {
@@ -373,7 +388,7 @@ export async function PUT(req: NextRequest) {
   try {
     await ensureCatalogSchema();
     const product = await updateAdminProduct(productId, input);
-    revalidateStorefrontCatalog(product.slug);
+    revalidateStorefrontCatalog(storefrontSlugForRevalidation(product));
     return NextResponse.json({ product });
   } catch (error) {
     if (error instanceof Error) {

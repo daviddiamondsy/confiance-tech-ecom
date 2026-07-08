@@ -2,6 +2,7 @@ import {
   formatNgn,
   formatRefereeDiscountRange,
   REFERRAL_ATTRIBUTION_DAYS,
+  REFERRAL_MIN_CATALOG_PRICE_NGN,
   REFERRAL_MIN_DEAL_NGN,
   STORE_CREDIT_EXPIRY_MONTHS,
 } from "@/lib/referral/config";
@@ -39,6 +40,7 @@ export function buildReferralTermsSections(): ReferralTermsSection[] {
         "A friend cannot use their own referral code.",
         "The friend must open your referral link and complete checkout while the referral is still attributed to your code.",
         `Referral links stay active for ${REFERRAL_ATTRIBUTION_DAYS} days after a friend clicks your link.`,
+        `Referral discounts apply to device orders priced at least ${formatNgn(REFERRAL_MIN_CATALOG_PRICE_NGN)}.`,
         `Friend savings are fixed by device catalog price band (${friendDiscountRange} depending on the product). See the reward tiers table for current amounts.`,
       ],
     },

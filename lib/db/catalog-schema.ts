@@ -59,6 +59,7 @@ export async function ensureCatalogSchema(): Promise<void> {
   await sqlDdl`ALTER TABLE products ADD COLUMN IF NOT EXISTS yuan_cost NUMERIC(12, 2)`;
   await sqlDdl`ALTER TABLE products ADD COLUMN IF NOT EXISTS slug TEXT`;
   await sqlDdl`ALTER TABLE products ADD COLUMN IF NOT EXISTS filter_slug TEXT`;
+  await sqlDdl`ALTER TABLE products ADD COLUMN IF NOT EXISTS badge TEXT`;
   await sqlDdl`
     ALTER TABLE products
     ADD COLUMN IF NOT EXISTS china_shipping_yuan INTEGER NOT NULL DEFAULT 10

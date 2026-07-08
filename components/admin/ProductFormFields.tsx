@@ -531,6 +531,9 @@ export default function ProductFormFields({
           value={form.badge}
           onChange={(event) => onChange({ badge: event.target.value })}
         />
+        <p className="mt-1.5 text-xs text-slate-500">
+          Hidden on the storefront when it matches the condition label (New or Like New).
+        </p>
       </div>
 
       <div>

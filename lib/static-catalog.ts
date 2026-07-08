@@ -12,6 +12,11 @@ export function shouldUseStaticCatalog(): boolean {
 
 let cachedStaticProducts: Product[] | null = null;
 
+/** Drop in-memory static catalog after admin writes (no-op when Postgres is active). */
+export function bustStaticCatalogCache(): void {
+  cachedStaticProducts = null;
+}
+
 export function getStaticCatalogProducts(): Product[] {
   if (!cachedStaticProducts) {
     cachedStaticProducts = buildCatalogProducts().map((product) => {

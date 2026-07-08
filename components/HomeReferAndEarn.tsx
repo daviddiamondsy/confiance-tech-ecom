@@ -4,6 +4,7 @@ import {
   formatNgn,
   formatReferralTierRange,
   REFERRAL_ATTRIBUTION_DAYS,
+  REFERRAL_MIN_CATALOG_PRICE_NGN,
   REFERRAL_TIERS,
   STORE_CREDIT_EXPIRY_MONTHS,
 } from "@/lib/referral/config";
@@ -79,6 +80,7 @@ export default function HomeReferAndEarn() {
                 <p className="text-sm text-slate-400 mb-6">
                   Based on your friend&apos;s catalog price. Amounts are fixed per tier.
                   Links stay active for {REFERRAL_ATTRIBUTION_DAYS} days.
+                  Referral discounts apply to device orders priced at least {formatNgn(REFERRAL_MIN_CATALOG_PRICE_NGN)}.
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
