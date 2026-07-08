@@ -1,5 +1,12 @@
 import { ensureHoldamDealLinked } from "@/lib/holdam/deal-link";
-import { REFERRAL_MIN_DEAL_NGN, REFERRAL_TIERS, referralTierForPrice } from "@/lib/referral/config";
+import {
+  REFERRAL_MIN_DEAL_NGN,
+  REFERRAL_TIERS,
+  referralCatalogMeetsMinPurchase,
+  referralCatalogMinPurchaseReason,
+  referralMinDealAfterDiscountReason,
+  referralTierForPrice,
+} from "@/lib/referral/config";
 import { coerceDate, coerceDateIso } from "@/lib/referral/dates";
 import { phonesMatch } from "@/lib/referral/phone";
 import { maskRefereePhone, storeCreditExpiresAt } from "@/lib/referral/store-credit";
@@ -198,7 +205,14 @@ export async function previewReferralDiscount(params: {
     };
   }
 
+  if (!referralCatalogMeetsMinPurchase(params.catalogPriceNgn)) {
+    return { valid: false, reason: referralCatalogMinPurchaseReason() };
+  }
+
   const tier = referralTierForPrice(params.catalogPriceNgn);
+  if (!tier) {
+    return { valid: false, reason: referralCatalogMinPurchaseReason() };
+  }
 
   return {
     valid: true,
@@ -238,12 +252,20 @@ export async function computeCheckoutAmount(params: {
     refereeDiscountNgn = preview.refereeDiscountNgn ?? 0;
     referrerCreditNgn = preview.referrerCreditNgn;
     referralCode = preview.code;
-    tierId = referralTierForPrice(params.catalogPriceNgn).id;
+    const tier = referralTierForPrice(params.catalogPriceNgn);
+    tierId = tier?.id;
 
     const codeRow = await getReferralCodeByCode(preview.code!);
     referrerPhone = codeRow?.referrer_phone;
 
-    amount = Math.max(REFERRAL_MIN_DEAL_NGN, amount - refereeDiscountNgn);
+    amount -= refereeDiscountNgn;
+
+    if (amount < REFERRAL_MIN_DEAL_NGN) {
+      return {
+        adjustment: { finalAmountNgn: amount, refereeDiscountNgn, storeCreditAppliedNgn: 0 },
+        error: referralMinDealAfterDiscountReason(),
+      };
+    }
   }
 
   if (params.applyStoreCredit) {
@@ -258,7 +280,7 @@ export async function computeCheckoutAmount(params: {
   if (amount < REFERRAL_MIN_DEAL_NGN) {
     return {
       adjustment: { finalAmountNgn: amount, refereeDiscountNgn, storeCreditAppliedNgn },
-      error: `Order total must be at least ₦${REFERRAL_MIN_DEAL_NGN.toLocaleString()} after discounts.`,
+      error: referralMinDealAfterDiscountReason(),
     };
   }
 
@@ -293,7 +315,7 @@ export async function recordReferralOnDealCreated(params: {
       refereeDiscountNgn: adjustment.refereeDiscountNgn,
       referrerCreditNgn: adjustment.referrerCreditNgn,
       storeCreditAppliedNgn: adjustment.storeCreditAppliedNgn,
-      tier: adjustment.tierId ?? referralTierForPrice(params.catalogPriceNgn).id,
+      tier: adjustment.tierId ?? referralTierForPrice(params.catalogPriceNgn)?.id ?? "budget",
     });
   }
 

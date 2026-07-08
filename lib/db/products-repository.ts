@@ -407,7 +407,7 @@ export async function upsertCatalogProducts(products: SeedProductInput[]): Promi
         yuan_cost = EXCLUDED.yuan_cost,
         original_price = EXCLUDED.original_price,
         image = EXCLUDED.image,
-        badge = EXCLUDED.badge,
+        badge = COALESCE(products.badge, EXCLUDED.badge),
         description = EXCLUDED.description,
         features = EXCLUDED.features,
         specifications = EXCLUDED.specifications,
@@ -813,7 +813,7 @@ async function persistAdminProductRowUpdate(fields: PersistProductRowFields): Pr
     priceMode,
   } = fields;
 
-  const coreParams = [
+  const rowCoreParams = [
     productId,
     slug,
     primaryFilterSlug,
@@ -826,8 +826,6 @@ async function persistAdminProductRowUpdate(fields: PersistProductRowFields): Pr
     description,
     JSON.stringify(features),
     JSON.stringify(specifications),
-    variantDimension,
-    priceMode,
   ];
 
   const runFullUpdate = () =>
@@ -854,7 +852,9 @@ async function persistAdminProductRowUpdate(fields: PersistProductRowFields): Pr
         updated_at = NOW()
       WHERE id = $1`,
       [
-        ...coreParams,
+        ...rowCoreParams,
+        variantDimension,
+        priceMode,
         shipping.chinaShippingYuan,
         shipping.internationalShippingCurrency,
         shipping.internationalShippingNgn,
@@ -884,7 +884,7 @@ async function persistAdminProductRowUpdate(fields: PersistProductRowFields): Pr
         updated_at = NOW()
       WHERE id = $1`,
       [
-        ...coreParams,
+        ...rowCoreParams,
         shipping.chinaShippingYuan,
         shipping.internationalShippingNgn,
         shipping.internationalShippingCurrency,
@@ -908,7 +908,7 @@ async function persistAdminProductRowUpdate(fields: PersistProductRowFields): Pr
         specifications = $12::jsonb,
         updated_at = NOW()
       WHERE id = $1`,
-      coreParams
+      rowCoreParams
     );
 
   let lastError: unknown;

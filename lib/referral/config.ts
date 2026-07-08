@@ -14,8 +14,12 @@ export interface ReferralTier {
   referrerCreditNgn: number;
 }
 
-/** Budget band starts at ₦0; reward sizing anchors here (~entry catalog). */
+/** Entry-level device catalog anchor for budget-tier reward sizing. */
 const BUDGET_REWARD_FLOOR_NGN = 400_000;
+
+/** Minimum catalog price (NGN) before a referral discount or referrer reward can apply. */
+export const REFERRAL_MIN_CATALOG_PRICE_NGN =
+  Number(process.env.REFERRAL_MIN_CATALOG_PRICE_NGN) || 300_000;
 
 /**
  * 5% of tier floor total referral pool, split equally between friend and referrer.
@@ -36,7 +40,7 @@ export const REFERRAL_TIERS: ReferralTier[] = [
   {
     id: "budget",
     label: "Budget",
-    minPriceNgn: 0,
+    minPriceNgn: REFERRAL_MIN_CATALOG_PRICE_NGN,
     maxPriceNgn: 550_000,
     ...tierRewards(BUDGET_REWARD_FLOOR_NGN),
   },
@@ -71,9 +75,36 @@ export const STORE_CREDIT_EXPIRY_MONTHS = 12;
 /** Holdam minimum deal size fallback when env is unset. */
 export const REFERRAL_MIN_DEAL_NGN = Number(process.env.REFERRAL_MIN_DEAL_NGN) || 25_000;
 
+export function referralCatalogMeetsMinPurchase(catalogPriceNgn: number): boolean {
+  return catalogPriceNgn >= REFERRAL_MIN_CATALOG_PRICE_NGN;
+}
+
+export function referralCatalogMinPurchaseReason(): string {
+  return `Referral discounts apply to device orders of ${formatNgn(REFERRAL_MIN_CATALOG_PRICE_NGN)} or more.`;
+}
+
+export function referralMinDealAfterDiscountReason(): string {
+  return `Order total must be at least ${formatNgn(REFERRAL_MIN_DEAL_NGN)} after discounts.`;
+}
+
 export const REFERRAL_COOKIE_NAME = "holdam_ref";
 
-export function referralTierForPrice(catalogPriceNgn: number): ReferralTier {
+export function catalogQualifiesForReferral(catalogPriceNgn: number): boolean {
+  return referralCatalogMeetsMinPurchase(catalogPriceNgn);
+}
+
+export function referralCatalogIneligibleReason(catalogPriceNgn: number): string | null {
+  if (catalogQualifiesForReferral(catalogPriceNgn)) {
+    return null;
+  }
+  return referralCatalogMinPurchaseReason();
+}
+
+export function referralTierForPrice(catalogPriceNgn: number): ReferralTier | null {
+  if (!catalogQualifiesForReferral(catalogPriceNgn)) {
+    return null;
+  }
+
   for (const tier of REFERRAL_TIERS) {
     const belowMax = tier.maxPriceNgn == null || catalogPriceNgn < tier.maxPriceNgn;
     if (catalogPriceNgn >= tier.minPriceNgn && belowMax) {

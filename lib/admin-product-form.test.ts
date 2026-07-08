@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  badgeValueForProductUpdate,
   emptyProductForm,
   productFormPayloadForSave,
   resolveAdminPriceModeFromBody,
@@ -39,5 +40,28 @@ describe("resolveAdminPriceModeFromBody", () => {
         priceMode: "direct_ngn",
       })
     ).toBe("calculated");
+  });
+});
+
+describe("badgeValueForProductUpdate", () => {
+  it("trims and keeps non-empty badge labels", () => {
+    expect(badgeValueForProductUpdate("  Sale  ")).toBe("Sale");
+  });
+
+  it("clears badge when the field is empty or whitespace", () => {
+    expect(badgeValueForProductUpdate("")).toBeNull();
+    expect(badgeValueForProductUpdate("   ")).toBeNull();
+    expect(badgeValueForProductUpdate(null)).toBeNull();
+  });
+});
+
+describe("productFormPayloadForSave badge", () => {
+  it("keeps badge in the save payload", () => {
+    const payload = productFormPayloadForSave({
+      ...emptyProductForm,
+      badge: "Featured",
+    });
+
+    expect(payload.badge).toBe("Featured");
   });
 });
