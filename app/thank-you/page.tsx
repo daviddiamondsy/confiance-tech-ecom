@@ -3,18 +3,22 @@ import { CheckCircle, ArrowLeft, Gift, Phone, Package } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-export default function ThankYouPage() {
+type ThankYouPageProps = {
+  searchParams?: Promise<{ orderRef?: string }>;
+};
+
+export default async function ThankYouPage({ searchParams }: ThankYouPageProps) {
+  const params = searchParams ? await searchParams : undefined;
+  const orderRef = params?.orderRef?.trim() || null;
+
   return (
     <div className="min-h-screen bg-surface-muted">
       <Header />
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-        {/* Main card */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-card overflow-hidden">
-          {/* Top accent */}
           <div className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2" />
 
           <div className="p-8 md:p-12 text-center">
-            {/* Icon */}
             <div className="relative inline-flex items-center justify-center mb-6">
               <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center">
                 <CheckCircle className="h-12 w-12 text-emerald-500" />
@@ -32,12 +36,26 @@ export default function ThankYouPage() {
               Thank You!
             </h1>
             <p className="text-slate-600 leading-relaxed mb-8 max-w-md mx-auto">
-              Your order has been received and sent to our team. We will contact you shortly to confirm your delivery details.
+              Your order has been received and sent to our team. We will contact you shortly to
+              confirm your delivery details.
             </p>
 
-            {/* Next steps */}
+            {orderRef && (
+              <div className="bg-primary-50 border border-primary-100 rounded-2xl p-5 mb-8 text-left max-w-md mx-auto">
+                <p className="text-xs font-semibold uppercase tracking-wider text-primary-700 mb-1">
+                  Your order number
+                </p>
+                <p className="font-mono text-lg font-bold text-slate-900">{orderRef}</p>
+                <p className="text-sm text-slate-600 mt-2">
+                  Save this number. Share it on WhatsApp if you need order updates.
+                </p>
+              </div>
+            )}
+
             <div className="bg-slate-50 rounded-2xl border border-slate-100 p-6 mb-8 text-left">
-              <h3 className="font-display font-semibold text-slate-900 mb-4 text-sm uppercase tracking-wider">What happens next</h3>
+              <h3 className="font-display font-semibold text-slate-900 mb-4 text-sm uppercase tracking-wider">
+                What happens next
+              </h3>
               <div className="space-y-3">
                 {[
                   { icon: Phone, text: "Our team calls to confirm your order and delivery address." },

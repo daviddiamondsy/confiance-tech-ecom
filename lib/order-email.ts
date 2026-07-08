@@ -19,6 +19,7 @@ export interface OrderEmailPayload {
   customerState: string;
   paymentStatus: "pending" | "paid";
   dealId?: string;
+  orderId?: number;
   confirmationFee?: number;
   stripeSessionId?: string;
   referral?: OrderEmailReferralDetails;
@@ -66,6 +67,7 @@ const buildEmailHtml = (payload: OrderEmailPayload) => {
     ["Product", payload.productName || "N/A"],
     ["Product ID", payload.productId || "N/A"],
     ["Deal ID", payload.dealId || "N/A"],
+    ["Order number", payload.orderId != null ? `CT-${payload.orderId}` : "N/A"],
     ["Size", payload.productStorage || "N/A"],
     ["Color", payload.productColor || "N/A"],
     ["Product Price", formatCurrency(payload.productPrice)],
@@ -108,6 +110,7 @@ const buildEmailText = (payload: OrderEmailPayload) => {
     `Product: ${payload.productName || "N/A"}`,
     `Product ID: ${payload.productId || "N/A"}`,
     `Deal ID: ${payload.dealId || "N/A"}`,
+    `Order number: ${payload.orderId != null ? `CT-${payload.orderId}` : "N/A"}`,
     `Size: ${payload.productStorage || "N/A"}`,
     `Color: ${payload.productColor || "N/A"}`,
     `Product Price: ${formatCurrency(payload.productPrice)}`,
