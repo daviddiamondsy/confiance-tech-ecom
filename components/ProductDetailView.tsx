@@ -9,7 +9,11 @@ import TrustFeaturesGrid from "@/components/TrustFeaturesGrid";
 import { Check, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import type { Product } from "@/lib/product-utils";
-import { getSelectedVariant, getDisplaySpecs } from "@/lib/product-utils";
+import {
+  getSelectedVariant,
+  getDisplaySpecs,
+  getVariantPickerLabel,
+} from "@/lib/product-utils";
 import { storefrontProductBadge } from "@/lib/product-condition-suffix";
 import { PRODUCT_DETAIL_TRUST_FEATURES } from "@/lib/storefront-trust-features";
 import { STOREFRONT_PRODUCT_DETAIL_TRUST_COPY } from "@/lib/device-quality-copy";
@@ -66,6 +70,15 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                 </span>
               )}
             </div>
+
+
+            <Link
+              href={buyHref}
+              className="mt-4 inline-flex items-center justify-center gap-2.5 w-full py-4 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold rounded-2xl transition-colors shadow-soft text-base"
+            >
+              <ShoppingBag className="h-5 w-5" />
+              Order Now - ₦{storefrontDisplayPrice(variant.price).toLocaleString()}
+            </Link>
           </div>
 
           {/* Info */}
@@ -76,9 +89,7 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
 
             {product.storageOptions && product.storageOptions.length > 0 && (
               <div className="mb-5">
-                <p className="input-label">
-                  {product.variantDimension === "size" ? "Size" : "Storage"}
-                </p>
+                <p className="input-label">{getVariantPickerLabel(product)}</p>
                 <div className="flex flex-wrap gap-2.5">
                   {product.storageOptions.map((option, index) => (
                     <button
@@ -168,13 +179,6 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
 
             <TrustFeaturesGrid variant="product-detail" className="mb-6" />
 
-            <Link
-              href={buyHref}
-              className="inline-flex items-center justify-center gap-2.5 w-full py-4 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold rounded-2xl transition-colors shadow-soft text-base"
-            >
-              <ShoppingBag className="h-5 w-5" />
-              Order Now - ₦{storefrontDisplayPrice(variant.price).toLocaleString()}
-            </Link>
           </div>
         </div>
       </div>
@@ -282,7 +286,7 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                   <h4 className="font-display text-xl font-bold text-slate-900 mb-4">What Our Customers Say</h4>
                   <blockquote className="text-slate-600 italic border-l-4 border-primary-500 pl-4 leading-relaxed">
                     &ldquo;Amazing product! The quality exceeded my expectations and the delivery was super fast. Will definitely order again!&rdquo;
-                    <footer className="text-slate-500 mt-3 not-italic font-semibold">- Happy Customer</footer>
+                    <footer className="text-slate-500 mt-3 not-italic font-semibold">- Cherish</footer>
                   </blockquote>
                 </div>
               </div>
