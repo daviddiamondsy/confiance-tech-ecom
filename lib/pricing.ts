@@ -136,8 +136,8 @@ export function sellingMarkupForYuan(
 
 /**
  * Selling price in NGN from supplier cost in CNY, GBP, or USD.
- * CNY: markup x (yuan x rate + china + intl + local), charm pricing.
- * GBP/USD: markup x (amount x rate + intl + local), charm pricing (no china shipping).
+ * CNY: markup x (yuan x rate + china + intl + local), charm pricing from ₦100k.
+ * GBP/USD: markup x (amount x rate + intl + local), charm pricing from ₦100k (no china shipping).
  */
 export function priceFromSupplierCost(
   cost: number,
@@ -163,12 +163,31 @@ export function priceFromYuan(
   return priceFromSupplierCost(yuan, "cny", config, shipping);
 }
 
+/** Charm pricing applies at and above this NGN amount. */
+export const CHARM_PRICING_MIN_NGN = 100_000;
+
 /**
  * Charm pricing: nearest amount ending in 9999 (ties round down).
+ * Amounts below {@link CHARM_PRICING_MIN_NGN} are kept as entered.
  */
 export function toCharmPrice(price: number): number {
-  if (price < 9999) return price;
+  if (price < CHARM_PRICING_MIN_NGN) return price;
   const lower = Math.floor((price - 9999) / 10_000) * 10_000 + 9999;
   const upper = lower + 10_000;
   return price - lower <= upper - price ? lower : upper;
+}
+
+/** Raw direct-naira input before charm pricing; legacy rows may only have the stored selling price. */
+export function directNairaRawFromStorage(
+  storedRaw: number | string | null | undefined,
+  storedSellingPrice: number
+): number {
+  if (storedRaw != null && !Number.isNaN(Number(storedRaw)) && Number(storedRaw) > 0) {
+    return Math.round(Number(storedRaw));
+  }
+  return storedSellingPrice;
+}
+
+export function sellingPriceFromDirectNaira(rawNaira: number): number {
+  return toCharmPrice(Math.round(rawNaira));
 }

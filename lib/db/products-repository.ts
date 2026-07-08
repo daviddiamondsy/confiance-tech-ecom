@@ -9,7 +9,14 @@ import { ensureCatalogSchema } from "@/lib/db/catalog-schema";
 import { slugForProductId, slugifyProductName, catalogProductIdForSlug, resolveStorefrontProductSlug } from "@/lib/product-slug";
 import { fetchColorsByProductIds, fetchColorsForProduct } from "@/lib/db/colors-repository";
 import { fetchPricingConfig } from "@/lib/db/pricing-config-repository";
-import { priceFromSupplierCost, parseCostCurrency, toCharmPrice, type PricingConfig, type SupplierCostCurrency } from "@/lib/pricing";
+import {
+  directNairaRawFromStorage,
+  parseCostCurrency,
+  priceFromSupplierCost,
+  sellingPriceFromDirectNaira,
+  type PricingConfig,
+  type SupplierCostCurrency,
+} from "@/lib/pricing";
 import {
   defaultShippingForProductName,
   productShippingFromRow,
@@ -202,8 +209,12 @@ function resolvePrice(
   storedPrice: number,
   config: PricingConfig,
   shipping: ProductShippingCosts,
-  costCurrency: SupplierCostCurrency = "cny"
+  costCurrency: SupplierCostCurrency = "cny",
+  priceMode: PriceMode = "calculated"
 ): number {
+  if (priceMode === "direct_ngn") {
+    return storedPrice;
+  }
   if (supplierCost != null && !Number.isNaN(supplierCost)) {
     return priceFromSupplierCost(supplierCost, costCurrency, config, shipping);
   }
@@ -246,6 +257,7 @@ function mapRowToProduct(
     row.filter_slug ?? primaryConditionFilterSlug(resolvedFilterSlugs) ?? undefined;
   const baseYuan = row.yuan_cost != null ? Number(row.yuan_cost) : null;
   const costCurrency = resolveCostCurrency(row.cost_currency);
+  const priceMode = parsePriceMode(row.price_mode);
   const storageOptions: StorageOption[] | undefined =
     storageRows.length > 0
       ? storageRows.map((option) => {
@@ -257,14 +269,14 @@ function mapRowToProduct(
           );
           return {
             storage: option.storage,
-            price: resolvePrice(yuan, option.price, config, shipping, costCurrency),
+            price: resolvePrice(yuan, option.price, config, shipping, costCurrency, priceMode),
           };
         })
       : undefined;
 
   const listingPrice =
     storageOptions?.[0]?.price ??
-    resolvePrice(baseYuan, row.price, config, shipping, costCurrency);
+    resolvePrice(baseYuan, row.price, config, shipping, costCurrency, priceMode);
 
   return {
     id: row.id,
@@ -475,9 +487,10 @@ export async function fetchAdminProducts(): Promise<AdminProductRecord[]> {
           firstOption.price,
           config,
           shipping,
-          costCurrency
+          costCurrency,
+          priceMode
         )
-      : resolvePrice(yuanCost, row.price, config, shipping, costCurrency);
+      : resolvePrice(yuanCost, row.price, config, shipping, costCurrency, priceMode);
     return {
       id: row.id,
       slug: row.slug ?? slugForProductId(row.id, row.name),
@@ -504,7 +517,7 @@ export async function fetchAdminProducts(): Promise<AdminProductRecord[]> {
         storage: option.storage,
         yuan:
           priceMode === "direct_ngn"
-            ? option.price
+            ? directNairaRawFromStorage(option.yuan_cost, option.price)
             : storageOptionYuanCost(row.id, option.storage, option.yuan_cost, yuanCost) ??
               yuanCost ??
               0,
@@ -956,9 +969,9 @@ async function replaceProductStorageOptions(
     const variant = normalized[index];
     const variantPrice =
       priceMode === "direct_ngn"
-        ? toCharmPrice(Math.round(variant.yuan))
+        ? sellingPriceFromDirectNaira(variant.yuan)
         : priceFromSupplierCost(variant.yuan, costCurrency, config, shipping);
-    const variantYuanCost = priceMode === "direct_ngn" ? null : variant.yuan;
+    const variantYuanCost = variant.yuan;
     await sql`
       INSERT INTO product_storage_options (product_id, storage, price, yuan_cost, sort_order)
       VALUES (
@@ -1003,7 +1016,7 @@ async function syncStorageOptionPrices(
     storage: option.storage,
     yuan:
       priceMode === "direct_ngn"
-        ? option.price
+        ? directNairaRawFromStorage(option.yuan_cost, option.price)
         : storageOptionYuanCost(productId, option.storage, option.yuan_cost, yuanCost) ?? yuanCost,
   }));
   await replaceProductStorageOptions(
@@ -1067,9 +1080,9 @@ export async function createAdminProduct(input: CreateProductInput): Promise<{
   const costCurrency = input.costCurrency ?? "cny";
   const price =
     priceMode === "direct_ngn"
-      ? toCharmPrice(Math.round(directNairaPrice!))
+      ? sellingPriceFromDirectNaira(directNairaPrice!)
       : priceFromSupplierCost(baseYuan!, costCurrency, config, shipping);
-  const persistedYuanCost = priceMode === "direct_ngn" ? null : baseYuan;
+  const persistedYuanCost = priceMode === "direct_ngn" ? directNairaPrice! : baseYuan;
   const isNew = isNewProductFromFilterSlugs(filterSlugs);
   const isIphone = /iphone/i.test(name);
   let features =
@@ -1249,7 +1262,7 @@ export async function updateAdminProduct(
       directNairaPrice == null &&
       (storageVariantsForSave == null || storageVariantsForSave.length === 0)
     ) {
-      directNairaPrice = existing.price;
+      directNairaPrice = directNairaRawFromStorage(existing.yuan_cost, existing.price);
     }
     if (
       directNairaPrice == null ||
@@ -1284,7 +1297,7 @@ export async function updateAdminProduct(
   const storage = storageInput;
   const price =
     priceMode === "direct_ngn"
-      ? toCharmPrice(Math.round(directNairaPrice!))
+      ? sellingPriceFromDirectNaira(directNairaPrice!)
       : priceFromSupplierCost(yuanCost!, costCurrency, config, shipping);
   let specifications = resolveProductSpecifications({
     specifications: input.specifications,
@@ -1328,7 +1341,7 @@ export async function updateAdminProduct(
         storage: option.storage,
         yuan:
           priceMode === "direct_ngn"
-            ? option.price
+            ? directNairaRawFromStorage(option.yuan_cost, option.price)
             : storageOptionYuanCost(productId, option.storage, option.yuan_cost, yuanCost!) ??
               yuanCost!,
       }));
@@ -1353,7 +1366,7 @@ export async function updateAdminProduct(
     primaryFilterSlug: primaryFilterSlug || null,
     name,
     price,
-    yuanCost: priceMode === "direct_ngn" ? null : yuanCost ?? null,
+    yuanCost: priceMode === "direct_ngn" ? directNairaPrice ?? null : yuanCost ?? null,
     costCurrency,
     image,
     badge,

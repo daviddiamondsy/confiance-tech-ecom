@@ -12,7 +12,7 @@ import {
   previewVariantPricesFromForm,
   emptyProductForm,
 } from "@/lib/admin-product-form";
-import { DEFAULT_PRICING_CONFIG, toCharmPrice } from "@/lib/pricing";
+import { DEFAULT_PRICING_CONFIG } from "@/lib/pricing";
 
 describe("variant dimension helpers", () => {
   it("parses size dimension", () => {
@@ -49,6 +49,6 @@ describe("direct naira variant parsing", () => {
       },
       DEFAULT_PRICING_CONFIG
     );
-    expect(previews[0]?.price).toBe(toCharmPrice(45000));
+    expect(previews[0]?.price).toBe(45000);
   });
 });
