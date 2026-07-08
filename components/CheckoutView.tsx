@@ -6,7 +6,11 @@ import Link from "next/link";
 import { ArrowLeft, Truck, ShieldCheck, Package } from "lucide-react";
 import CustomerForm from "@/components/CustomerForm";
 import { getSelectedVariant } from "@/lib/product-utils";
-import { STOREFRONT_DOOR_DELIVERY_FEE_NGN } from "@/lib/storefront-display-price";
+import {
+  storefrontDisplayPrice,
+  storefrontOrderTotal,
+  STOREFRONT_DOOR_DELIVERY_FEE_NGN,
+} from "@/lib/storefront-display-price";
 import { DELIVERY_ESTIMATE_COPY } from "@/lib/delivery-deadline";
 import type { Product } from "@/lib/product-utils";
 
@@ -48,8 +52,8 @@ export default function CheckoutView({
     [product, storageIndex, colorIndex]
   );
 
-  const basePrice = variant.price - STOREFRONT_DOOR_DELIVERY_FEE_NGN;
-  const totalPrice = doorDelivery ? variant.price : basePrice;
+  const productDisplayPrice = storefrontDisplayPrice(variant.price, product);
+  const totalPrice = storefrontOrderTotal(variant.price, product, doorDelivery);
 
   const changeVariantHref = useMemo(() => {
     const base = `/products/${product.slug}`;
@@ -124,7 +128,7 @@ export default function CheckoutView({
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600">Product price</span>
                   <span className="font-medium text-slate-900">
-                    &#8358;{basePrice.toLocaleString()}
+                    &#8358;{productDisplayPrice.toLocaleString()}
                   </span>
                 </div>
 

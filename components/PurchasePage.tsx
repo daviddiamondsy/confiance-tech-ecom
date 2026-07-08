@@ -13,6 +13,7 @@ import { DELIVERY_ESTIMATE_COPY } from "@/lib/delivery-deadline";
 import { productPath } from "@/lib/product-slug";
 import {
   storefrontDisplayPrice,
+  storefrontOrderTotal,
   STOREFRONT_DOOR_DELIVERY_FEE_NGN,
 } from "@/lib/storefront-display-price";
 
@@ -52,8 +53,8 @@ export default function PurchasePage({
     [product, selectedStorageIndex, selectedColorIndex]
   );
 
-  const devicePrice = storefrontDisplayPrice(variant.price);
-  const total = doorDelivery ? variant.price : devicePrice;
+  const devicePrice = storefrontDisplayPrice(variant.price, product);
+  const total = storefrontOrderTotal(variant.price, product, doorDelivery);
 
   const badge = storefrontProductBadge(product);
 
@@ -127,7 +128,7 @@ export default function PurchasePage({
                         selectedStorageIndex === index ? "text-primary-600" : "text-slate-500"
                       }`}
                     >
-                      ₦{storefrontDisplayPrice(option.price).toLocaleString()}
+                      ₦{storefrontDisplayPrice(option.price, product).toLocaleString()}
                     </span>
                   </button>
                 ))}

@@ -9,6 +9,8 @@ import { productPath } from "@/lib/product-slug";
 import { storefrontProductBadge } from "@/lib/product-condition-suffix";
 import {
   storefrontDisplayPrice,
+  storefrontDoorDeliveryLineFee,
+  storefrontOrderTotal,
   STOREFRONT_DOOR_DELIVERY_FEE_NGN,
 } from "@/lib/storefront-display-price";
 import { ShoppingCart, Truck } from "lucide-react";
@@ -52,9 +54,9 @@ export default function OrderPageView({
   );
 
   const badge = storefrontProductBadge(product);
-  const productDisplayPrice = storefrontDisplayPrice(variant.price);
-  const deliveryFee = doorDelivery ? STOREFRONT_DOOR_DELIVERY_FEE_NGN : 0;
-  const totalPrice = productDisplayPrice + deliveryFee;
+  const productDisplayPrice = storefrontDisplayPrice(variant.price, product);
+  const deliveryFee = storefrontDoorDeliveryLineFee(product, doorDelivery);
+  const totalPrice = storefrontOrderTotal(variant.price, product, doorDelivery);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 md:py-14">
@@ -123,7 +125,7 @@ export default function OrderPageView({
                           selectedStorageIndex === index ? "text-primary-600" : "text-slate-400"
                         }`}
                       >
-                        ₦{storefrontDisplayPrice(option.price).toLocaleString()}
+                        ₦{storefrontDisplayPrice(option.price, product).toLocaleString()}
                       </span>
                     </button>
                   ))}
@@ -172,7 +174,6 @@ export default function OrderPageView({
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-
                   <label className="flex items-center gap-2 cursor-pointer group">
                     <input
                       type="checkbox"
@@ -187,7 +188,7 @@ export default function OrderPageView({
                   </label>
                   <span
                     className={`font-semibold tabular-nums transition-colors ${
-                      doorDelivery ? "text-slate-900" : "text-slate-400 line-through"
+                      deliveryFee > 0 ? "text-slate-900" : "text-slate-400 line-through"
                     }`}
                   >
                     ₦{STOREFRONT_DOOR_DELIVERY_FEE_NGN.toLocaleString()}

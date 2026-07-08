@@ -1,21 +1,60 @@
+import type { PriceMode } from "@/lib/variant-dimension";
+
 /**
- * Door delivery fee shown as a separate line item on the order page.
- *
- * Product listing and detail pages display (catalog price - this fee) so the
- * initial price looks more competitive. The full catalog price is always
- * charged at checkout because it already includes local delivery in its cost
- * structure.
+ * Door delivery fee added at checkout when local delivery is not already in the
+ * catalog price (e.g. direct-naira accessories).
  */
 export const STOREFRONT_DOOR_DELIVERY_FEE_NGN = 10_000;
 
+export interface StorefrontDeliveryPricing {
+  priceMode?: PriceMode;
+  localDeliveryNgn?: number;
+}
+
+/** Local delivery already included in catalog price (calculated products only). */
+export function bundledLocalDeliveryNgn(
+  product: StorefrontDeliveryPricing
+): number {
+  if (product.priceMode === "direct_ngn") return 0;
+  if (product.localDeliveryNgn === 0) return 0;
+  return product.localDeliveryNgn ?? STOREFRONT_DOOR_DELIVERY_FEE_NGN;
+}
+
+export function storefrontCatalogIncludesLocalDelivery(
+  product: StorefrontDeliveryPricing
+): boolean {
+  return bundledLocalDeliveryNgn(product) > 0;
+}
+
 /**
  * Display price for product listing and detail pages.
- * Subtracts the door delivery fee so the advertised price appears lower.
- * Door delivery is presented as a separate add-on on the order page.
- *
- * Because catalog prices end in ...999 or ...9999, subtracting 10,000 always
- * produces another charm price (e.g. 149,999 - 10,000 = 139,999).
+ * Strips bundled local delivery only when that amount is in the catalog price.
  */
-export function storefrontDisplayPrice(catalogPrice: number): number {
-  return Math.max(0, catalogPrice - STOREFRONT_DOOR_DELIVERY_FEE_NGN);
+export function storefrontDisplayPrice(
+  catalogPrice: number,
+  product: StorefrontDeliveryPricing
+): number {
+  return catalogPrice - bundledLocalDeliveryNgn(product);
+}
+
+/** Door delivery amount shown on the checkout line (and added to total when selected). */
+export function storefrontDoorDeliveryLineFee(
+  product: StorefrontDeliveryPricing,
+  doorDelivery: boolean
+): number {
+  if (!doorDelivery) return 0;
+  const bundled = bundledLocalDeliveryNgn(product);
+  if (bundled > 0) return bundled;
+  return STOREFRONT_DOOR_DELIVERY_FEE_NGN;
+}
+
+export function storefrontOrderTotal(
+  catalogPrice: number,
+  product: StorefrontDeliveryPricing,
+  doorDelivery: boolean
+): number {
+  return (
+    storefrontDisplayPrice(catalogPrice, product) +
+    storefrontDoorDeliveryLineFee(product, doorDelivery)
+  );
 }

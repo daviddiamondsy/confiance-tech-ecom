@@ -19,6 +19,7 @@ import { PRODUCT_DETAIL_TRUST_FEATURES } from "@/lib/storefront-trust-features";
 import { STOREFRONT_PRODUCT_DETAIL_TRUST_COPY } from "@/lib/device-quality-copy";
 import {
   storefrontDisplayPrice,
+  storefrontCatalogIncludesLocalDelivery,
   STOREFRONT_DOOR_DELIVERY_FEE_NGN,
 } from "@/lib/storefront-display-price";
 
@@ -77,7 +78,7 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
               className="mt-4 inline-flex items-center justify-center gap-2.5 w-full py-4 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold rounded-2xl transition-colors shadow-soft text-base"
             >
               <ShoppingBag className="h-5 w-5" />
-              Order Now - ₦{storefrontDisplayPrice(variant.price).toLocaleString()}
+              Order Now - ₦{storefrontDisplayPrice(variant.price, product).toLocaleString()}
             </Link>
           </div>
 
@@ -108,7 +109,7 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                           selectedStorageIndex === index ? "text-primary-600" : "text-slate-500"
                         }`}
                       >
-                        ₦{storefrontDisplayPrice(option.price).toLocaleString()}
+                        ₦{storefrontDisplayPrice(option.price, product).toLocaleString()}
                       </span>
                     </button>
                   ))}
@@ -142,24 +143,26 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
 
             <div className="flex items-baseline gap-3 mb-2">
               <span className="text-3xl md:text-4xl font-bold text-slate-900">
-                ₦{storefrontDisplayPrice(variant.price).toLocaleString()}
+                ₦{storefrontDisplayPrice(variant.price, product).toLocaleString()}
               </span>
               {product.originalPrice && (
                 <span className="text-lg text-slate-400 line-through">
-                  ₦{storefrontDisplayPrice(product.originalPrice).toLocaleString()}
+                  ₦{storefrontDisplayPrice(product.originalPrice, product).toLocaleString()}
                 </span>
               )}
             </div>
             {product.originalPrice && (
               <div className="mb-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 text-sm font-bold rounded-full">
-                  Save ₦{(storefrontDisplayPrice(product.originalPrice) - storefrontDisplayPrice(variant.price)).toLocaleString()}
+                  Save ₦{(storefrontDisplayPrice(product.originalPrice, product) - storefrontDisplayPrice(variant.price, product)).toLocaleString()}
                 </span>
               </div>
             )}
+            {storefrontCatalogIncludesLocalDelivery(product) && (
             <p className="text-xs text-slate-400 mb-5">
               +₦{STOREFRONT_DOOR_DELIVERY_FEE_NGN.toLocaleString()} door delivery (added at checkout)
             </p>
+            )}
 
             <p className="text-slate-600 leading-relaxed mb-6">{product.description}</p>
 
@@ -224,7 +227,7 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                       className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-primary-700 font-bold rounded-2xl hover:bg-primary-50 transition-colors shadow-soft"
                     >
                       <ShoppingBag className="h-5 w-5" />
-                      Order Now - ₦{storefrontDisplayPrice(variant.price).toLocaleString()}
+                      Order Now - ₦{storefrontDisplayPrice(variant.price, product).toLocaleString()}
                     </Link>
                   </div>
                 </div>
@@ -309,7 +312,7 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                     className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary-600 text-white font-bold rounded-2xl hover:bg-primary-700 transition-colors shadow-glow"
                   >
                     <ShoppingBag className="h-5 w-5" />
-                    Place My Order - ₦{storefrontDisplayPrice(variant.price).toLocaleString()}
+                    Place My Order - ₦{storefrontDisplayPrice(variant.price, product).toLocaleString()}
                   </Link>
                 </div>
               </div>
