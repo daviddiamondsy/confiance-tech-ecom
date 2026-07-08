@@ -3,6 +3,7 @@ import {
 } from "@/lib/product-condition-suffix";
 import {
   variantPickerLabel,
+  type PriceMode,
   type VariantDimension,
 } from "@/lib/variant-dimension";
 
@@ -29,6 +30,8 @@ export interface Product {
   images?: string[];
   video?: string;
   variantDimension?: VariantDimension;
+  priceMode?: PriceMode;
+  localDeliveryNgn?: number;
 }
 
 export function getVariantPickerLabel(product: Product): string {

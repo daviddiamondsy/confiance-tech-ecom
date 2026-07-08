@@ -406,7 +406,7 @@ export default function ProductFormFields({
         >
           {LOCAL_DELIVERY_NGN_OPTIONS.map((amount) => (
             <option key={amount} value={amount}>
-              ₦{amount.toLocaleString()}
+              {amount === 0 ? "None (not in catalog price)" : `₦${amount.toLocaleString()}`}
             </option>
           ))}
         </select>

@@ -298,6 +298,8 @@ function mapRowToProduct(
     filterSlug: primaryFilterSlug,
     filterSlugs: resolvedFilterSlugs.length > 0 ? resolvedFilterSlugs : undefined,
     variantDimension: parseVariantDimension(row.variant_dimension),
+    priceMode,
+    localDeliveryNgn: shipping.localDeliveryNgn,
   };
 }
 

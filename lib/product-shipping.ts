@@ -1,7 +1,7 @@
 export const CHINA_SHIPPING_YUAN_OPTIONS = [0, 10, 30] as const;
 export const INTERNATIONAL_SHIPPING_NGN_OPTIONS = [0, 25_000, 40_000, 50_000] as const;
 export const INTERNATIONAL_SHIPPING_USD_OPTIONS = [0, 15, 25, 30] as const;
-export const LOCAL_DELIVERY_NGN_OPTIONS = [10_000, 15_000, 20_000] as const;
+export const LOCAL_DELIVERY_NGN_OPTIONS = [0, 10_000, 15_000, 20_000] as const;
 
 export const DEFAULT_CHINA_SHIPPING_YUAN = 10;
 export const DEFAULT_INTERNATIONAL_SHIPPING_NGN = 25_000;
