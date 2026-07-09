@@ -63,7 +63,7 @@ export default function PurchasePage({
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 lg:gap-10 items-start">
 
         {/* Left: Product summary + order details */}
-        <div className="space-y-4">
+        <div className="order-2 lg:order-1 space-y-4">
 
           {/* Back link */}
           <Link
@@ -242,7 +242,7 @@ export default function PurchasePage({
         </div>
 
         {/* Right: Customer form */}
-        <div className="lg:sticky lg:top-24">
+        <div className="order-1 lg:order-2 lg:sticky lg:top-24">
           <CustomerForm
             title="Your Delivery Details"
             subtitle="Fill in your details and we will confirm your order within 24 hours."

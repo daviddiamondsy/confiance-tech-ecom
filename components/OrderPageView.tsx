@@ -71,7 +71,7 @@ export default function OrderPageView({
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-14">
         {/* Left: Product summary + price breakdown */}
-        <div className="lg:col-span-2">
+        <div className="order-2 lg:order-1 lg:col-span-2">
           <div className="sticky top-24 space-y-4">
             {/* Product card */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-soft overflow-hidden">
@@ -207,7 +207,7 @@ export default function OrderPageView({
         </div>
 
         {/* Right: Customer form */}
-        <div className="lg:col-span-3">
+        <div className="order-1 lg:order-2 lg:col-span-3">
           <CustomerForm
             title="Delivery Details"
             subtitle="We will contact you to confirm your order before processing payment."
