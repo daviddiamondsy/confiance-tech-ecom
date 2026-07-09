@@ -85,7 +85,7 @@ export default function CheckoutView({
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Order summary */}
-        <div className="lg:col-span-2 order-1 lg:order-1">
+        <div className="order-2 lg:order-1 lg:col-span-2">
           <div className="bg-white rounded-3xl border border-slate-100 shadow-card overflow-hidden sticky top-24">
             <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-4">
               <h2 className="font-display text-base font-bold text-white flex items-center gap-2">
@@ -173,7 +173,7 @@ export default function CheckoutView({
         </div>
 
         {/* Delivery form */}
-        <div className="lg:col-span-3 order-2 lg:order-2">
+        <div className="order-1 lg:order-2 lg:col-span-3">
           <CustomerForm
             title="Delivery Details"
             subtitle="Enter your delivery information to complete your order."

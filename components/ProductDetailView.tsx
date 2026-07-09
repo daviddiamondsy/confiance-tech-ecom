@@ -18,9 +18,9 @@ import { storefrontProductBadge } from "@/lib/product-condition-suffix";
 import { PRODUCT_DETAIL_TRUST_FEATURES } from "@/lib/storefront-trust-features";
 import { STOREFRONT_PRODUCT_DETAIL_TRUST_COPY } from "@/lib/device-quality-copy";
 import {
+  bundledLocalDeliveryNgn,
   storefrontDisplayPrice,
   storefrontCatalogIncludesLocalDelivery,
-  STOREFRONT_DOOR_DELIVERY_FEE_NGN,
 } from "@/lib/storefront-display-price";
 
 interface ProductDetailViewProps {
@@ -159,9 +159,9 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
               </div>
             )}
             {storefrontCatalogIncludesLocalDelivery(product) && (
-            <p className="text-xs text-slate-400 mb-5">
-              +₦{STOREFRONT_DOOR_DELIVERY_FEE_NGN.toLocaleString()} door delivery (added at checkout)
-            </p>
+              <p className="text-xs text-slate-400 mb-5">
+                Includes ₦{bundledLocalDeliveryNgn(product).toLocaleString()} door delivery in catalog price
+              </p>
             )}
 
             <p className="text-slate-600 leading-relaxed mb-6">{product.description}</p>
