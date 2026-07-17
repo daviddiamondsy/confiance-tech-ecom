@@ -1,18 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
-  extractAnthropicMessageText,
+  extractGroqChatContent,
   finalizeGeneratedProductCopy,
   parseAiJsonContent,
   parseGeneratedProductCopy,
 } from "@/lib/admin-product-copy-ai";
 
 describe("admin-product-copy-ai", () => {
-  it("extractAnthropicMessageText returns the first text block", () => {
+  it("extractGroqChatContent returns the assistant message content", () => {
     expect(
-      extractAnthropicMessageText({
-        content: [
-          { type: "text", text: '{"description":"Hello"}' },
-        ],
+      extractGroqChatContent({
+        choices: [{ message: { content: '{"description":"Hello"}' } }],
       })
     ).toBe('{"description":"Hello"}');
   });

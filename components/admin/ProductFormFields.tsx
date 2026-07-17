@@ -148,7 +148,7 @@ export default function ProductFormFields({
             {generatingCopy ? "Generating..." : "Generate description and specs"}
           </button>
           <p className="text-xs text-slate-500">
-            Uses Anthropic from ADMIN_ANTHROPIC_API_KEY. Fills description, features, and specifications.
+            Uses Groq from GROQ_API_KEY. Fills description, features, and specifications.
           </p>
         </div>
         {generateCopyError ? (
