@@ -13,6 +13,9 @@ export async function ensureCatalogSchema(): Promise<void> {
       selling_markup NUMERIC(6, 3) NOT NULL DEFAULT 1.2,
       expensive_yuan_threshold NUMERIC(12, 2),
       expensive_selling_markup NUMERIC(6, 3) DEFAULT 1.15,
+
+cheap_yuan_threshold NUMERIC(12, 2),
+cheap_selling_markup NUMERIC(6, 3) DEFAULT 1.25,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
@@ -35,6 +38,18 @@ export async function ensureCatalogSchema(): Promise<void> {
   await sqlDdl`
     ALTER TABLE pricing_config
     ADD COLUMN IF NOT EXISTS expensive_wholesale_ngn_threshold NUMERIC(12, 2) DEFAULT 724500
+  `;
+  await sqlDdl`
+    ALTER TABLE pricing_config
+    ADD COLUMN IF NOT EXISTS cheap_yuan_threshold NUMERIC(12, 2) DEFAULT 1750
+  `;
+  await sqlDdl`
+    ALTER TABLE pricing_config
+    ADD COLUMN IF NOT EXISTS cheap_wholesale_ngn_threshold NUMERIC(12, 2) DEFAULT 400000
+  `;
+  await sqlDdl`
+    ALTER TABLE pricing_config
+    ADD COLUMN IF NOT EXISTS cheap_selling_markup NUMERIC(6, 3) DEFAULT 1.25
   `;
 
   await sqlDdl`
@@ -137,9 +152,9 @@ export async function ensureCatalogSchema(): Promise<void> {
 
   await sql`
     INSERT INTO pricing_config (
-      id, yuan_to_naira, shipping_ngn, selling_markup, expensive_yuan_threshold, expensive_selling_markup
+      id, yuan_to_naira, shipping_ngn, selling_markup, expensive_yuan_threshold, expensive_selling_markup, cheap_yuan_threshold, cheap_wholesale_ngn_threshold, cheap_selling_markup
     )
-    VALUES ('default', 207, 30000, 1.2, 3500, 1.15)
+    VALUES ('default', 207, 30000, 1.2, 3500, 1.15, 1750, 400000, 1.25)
     ON CONFLICT (id) DO NOTHING
   `;
 }

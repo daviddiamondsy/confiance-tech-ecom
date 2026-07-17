@@ -20,11 +20,21 @@ export interface PricingConfig {
   expensiveWholesaleNgnThreshold?: number | null;
   /** Markup multiplier for expensive items (default 1.15 = 15% markup). */
   expensiveSellingMarkup?: number | null;
+  /** When CNY cost is below this, use cheapSellingMarkup instead. */
+  cheapYuanThreshold?: number | null;
+  /** When GBP/USD wholesale (cost x rate, before shipping) is below this, use cheap markup. */
+  cheapWholesaleNgnThreshold?: number | null;
+  /** Markup multiplier for cheap / small-phone items (default 1.25 = 25% markup). */
+  cheapSellingMarkup?: number | null;
 }
 
 export const DEFAULT_GBP_TO_NAIRA = 1850;
 export const DEFAULT_USD_TO_NAIRA = 1650;
 export const DEFAULT_EXPENSIVE_WHOLESALE_NGN_THRESHOLD = 724_500;
+/** GBP/USD wholesale below this uses the cheap (1.25) markup tier. */
+export const DEFAULT_CHEAP_WHOLESALE_NGN_THRESHOLD = 400_000;
+/** CNY cost below this uses the cheap (1.25) markup tier (~₦400k wholesale at default rate). */
+export const DEFAULT_CHEAP_YUAN_THRESHOLD = 1750;
 
 export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   /** Fallback when pricing_config row is missing; admin Pricing tab is the source of truth. */
@@ -35,6 +45,9 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   expensiveYuanThreshold: 3500,
   expensiveWholesaleNgnThreshold: DEFAULT_EXPENSIVE_WHOLESALE_NGN_THRESHOLD,
   expensiveSellingMarkup: 1.15,
+  cheapYuanThreshold: DEFAULT_CHEAP_YUAN_THRESHOLD,
+  cheapWholesaleNgnThreshold: DEFAULT_CHEAP_WHOLESALE_NGN_THRESHOLD,
+  cheapSellingMarkup: 1.25,
 };
 
 export function parseCostCurrency(value: unknown): SupplierCostCurrency {
@@ -78,7 +91,7 @@ export function shippingNgnForCostCurrency(
   return internationalShippingAmountNgn(shipping, config.usdToNaira) + shipping.localDeliveryNgn;
 }
 
-/** Wholesale NGN used for expensive-item tier (GBP/USD: cost x rate only; CNY: yuan x rate). */
+/** Wholesale NGN used for expensive/cheap tiers (GBP/USD: cost x rate only; CNY: yuan x rate). */
 export function wholesaleNgnForTier(
   cost: number,
   currency: SupplierCostCurrency,
@@ -105,21 +118,34 @@ export function sellingMarkupForSupplierCost(
   currency: SupplierCostCurrency,
   config: PricingConfig = DEFAULT_PRICING_CONFIG
 ): number {
-  const threshold = config.expensiveYuanThreshold;
-  const wholesaleThreshold = config.expensiveWholesaleNgnThreshold;
+  const expensiveThreshold = config.expensiveYuanThreshold;
+  const expensiveWholesaleThreshold = config.expensiveWholesaleNgnThreshold;
   const expensiveMarkup = config.expensiveSellingMarkup;
+  const cheapThreshold = config.cheapYuanThreshold;
+  const cheapWholesaleThreshold = config.cheapWholesaleNgnThreshold;
+  const cheapMarkup = config.cheapSellingMarkup;
 
-  if (expensiveMarkup == null || expensiveMarkup <= 0) {
-    return config.sellingMarkup;
+  if (expensiveMarkup != null && expensiveMarkup > 0) {
+    if (currency === "cny") {
+      if (expensiveThreshold != null && expensiveThreshold > 0 && cost >= expensiveThreshold) {
+        return expensiveMarkup;
+      }
+    } else if (expensiveWholesaleThreshold != null && expensiveWholesaleThreshold > 0) {
+      if (wholesaleNgnForTier(cost, currency, config) >= expensiveWholesaleThreshold) {
+        return expensiveMarkup;
+      }
+    }
   }
 
-  if (currency === "cny") {
-    if (threshold != null && threshold > 0 && cost >= threshold) {
-      return expensiveMarkup;
-    }
-  } else if (wholesaleThreshold != null && wholesaleThreshold > 0) {
-    if (wholesaleNgnForTier(cost, currency, config) >= wholesaleThreshold) {
-      return expensiveMarkup;
+  if (cheapMarkup != null && cheapMarkup > 0) {
+    if (currency === "cny") {
+      if (cheapThreshold != null && cheapThreshold > 0 && cost < cheapThreshold) {
+        return cheapMarkup;
+      }
+    } else if (cheapWholesaleThreshold != null && cheapWholesaleThreshold > 0) {
+      if (wholesaleNgnForTier(cost, currency, config) < cheapWholesaleThreshold) {
+        return cheapMarkup;
+      }
     }
   }
 

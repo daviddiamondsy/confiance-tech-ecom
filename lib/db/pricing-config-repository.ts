@@ -1,6 +1,8 @@
 import { sql } from "@/lib/db/client";
 import { CATALOG_YUAN } from "@/lib/catalog-yuan";
 import {
+  DEFAULT_CHEAP_WHOLESALE_NGN_THRESHOLD,
+  DEFAULT_CHEAP_YUAN_THRESHOLD,
   DEFAULT_EXPENSIVE_WHOLESALE_NGN_THRESHOLD,
   DEFAULT_GBP_TO_NAIRA,
   DEFAULT_USD_TO_NAIRA,
@@ -38,6 +40,9 @@ interface PricingConfigRow {
   expensive_yuan_threshold: string | null;
   expensive_wholesale_ngn_threshold: string | null;
   expensive_selling_markup: string | null;
+  cheap_yuan_threshold: string | null;
+  cheap_wholesale_ngn_threshold: string | null;
+  cheap_selling_markup: string | null;
 }
 
 function mapRow(row: PricingConfigRow): PricingConfig {
@@ -54,6 +59,16 @@ function mapRow(row: PricingConfigRow): PricingConfig {
         : DEFAULT_EXPENSIVE_WHOLESALE_NGN_THRESHOLD,
     expensiveSellingMarkup:
       row.expensive_selling_markup != null ? Number(row.expensive_selling_markup) : null,
+    cheapYuanThreshold:
+      row.cheap_yuan_threshold != null
+        ? Number(row.cheap_yuan_threshold)
+        : DEFAULT_CHEAP_YUAN_THRESHOLD,
+    cheapWholesaleNgnThreshold:
+      row.cheap_wholesale_ngn_threshold != null
+        ? Number(row.cheap_wholesale_ngn_threshold)
+        : DEFAULT_CHEAP_WHOLESALE_NGN_THRESHOLD,
+    cheapSellingMarkup:
+      row.cheap_selling_markup != null ? Number(row.cheap_selling_markup) : 1.25,
   };
 }
 
@@ -67,14 +82,17 @@ export async function fetchPricingConfig(): Promise<PricingConfig> {
         selling_markup,
         expensive_yuan_threshold,
         expensive_wholesale_ngn_threshold,
-        expensive_selling_markup
+        expensive_selling_markup,
+        cheap_yuan_threshold,
+        cheap_wholesale_ngn_threshold,
+        cheap_selling_markup
       FROM pricing_config
       WHERE id = 'default'
       LIMIT 1
     `;
     if (rows[0]) return mapRow(rows[0]);
   } catch {
-    // Table may not exist before first migrate
+    // Table may not exist before first migrate / columns added
   }
   return DEFAULT_PRICING_CONFIG;
 }
@@ -85,9 +103,10 @@ export async function updatePricingConfig(
   await sql.query(
     `INSERT INTO pricing_config (
        id, yuan_to_naira, gbp_to_naira, usd_to_naira, shipping_ngn, selling_markup,
-       expensive_yuan_threshold, expensive_wholesale_ngn_threshold, expensive_selling_markup, updated_at
+       expensive_yuan_threshold, expensive_wholesale_ngn_threshold, expensive_selling_markup,
+       cheap_yuan_threshold, cheap_wholesale_ngn_threshold, cheap_selling_markup, updated_at
      )
-     VALUES ('default', $1, $2, $3, 0, $4, $5, $6, $7, NOW())
+     VALUES ('default', $1, $2, $3, 0, $4, $5, $6, $7, $8, $9, $10, NOW())
      ON CONFLICT (id) DO UPDATE SET
        yuan_to_naira = EXCLUDED.yuan_to_naira,
        gbp_to_naira = EXCLUDED.gbp_to_naira,
@@ -96,6 +115,9 @@ export async function updatePricingConfig(
        expensive_yuan_threshold = EXCLUDED.expensive_yuan_threshold,
        expensive_wholesale_ngn_threshold = EXCLUDED.expensive_wholesale_ngn_threshold,
        expensive_selling_markup = EXCLUDED.expensive_selling_markup,
+       cheap_yuan_threshold = EXCLUDED.cheap_yuan_threshold,
+       cheap_wholesale_ngn_threshold = EXCLUDED.cheap_wholesale_ngn_threshold,
+       cheap_selling_markup = EXCLUDED.cheap_selling_markup,
        updated_at = NOW()`,
     [
       config.yuanToNaira,
@@ -105,6 +127,9 @@ export async function updatePricingConfig(
       config.expensiveYuanThreshold ?? null,
       config.expensiveWholesaleNgnThreshold ?? null,
       config.expensiveSellingMarkup ?? null,
+      config.cheapYuanThreshold ?? null,
+      config.cheapWholesaleNgnThreshold ?? null,
+      config.cheapSellingMarkup ?? null,
     ]
   );
 

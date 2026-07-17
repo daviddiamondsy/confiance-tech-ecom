@@ -2,11 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import {
   CHARM_PRICING_MIN_NGN,
+  DEFAULT_CHEAP_WHOLESALE_NGN_THRESHOLD,
+  DEFAULT_CHEAP_YUAN_THRESHOLD,
   DEFAULT_PRICING_CONFIG,
   directNairaRawFromStorage,
   priceFromSupplierCost,
+  sellingMarkupForSupplierCost,
   sellingPriceFromDirectNaira,
   toCharmPrice,
+  wholesaleNgnForTier,
 } from "@/lib/pricing";
 import { DEFAULT_PRODUCT_SHIPPING } from "@/lib/product-shipping";
 
@@ -51,5 +55,38 @@ describe("priceFromSupplierCost", () => {
     expect(price).toBeGreaterThan(CHARM_PRICING_MIN_NGN);
     expect(price).not.toBe(42_999);
     expect(price % 10_000).toBe(9999);
+  });
+});
+
+// BDD: e-com.md › Admin catalog pricing — cheap phones use 1.25 markup below cost thresholds
+describe("sellingMarkupForSupplierCost cheap tier (opposite of expensive)", () => {
+  it("uses 1.25 markup when CNY cost is below the cheap yuan threshold", () => {
+    const yuan = DEFAULT_CHEAP_YUAN_THRESHOLD - 1;
+    expect(sellingMarkupForSupplierCost(yuan, "cny", DEFAULT_PRICING_CONFIG)).toBe(1.25);
+  });
+
+  it("uses standard 1.2 markup between cheap and expensive yuan thresholds", () => {
+    const yuan = DEFAULT_CHEAP_YUAN_THRESHOLD;
+    expect(yuan).toBeLessThan(DEFAULT_PRICING_CONFIG.expensiveYuanThreshold!);
+    expect(sellingMarkupForSupplierCost(yuan, "cny", DEFAULT_PRICING_CONFIG)).toBe(1.2);
+  });
+
+  it("still uses expensive 1.15 markup at or above the expensive yuan threshold", () => {
+    expect(sellingMarkupForSupplierCost(3_500, "cny", DEFAULT_PRICING_CONFIG)).toBe(1.15);
+  });
+
+  it("uses 1.25 for GBP when wholesale (cost x rate) is below ₦400k", () => {
+    const gbp = 200;
+    const wholesale = wholesaleNgnForTier(gbp, "gbp", DEFAULT_PRICING_CONFIG);
+    expect(wholesale).toBeLessThan(DEFAULT_CHEAP_WHOLESALE_NGN_THRESHOLD);
+    expect(sellingMarkupForSupplierCost(gbp, "gbp", DEFAULT_PRICING_CONFIG)).toBe(1.25);
+  });
+
+  it("uses standard 1.2 for GBP when wholesale is at or above ₦400k but below expensive", () => {
+    const gbp = 220;
+    const wholesale = wholesaleNgnForTier(gbp, "gbp", DEFAULT_PRICING_CONFIG);
+    expect(wholesale).toBeGreaterThanOrEqual(DEFAULT_CHEAP_WHOLESALE_NGN_THRESHOLD);
+    expect(wholesale).toBeLessThan(DEFAULT_PRICING_CONFIG.expensiveWholesaleNgnThreshold!);
+    expect(sellingMarkupForSupplierCost(gbp, "gbp", DEFAULT_PRICING_CONFIG)).toBe(1.2);
   });
 });
