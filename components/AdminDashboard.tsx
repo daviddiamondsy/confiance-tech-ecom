@@ -70,6 +70,9 @@ export default function AdminDashboard() {
     expensiveYuanThreshold: 3500,
     expensiveWholesaleNgnThreshold: 724_500,
     expensiveSellingMarkup: 1.15,
+    cheapSellingMarkup: 1.25,
+    cheapYuanThreshold: 1750,
+    cheapWholesaleNgnThreshold: 400_000,
   });
   const [products, setProducts] = useState<AdminProductRecord[]>([]);
   const [filterTags, setFilterTags] = useState<ProductFilterTag[]>([]);
@@ -629,7 +632,7 @@ export default function AdminDashboard() {
             <AdminStatCard
               label="Standard markup"
               value={`${Math.round((pricing.sellingMarkup - 1) * 100)}%`}
-              hint={`Expensive items: ${pricing.expensiveSellingMarkup != null ? `${Math.round((pricing.expensiveSellingMarkup - 1) * 100)}%` : "disabled"} above ${pricing.expensiveYuanThreshold ?? "—"}¥`}
+              hint={`Cheap items: ${pricing.cheapSellingMarkup != null ? `${Math.round((pricing.cheapSellingMarkup - 1) * 100)}%` : "disabled"} above ${pricing.cheapYuanThreshold ?? "—"}¥, Expensive items: ${pricing.expensiveSellingMarkup != null ? `${Math.round((pricing.expensiveSellingMarkup - 1) * 100)}%` : "disabled"} above ${pricing.expensiveYuanThreshold ?? "—"}¥`}
               icon={DollarSign}
               variant="emerald"
             />
@@ -681,7 +684,7 @@ export default function AdminDashboard() {
           <p className="text-sm text-slate-600 mb-6">
             CNY: markup x (yuan x rate + china + intl + local), charm pricing (…999 below ₦100k, …9999 from ₦100k).
             GBP/USD: markup x (amount x rate + intl + local), no china shipping. International
-            shipping can be entered in NGN or USD (USD converts at the pricing rate). Expensive CNY items
+            shipping can be entered in NGN or USD (USD converts at the pricing rate). Cheap CNY items use the higher markup at or above the yuan threshold. Expensive CNY items
             use the lower markup at or above the yuan threshold. Expensive GBP/USD items use it when
             wholesale (cost x rate) is at or above the NGN threshold.
           </p>
