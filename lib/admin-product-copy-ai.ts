@@ -21,16 +21,19 @@ export interface GenerateProductCopyInput {
   storage?: string;
 }
 
-export function getAdminAnthropicApiKey(): string | null {
+const GROQ_CHAT_COMPLETIONS_URL = "https://api.groq.com/openai/v1/chat/completions";
+const DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile";
+
+export function getAdminGroqApiKey(): string | null {
   return (
-    process.env.ADMIN_ANTHROPIC_API_KEY?.trim() ||
-    process.env.ANTHROPIC_API_KEY?.trim() ||
+    process.env.ADMIN_GROQ_API_KEY?.trim() ||
+    process.env.GROQ_API_KEY?.trim() ||
     null
   );
 }
 
-export function getAdminAnthropicModel(): string {
-  return process.env.ADMIN_ANTHROPIC_MODEL?.trim() || "claude-haiku-4-5";
+export function getAdminGroqModel(): string {
+  return process.env.ADMIN_GROQ_MODEL?.trim() || DEFAULT_GROQ_MODEL;
 }
 
 export class AdminProductCopyAiError extends Error {
@@ -43,22 +46,22 @@ export class AdminProductCopyAiError extends Error {
   }
 }
 
-function anthropicErrorMessage(status: number, body: string): string {
+function groqErrorMessage(status: number, body: string): string {
   try {
     const data = JSON.parse(body) as {
-      error?: { message?: string; type?: string };
+      error?: { message?: string; type?: string; code?: string };
     };
-    const type = data.error?.type;
+    const type = data.error?.type ?? data.error?.code;
     const message = data.error?.message?.trim();
 
-    if (type === "insufficient_quota_error") {
-      return "Anthropic quota exceeded. Add billing credits at console.anthropic.com or use another API key.";
+    if (type === "insufficient_quota" || /quota|billing|credits/i.test(message ?? "")) {
+      return "Groq quota exceeded. Check billing at console.groq.com or use another API key.";
     }
-    if (type === "authentication_error" || status === 401) {
-      return "Invalid Anthropic API key. Check ADMIN_ANTHROPIC_API_KEY or ANTHROPIC_API_KEY in .env.local.";
+    if (type === "invalid_api_key" || status === 401) {
+      return "Invalid Groq API key. Check ADMIN_GROQ_API_KEY or GROQ_API_KEY in .env.local.";
     }
-    if (type === "rate_limit_error") {
-      return "Anthropic rate limit hit. Wait a moment and try again.";
+    if (type === "rate_limit_exceeded" || status === 429) {
+      return "Groq rate limit hit. Wait a moment and try again.";
     }
     if (message) {
       return message;
@@ -67,7 +70,7 @@ function anthropicErrorMessage(status: number, body: string): string {
     // Ignore JSON parse errors and fall through.
   }
 
-  return "Could not generate copy. Check your Anthropic account and try again.";
+  return "Could not generate copy. Check your Groq account and try again.";
 }
 
 /** Strip markdown fences and parse JSON from model text output. */
@@ -92,31 +95,6 @@ export function parseAiJsonContent(content: string): unknown {
     throw new Error("invalid json");
   }
 }
-
-const PRODUCT_COPY_OUTPUT_SCHEMA = {
-  type: "object",
-  properties: {
-    description: { type: "string" },
-    features: {
-      type: "array",
-      items: { type: "string" },
-    },
-    specifications: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          label: { type: "string" },
-          value: { type: "string" },
-        },
-        required: ["label", "value"],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ["description", "features", "specifications"],
-  additionalProperties: false,
-} as const;
 
 function conditionLabel(filterSlugs: string[] | undefined): "new" | "clean" | "unspecified" {
   if (filterSlugs?.includes(NEW_PRODUCT_FILTER_SLUG)) return "new";
@@ -209,44 +187,34 @@ export function parseGeneratedProductCopy(raw: unknown): GeneratedProductCopy {
   return { description, features, specifications };
 }
 
-/** Extract JSON text from an Anthropic Messages API response payload. */
-export function extractAnthropicMessageText(payload: {
-  content?: Array<{ type?: string; text?: string }>;
+/** Extract assistant text from a Groq/OpenAI chat completions response. */
+export function extractGroqChatContent(payload: {
+  choices?: Array<{ message?: { content?: string | null } }>;
 }): string | null {
-  const textBlock = payload.content?.find((block) => block.type === "text" && block.text?.trim());
-  return textBlock?.text?.trim() ?? null;
+  const content = payload.choices?.[0]?.message?.content;
+  return typeof content === "string" && content.trim() ? content.trim() : null;
 }
 
-async function requestAnthropicProductCopy(
+async function requestGroqProductCopy(
   apiKey: string,
-  input: GenerateProductCopyInput,
-  useStructuredOutput: boolean
+  input: GenerateProductCopyInput
 ): Promise<Response> {
-  const body: Record<string, unknown> = {
-    model: getAdminAnthropicModel(),
-    max_tokens: 2048,
-    temperature: 0.35,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: buildUserPrompt(input) }],
-  };
-
-  if (useStructuredOutput) {
-    body.output_config = {
-      format: {
-        type: "json_schema",
-        schema: PRODUCT_COPY_OUTPUT_SCHEMA,
-      },
-    };
-  }
-
-  return fetch("https://api.anthropic.com/v1/messages", {
+  return fetch(GROQ_CHAT_COMPLETIONS_URL, {
     method: "POST",
     headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
+      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      model: getAdminGroqModel(),
+      max_tokens: 2048,
+      temperature: 0.35,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: buildUserPrompt(input) },
+      ],
+    }),
   });
 }
 
@@ -294,11 +262,11 @@ export function finalizeGeneratedProductCopy(
 export async function generateProductCopyWithAi(
   input: GenerateProductCopyInput
 ): Promise<GeneratedProductCopy> {
-  const apiKey = getAdminAnthropicApiKey();
+  const apiKey = getAdminGroqApiKey();
   if (!apiKey) {
     throw new AdminProductCopyAiError(
       "AI_NOT_CONFIGURED",
-      "AI copy generation is not configured. Set ADMIN_ANTHROPIC_API_KEY or ANTHROPIC_API_KEY."
+      "AI copy generation is not configured. Set ADMIN_GROQ_API_KEY or GROQ_API_KEY."
     );
   }
 
@@ -307,38 +275,20 @@ export async function generateProductCopyWithAi(
     throw new AdminProductCopyAiError("PRODUCT_NAME_REQUIRED", "Product name is required.");
   }
 
-  let response = await requestAnthropicProductCopy(apiKey, input, true);
+  const response = await requestGroqProductCopy(apiKey, input);
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
-    const retryWithoutStructured =
-      response.status === 400 &&
-      /output_config|structured|json_schema|format/i.test(detail);
-
-    if (retryWithoutStructured) {
-      console.warn("[admin-product-copy-ai] Structured output unavailable; retrying plain JSON");
-      response = await requestAnthropicProductCopy(apiKey, input, false);
-    } else {
-      console.error("[admin-product-copy-ai] Anthropic error", response.status, detail);
-      throw new AdminProductCopyAiError(
-        "AI_REQUEST_FAILED",
-        anthropicErrorMessage(response.status, detail)
-      );
-    }
-  }
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    console.error("[admin-product-copy-ai] Anthropic error", response.status, detail);
+    console.error("[admin-product-copy-ai] Groq error", response.status, detail);
     throw new AdminProductCopyAiError(
       "AI_REQUEST_FAILED",
-      anthropicErrorMessage(response.status, detail)
+      groqErrorMessage(response.status, detail)
     );
   }
 
   const payload = (await response.json()) as {
-    content?: Array<{ type?: string; text?: string }>;
+    choices?: Array<{ message?: { content?: string | null } }>;
   };
-  const content = extractAnthropicMessageText(payload);
+  const content = extractGroqChatContent(payload);
   if (!content) {
     throw new AdminProductCopyAiError(
       "INVALID_AI_RESPONSE",
