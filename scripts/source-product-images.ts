@@ -10,6 +10,11 @@ const OUT_DIR = path.join(process.cwd(), "public/product-images");
 
 const SOURCES: Array<{ file: string; url: string }> = [
   {
+    file: "iphone-11.png",
+    // Official Apple Store black select (transparent PNG)
+    url: "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone11-black-select-2019?wid=940&hei=1112&fmt=png-alpha",
+  },
+  {
     file: "iphone-15.png",
     // Black iPhone 15 from Jumia listing (411091446)
     url: "https://ng.jumia.is/unsafe/fit-in/680x680/filters:fill(white)/product/64/4190114/1.jpg?0866",
