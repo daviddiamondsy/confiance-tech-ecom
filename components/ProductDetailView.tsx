@@ -160,7 +160,7 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
             )}
             {storefrontCatalogIncludesLocalDelivery(product) && (
               <p className="text-xs text-slate-400 mb-5">
-                Includes ₦{bundledLocalDeliveryNgn(product).toLocaleString()} door delivery in catalog price
+                Extra ₦{bundledLocalDeliveryNgn(product).toLocaleString()} will be added if you select door delivery
               </p>
             )}
 
