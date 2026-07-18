@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { persistReferralCode } from "@/components/ReferralDiscountBanner";
+import { persistReferralCode } from "@/components/useReferralDiscount";
 
 /** Persist ?ref=CODE from referral landing into sessionStorage for checkout. */
 export default function ReferralCapture() {

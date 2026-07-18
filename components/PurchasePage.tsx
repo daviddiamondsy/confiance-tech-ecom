@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Check, Truck, Shield, Clock, ArrowLeft } from "lucide-react";
 import CustomerForm from "@/components/CustomerForm";
 import ReferralDiscountBanner from "@/components/ReferralDiscountBanner";
+import { useReferralDiscount } from "@/components/useReferralDiscount";
 import type { Product } from "@/lib/product-utils";
 import { getSelectedVariant } from "@/lib/product-utils";
 import { storefrontProductBadge } from "@/lib/product-condition-suffix";
@@ -13,11 +14,13 @@ import { DELIVERY_ESTIMATE_COPY } from "@/lib/delivery-deadline";
 import { productPath } from "@/lib/product-slug";
 import {
   storefrontDisplayPrice,
+  storefrontDoorDeliveryLineFee,
+  storefrontCheckoutDoorFeeNgn,
   storefrontOrderTotal,
   STOREFRONT_DOOR_DELIVERY_FEE_NGN,
 } from "@/lib/storefront-display-price";
-
-const DOOR_DELIVERY_FEE = STOREFRONT_DOOR_DELIVERY_FEE_NGN;
+import { storefrontOrderTotalAfterReferral } from "@/lib/referral/display-price";
+import { formatNgn } from "@/lib/referral/config";
 
 interface PurchasePageProps {
   product: Product;
@@ -54,7 +57,10 @@ export default function PurchasePage({
   );
 
   const devicePrice = storefrontDisplayPrice(variant.price, product);
-  const total = storefrontOrderTotal(variant.price, product, doorDelivery);
+  const deliveryFee = storefrontDoorDeliveryLineFee(product, doorDelivery);
+  const { discountNgn } = useReferralDiscount(variant.price);
+  const undiscountedTotal = storefrontOrderTotal(variant.price, product, doorDelivery);
+  const total = storefrontOrderTotalAfterReferral(devicePrice, deliveryFee, discountNgn);
 
   const badge = storefrontProductBadge(product);
 
@@ -173,6 +179,13 @@ export default function PurchasePage({
                 </span>
               </div>
 
+              {discountNgn > 0 && (
+                <div className="flex items-center justify-between text-sm text-emerald-700">
+                  <span>Referral discount</span>
+                  <span className="font-semibold flex-shrink-0">-{formatNgn(discountNgn)}</span>
+                </div>
+              )}
+
               {/* Door delivery toggle */}
               <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 cursor-pointer hover:border-primary-300 hover:bg-primary-50/40 transition-all select-none">
                 <div className="flex items-center gap-3">
@@ -191,16 +204,23 @@ export default function PurchasePage({
                   </div>
                 </div>
                 <span className="text-sm font-semibold text-slate-900 flex-shrink-0">
-                  +₦{DOOR_DELIVERY_FEE.toLocaleString()}
+                  +₦{STOREFRONT_DOOR_DELIVERY_FEE_NGN.toLocaleString()}
                 </span>
               </label>
 
               {/* Total */}
               <div className="border-t border-slate-100 pt-3 flex items-center justify-between">
                 <span className="font-display font-bold text-slate-900">Total</span>
-                <span className="font-display text-2xl font-bold text-slate-900">
-                  ₦{total.toLocaleString()}
-                </span>
+                <div className="text-right">
+                  <span className="font-display text-2xl font-bold text-slate-900">
+                    ₦{total.toLocaleString()}
+                  </span>
+                  {discountNgn > 0 && (
+                    <p className="text-xs text-slate-400 line-through">
+                      ₦{undiscountedTotal.toLocaleString()}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -253,6 +273,7 @@ export default function PurchasePage({
             productStorage={variant.storage}
             productColor={variant.color}
             deliveryDays={deliveryDays}
+            doorDeliveryFee={storefrontCheckoutDoorFeeNgn(product, doorDelivery)}
           />
         </div>
       </div>

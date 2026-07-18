@@ -4,15 +4,20 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import CustomerForm from "@/components/CustomerForm";
+import ReferralDiscountBanner from "@/components/ReferralDiscountBanner";
+import { useReferralDiscount } from "@/components/useReferralDiscount";
 import { type Product, getSelectedVariant } from "@/lib/product-utils";
 import { productPath } from "@/lib/product-slug";
 import { storefrontProductBadge } from "@/lib/product-condition-suffix";
 import {
   storefrontDisplayPrice,
   storefrontDoorDeliveryLineFee,
+  storefrontCheckoutDoorFeeNgn,
   storefrontOrderTotal,
   STOREFRONT_DOOR_DELIVERY_FEE_NGN,
 } from "@/lib/storefront-display-price";
+import { storefrontOrderTotalAfterReferral } from "@/lib/referral/display-price";
+import { formatNgn } from "@/lib/referral/config";
 import { ShoppingCart, Truck } from "lucide-react";
 
 interface OrderPageViewProps {
@@ -54,9 +59,15 @@ export default function OrderPageView({
   );
 
   const badge = storefrontProductBadge(product);
+  const { discountNgn } = useReferralDiscount(variant.price);
   const productDisplayPrice = storefrontDisplayPrice(variant.price, product);
   const deliveryFee = storefrontDoorDeliveryLineFee(product, doorDelivery);
-  const totalPrice = storefrontOrderTotal(variant.price, product, doorDelivery);
+  const undiscountedTotal = storefrontOrderTotal(variant.price, product, doorDelivery);
+  const totalPrice = storefrontOrderTotalAfterReferral(
+    productDisplayPrice,
+    deliveryFee,
+    discountNgn
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 md:py-14">
@@ -73,6 +84,8 @@ export default function OrderPageView({
         {/* Left: Product summary + price breakdown */}
         <div className="order-2 lg:order-1 lg:col-span-2">
           <div className="sticky top-24 space-y-4">
+            <ReferralDiscountBanner catalogPriceNgn={variant.price} />
+
             {/* Product card */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-soft overflow-hidden">
               <div className="aspect-square bg-gradient-to-br from-slate-50 to-slate-100 relative">
@@ -173,6 +186,13 @@ export default function OrderPageView({
                   </span>
                 </div>
 
+                {discountNgn > 0 && (
+                  <div className="flex items-center justify-between text-sm text-emerald-700">
+                    <span>Referral discount</span>
+                    <span className="font-semibold">-{formatNgn(discountNgn)}</span>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between text-sm">
                   <label className="flex items-center gap-2 cursor-pointer group">
                     <input
@@ -197,9 +217,16 @@ export default function OrderPageView({
 
                 <div className="border-t border-slate-100 pt-3 flex items-baseline justify-between">
                   <span className="font-display font-bold text-slate-900 text-sm">Total</span>
-                  <span className="font-display text-2xl font-bold text-primary-700 tabular-nums">
-                    ₦{totalPrice.toLocaleString()}
-                  </span>
+                  <div className="text-right">
+                    <span className="font-display text-2xl font-bold text-primary-700 tabular-nums">
+                      ₦{totalPrice.toLocaleString()}
+                    </span>
+                    {discountNgn > 0 && (
+                      <p className="text-xs text-slate-400 line-through">
+                        ₦{undiscountedTotal.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -218,7 +245,7 @@ export default function OrderPageView({
             productStorage={variant.storage}
             productColor={variant.color}
             deliveryDays={deliveryDays}
-            doorDeliveryFee={0}
+            doorDeliveryFee={storefrontCheckoutDoorFeeNgn(product, doorDelivery)}
           />
         </div>
       </div>

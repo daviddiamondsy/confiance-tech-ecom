@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import ReferralDiscountBanner from "@/components/ReferralDiscountBanner";
+import { useReferralDiscount } from "@/components/useReferralDiscount";
 import ImageCarousel from "@/components/ImageCarousel";
 import ProductSpecifications from "@/components/ProductSpecifications";
 import TrustFeaturesGrid from "@/components/TrustFeaturesGrid";
@@ -22,6 +23,8 @@ import {
   storefrontDisplayPrice,
   storefrontCatalogIncludesLocalDelivery,
 } from "@/lib/storefront-display-price";
+import { storefrontPriceAfterReferralDiscount } from "@/lib/referral/display-price";
+import { formatNgn } from "@/lib/referral/config";
 
 interface ProductDetailViewProps {
   product: Product;
@@ -43,6 +46,12 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
   );
 
   const badge = storefrontProductBadge(product);
+  const { discountNgn } = useReferralDiscount(variant.price);
+  const displayPrice = storefrontDisplayPrice(variant.price, product);
+  const discountedDisplayPrice = storefrontPriceAfterReferralDiscount(
+    displayPrice,
+    discountNgn
+  );
 
   const buyHref = useMemo(() => {
     const params = new URLSearchParams();
@@ -143,21 +152,31 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
 
             <div className="flex items-baseline gap-3 mb-2">
               <span className="text-3xl md:text-4xl font-bold text-slate-900">
-                ₦{storefrontDisplayPrice(variant.price, product).toLocaleString()}
+                ₦{discountedDisplayPrice.toLocaleString()}
               </span>
-              {product.originalPrice && (
+              {discountNgn > 0 ? (
+                <span className="text-lg text-slate-400 line-through">
+                  ₦{displayPrice.toLocaleString()}
+                </span>
+              ) : product.originalPrice ? (
                 <span className="text-lg text-slate-400 line-through">
                   ₦{storefrontDisplayPrice(product.originalPrice, product).toLocaleString()}
                 </span>
-              )}
+              ) : null}
             </div>
-            {product.originalPrice && (
+            {discountNgn > 0 ? (
               <div className="mb-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 text-sm font-bold rounded-full">
-                  Save ₦{(storefrontDisplayPrice(product.originalPrice, product) - storefrontDisplayPrice(variant.price, product)).toLocaleString()}
+                  Referral save {formatNgn(discountNgn)}
                 </span>
               </div>
-            )}
+            ) : product.originalPrice ? (
+              <div className="mb-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 text-sm font-bold rounded-full">
+                  Save ₦{(storefrontDisplayPrice(product.originalPrice, product) - displayPrice).toLocaleString()}
+                </span>
+              </div>
+            ) : null}
             {storefrontCatalogIncludesLocalDelivery(product) && (
               <p className="text-xs text-slate-400 mb-5">
                 Extra ₦{bundledLocalDeliveryNgn(product).toLocaleString()} will be added if you select door delivery

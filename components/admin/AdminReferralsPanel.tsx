@@ -20,10 +20,12 @@ const emptyForm = {
   name: "",
   phone: "",
   customCode: "",
+  productSlug: "",
 };
 
 export default function AdminReferralsPanel() {
   const [referrals, setReferrals] = useState<AdminReferralRow[]>([]);
+  const [productOptions, setProductOptions] = useState<Array<{ slug: string; name: string }>>([]);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -32,6 +34,14 @@ export default function AdminReferralsPanel() {
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [listProductSlug, setListProductSlug] = useState("");
+
+  const withProduct = useCallback((baseUrl: string, productSlug: string) => {
+    const slug = productSlug.trim();
+    if (!slug) return baseUrl;
+    const separator = baseUrl.includes("?") ? "&" : "?";
+    return `${baseUrl}${separator}product=${encodeURIComponent(slug)}`;
+  }, []);
 
   const loadReferrals = useCallback(async () => {
     setLoading(true);
@@ -53,9 +63,28 @@ export default function AdminReferralsPanel() {
     }
   }, []);
 
+  const loadProducts = useCallback(async () => {
+    try {
+      const response = await fetch("/api/admin/products");
+      if (!response.ok) return;
+      const data = await response.json();
+      const list = (data.products ?? [])
+        .map((product: { slug?: string; name?: string }) => ({
+          slug: String(product.slug ?? "").trim(),
+          name: String(product.name ?? "").trim(),
+        }))
+        .filter((product: { slug: string; name: string }) => product.slug && product.name)
+        .sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name));
+      setProductOptions(list);
+    } catch {
+      // Product picker is optional; keep referrals usable without it.
+    }
+  }, []);
+
   useEffect(() => {
     void loadReferrals();
-  }, [loadReferrals]);
+    void loadProducts();
+  }, [loadReferrals, loadProducts]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -81,7 +110,7 @@ export default function AdminReferralsPanel() {
           ? `Created referral link for ${data.referrerName || data.referrerPhone}.`
           : `Referral link already exists for this phone.`
       );
-      setGeneratedLink(data.shareUrl);
+      setGeneratedLink(withProduct(String(data.shareUrl ?? ""), form.productSlug));
       setForm((prev) => ({ ...prev, customCode: "" }));
       await loadReferrals();
     } catch {
@@ -139,6 +168,7 @@ export default function AdminReferralsPanel() {
         <h2 className="font-display text-2xl font-bold text-slate-900">Referrals</h2>
         <p className="text-sm text-slate-600 mt-1">
           Generate share links for past buyers. Optional custom codes must be 4 to 20 letters or numbers.
+          Pick a product to send a friend straight to that device.
         </p>
       </div>
 
@@ -176,7 +206,7 @@ export default function AdminReferralsPanel() {
               required
             />
           </div>
-          <div className="md:col-span-2">
+          <div>
             <label htmlFor="referral-code" className="block text-sm font-medium text-slate-700 mb-2">
               Custom code (optional)
             </label>
@@ -192,6 +222,27 @@ export default function AdminReferralsPanel() {
             />
             <p className="text-xs text-slate-500 mt-1">
               Leave blank to auto-generate from the customer name.
+            </p>
+          </div>
+          <div>
+            <label htmlFor="referral-product" className="block text-sm font-medium text-slate-700 mb-2">
+              Product for link (optional)
+            </label>
+            <select
+              id="referral-product"
+              className="input-field"
+              value={form.productSlug}
+              onChange={(event) => setForm((prev) => ({ ...prev, productSlug: event.target.value }))}
+            >
+              <option value="">All products (catalog)</option>
+              {productOptions.map((product) => (
+                <option key={product.slug} value={product.slug}>
+                  {product.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-500 mt-1">
+              Friend opens the selected device page with your referral applied.
             </p>
           </div>
 
@@ -238,12 +289,34 @@ export default function AdminReferralsPanel() {
       </section>
 
       <section className="card-elevated p-6">
-        <div className="flex items-center gap-2 mb-5">
-          <h3 className="font-display text-lg font-bold text-slate-900">Existing referral links</h3>
-          {!loading && (
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
-              {referrals.length}
-            </span>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+          <div className="flex items-center gap-2">
+            <h3 className="font-display text-lg font-bold text-slate-900">Existing referral links</h3>
+            {!loading && (
+              <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+                {referrals.length}
+              </span>
+            )}
+          </div>
+          {productOptions.length > 0 && (
+            <div className="sm:max-w-xs w-full">
+              <label htmlFor="list-referral-product" className="sr-only">
+                Product for copied links
+              </label>
+              <select
+                id="list-referral-product"
+                className="input-field"
+                value={listProductSlug}
+                onChange={(event) => setListProductSlug(event.target.value)}
+              >
+                <option value="">Copy links for catalog</option>
+                {productOptions.map((product) => (
+                  <option key={product.slug} value={product.slug}>
+                    Copy for: {product.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
         </div>
 
@@ -314,7 +387,7 @@ export default function AdminReferralsPanel() {
                           type="button"
                           title="Copy share link"
                           className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                          onClick={() => copyLink(referral.shareUrl)}
+                          onClick={() => copyLink(withProduct(referral.shareUrl, listProductSlug))}
                         >
                           <Copy className="h-3 w-3" />
                           Copy

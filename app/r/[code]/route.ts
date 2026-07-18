@@ -13,7 +13,8 @@ interface ReferralRouteContext {
 }
 
 /**
- * Referral link landing: GET /r/CODE sets attribution cookie and redirects to catalog.
+ * Referral link landing: GET /r/CODE sets attribution cookie and redirects.
+ * Optional `?product={slug}` deep-links to that device page with `?ref=CODE`.
  * Must be a Route Handler — cookies cannot be set from Server Component pages.
  */
 export async function GET(request: NextRequest, context: ReferralRouteContext) {
@@ -35,7 +36,10 @@ export async function GET(request: NextRequest, context: ReferralRouteContext) {
       return new NextResponse("Referral link not found.", { status: 404 });
     }
 
-    const destination = new URL("/products", request.url);
+    const productSlug = request.nextUrl.searchParams.get("product")?.trim();
+    const destination = productSlug
+      ? new URL(`/products/${encodeURIComponent(productSlug)}`, request.url)
+      : new URL("/products", request.url);
     destination.searchParams.set("ref", referral.code);
 
     const response = NextResponse.redirect(destination);

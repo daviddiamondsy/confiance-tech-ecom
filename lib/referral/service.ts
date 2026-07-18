@@ -451,7 +451,18 @@ export async function adminDeleteReferral(id: number): Promise<void> {
   }
 }
 
-export function referralShareUrl(code: string, siteBaseUrl: string): string {
+/**
+ * Share landing URL. Optional productSlug deep-links the friend to that device
+ * via `/r/{code}?product={slug}` → `/products/{slug}?ref={code}`.
+ */
+export function referralShareUrl(
+  code: string,
+  siteBaseUrl: string,
+  productSlug?: string | null
+): string {
   const base = siteBaseUrl.replace(/\/$/, "");
-  return `${base}/r/${encodeURIComponent(code)}`;
+  const url = `${base}/r/${encodeURIComponent(code)}`;
+  const slug = productSlug?.trim();
+  if (!slug) return url;
+  return `${url}?product=${encodeURIComponent(slug)}`;
 }
