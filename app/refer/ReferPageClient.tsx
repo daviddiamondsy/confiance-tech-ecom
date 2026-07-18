@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Copy, Gift, Share2, Users } from "lucide-react";
@@ -13,6 +14,7 @@ import {
 } from "@/lib/referral/config";
 import ReferralTerms from "@/components/ReferralTerms";
 import { buildReferralShareMessage } from "@/lib/referral/share-message";
+import { resolveStorefrontReferralShareUrl } from "@/lib/referral/product-share-url";
 import { readLastOrderPhone } from "@/lib/customer-phone-storage";
 
 interface ReferralHistoryItem {
@@ -49,6 +51,7 @@ function formatReferralDate(iso: string): string {
 }
 
 function ReferDashboardContent() {
+  const searchParams = useSearchParams();
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,6 +61,13 @@ function ReferDashboardContent() {
   const [copiedShare, setCopiedShare] = useState(false);
   const [productOptions, setProductOptions] = useState<Array<{ slug: string; name: string }>>([]);
   const [productSlug, setProductSlug] = useState("");
+
+  useEffect(() => {
+    const fromUrl = searchParams.get("product")?.trim();
+    if (fromUrl) {
+      setProductSlug(fromUrl);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const savedPhone = readLastOrderPhone();
@@ -94,12 +104,9 @@ function ReferDashboardContent() {
 
   const selectedProduct = productOptions.find((product) => product.slug === productSlug) ?? null;
 
-  const resolvedShareUrl = (() => {
-    if (!dashboard?.shareUrl) return "";
-    if (!productSlug) return dashboard.shareUrl;
-    const separator = dashboard.shareUrl.includes("?") ? "&" : "?";
-    return `${dashboard.shareUrl}${separator}product=${encodeURIComponent(productSlug)}`;
-  })();
+  const resolvedShareUrl = dashboard?.shareUrl
+    ? resolveStorefrontReferralShareUrl(dashboard.shareUrl, productSlug)
+    : "";
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,10 +236,20 @@ function ReferDashboardContent() {
               )}
             </div>
             <div className="p-8">
+              {productSlug && (
+                <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <p className="text-sm font-semibold text-emerald-900">
+                    Sharing link for {selectedProduct?.name ?? "this device"}
+                  </p>
+                  <p className="text-xs text-emerald-800 mt-0.5">
+                    Friends land on this device page with your referral discount applied.
+                  </p>
+                </div>
+              )}
               {productOptions.length > 0 && (
                 <div className="mb-5">
                   <label htmlFor="refer-product" className="input-label">
-                    Share a specific product (optional)
+                    Product for this link
                   </label>
                   <select
                     id="refer-product"

@@ -35,6 +35,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Persist ?ref= before React hydrates so product links keep the referral code. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var m=location.search.match(/[?&]ref=([^&]+)/);if(m){sessionStorage.setItem("holdam_referral_code",decodeURIComponent(m[1]).trim().toUpperCase());}}catch(e){}})();`,
+          }}
+        />
         {/* Meta Pixel Code */}
         <Script id="meta-pixel" strategy="afterInteractive">
           {`

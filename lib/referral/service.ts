@@ -451,18 +451,16 @@ export async function adminDeleteReferral(id: number): Promise<void> {
   }
 }
 
+import { storefrontReferralShareUrl } from "@/lib/referral/product-share-url";
+
 /**
- * Share landing URL. Optional productSlug deep-links the friend to that device
- * via `/r/{code}?product={slug}` → `/products/{slug}?ref={code}`.
+ * Share URL for friends: `/products?ref={code}` or `/products/{slug}?ref={code}`.
+ * Legacy `/r/{code}` redirects still work for old links.
  */
 export function referralShareUrl(
   code: string,
   siteBaseUrl: string,
   productSlug?: string | null
 ): string {
-  const base = siteBaseUrl.replace(/\/$/, "");
-  const url = `${base}/r/${encodeURIComponent(code)}`;
-  const slug = productSlug?.trim();
-  if (!slug) return url;
-  return `${url}?product=${encodeURIComponent(slug)}`;
+  return storefrontReferralShareUrl(siteBaseUrl, code, productSlug);
 }
