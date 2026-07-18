@@ -24,6 +24,7 @@ import {
   storefrontCatalogIncludesLocalDelivery,
 } from "@/lib/storefront-display-price";
 import { storefrontPriceAfterReferralDiscount } from "@/lib/referral/display-price";
+import { appendReferralQuery } from "@/lib/referral/product-share-url";
 import { formatNgn } from "@/lib/referral/config";
 
 interface ProductDetailViewProps {
@@ -46,7 +47,7 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
   );
 
   const badge = storefrontProductBadge(product);
-  const { discountNgn } = useReferralDiscount(variant.price);
+  const { discountNgn, code: referralCode } = useReferralDiscount(variant.price);
   const displayPrice = storefrontDisplayPrice(variant.price, product);
   const discountedDisplayPrice = storefrontPriceAfterReferralDiscount(
     displayPrice,
@@ -58,8 +59,12 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
     if (variant.storage) params.set("storage", variant.storage);
     if (variant.color) params.set("color", variant.color);
     const qs = params.toString();
-    return `/order/${product.slug}${qs ? `?${qs}` : ""}`;
-  }, [product.slug, variant.storage, variant.color]);
+    let href = `/order/${product.slug}${qs ? `?${qs}` : ""}`;
+    if (referralCode) {
+      href = appendReferralQuery(href, referralCode);
+    }
+    return href;
+  }, [product.slug, variant.storage, variant.color, referralCode]);
 
   return (
     <>
