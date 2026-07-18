@@ -48,6 +48,19 @@ export function storefrontDoorDeliveryLineFee(
   return STOREFRONT_DOOR_DELIVERY_FEE_NGN;
 }
 
+/**
+ * Extra door fee to send to create-holdam-deal.
+ * Zero when local delivery is already inside the catalog price.
+ */
+export function storefrontCheckoutDoorFeeNgn(
+  product: StorefrontDeliveryPricing,
+  doorDelivery: boolean
+): number {
+  if (!doorDelivery) return 0;
+  if (bundledLocalDeliveryNgn(product) > 0) return 0;
+  return STOREFRONT_DOOR_DELIVERY_FEE_NGN;
+}
+
 export function storefrontOrderTotal(
   catalogPrice: number,
   product: StorefrontDeliveryPricing,

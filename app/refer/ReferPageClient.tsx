@@ -56,6 +56,8 @@ function ReferDashboardContent() {
   const [dashboard, setDashboard] = useState<ReferralDashboardData | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
+  const [productOptions, setProductOptions] = useState<Array<{ slug: string; name: string }>>([]);
+  const [productSlug, setProductSlug] = useState("");
 
   useEffect(() => {
     const savedPhone = readLastOrderPhone();
@@ -63,6 +65,41 @@ function ReferDashboardContent() {
       setPhone(savedPhone);
     }
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadProducts() {
+      try {
+        const response = await fetch("/api/bot/catalog");
+        if (!response.ok) return;
+        const data = await response.json();
+        if (cancelled) return;
+        const list = (data.products ?? [])
+          .map((product: { slug?: string; name?: string }) => ({
+            slug: String(product.slug ?? "").trim(),
+            name: String(product.name ?? "").trim(),
+          }))
+          .filter((product: { slug: string; name: string }) => product.slug && product.name)
+          .sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name));
+        setProductOptions(list);
+      } catch {
+        // Product picker is optional.
+      }
+    }
+    void loadProducts();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const selectedProduct = productOptions.find((product) => product.slug === productSlug) ?? null;
+
+  const resolvedShareUrl = (() => {
+    if (!dashboard?.shareUrl) return "";
+    if (!productSlug) return dashboard.shareUrl;
+    const separator = dashboard.shareUrl.includes("?") ? "&" : "?";
+    return `${dashboard.shareUrl}${separator}product=${encodeURIComponent(productSlug)}`;
+  })();
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,9 +128,9 @@ function ReferDashboardContent() {
   };
 
   const copyReferralLink = async () => {
-    if (!dashboard?.shareUrl) return;
+    if (!resolvedShareUrl) return;
     try {
-      await navigator.clipboard.writeText(dashboard.shareUrl);
+      await navigator.clipboard.writeText(resolvedShareUrl);
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
     } catch {
@@ -102,11 +139,12 @@ function ReferDashboardContent() {
   };
 
   const copyShareMessage = async () => {
-    if (!dashboard?.shareUrl) return;
+    if (!resolvedShareUrl) return;
     try {
       const message = buildReferralShareMessage({
-        shareUrl: dashboard.shareUrl,
-        referrerName: dashboard.referrerName,
+        shareUrl: resolvedShareUrl,
+        referrerName: dashboard?.referrerName,
+        productName: selectedProduct?.name,
       });
       await navigator.clipboard.writeText(message);
       setCopiedShare(true);
@@ -191,8 +229,31 @@ function ReferDashboardContent() {
               )}
             </div>
             <div className="p-8">
+              {productOptions.length > 0 && (
+                <div className="mb-5">
+                  <label htmlFor="refer-product" className="input-label">
+                    Share a specific product (optional)
+                  </label>
+                  <select
+                    id="refer-product"
+                    className="input-field"
+                    value={productSlug}
+                    onChange={(e) => setProductSlug(e.target.value)}
+                  >
+                    <option value="">All products (catalog)</option>
+                    {productOptions.map((product) => (
+                      <option key={product.slug} value={product.slug}>
+                        {product.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Your friend opens that device page with your discount ready.
+                  </p>
+                </div>
+              )}
               <div className="flex items-center gap-2 mb-5 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="text-sm font-mono text-slate-700 flex-1 break-all">{dashboard.shareUrl}</span>
+                <span className="text-sm font-mono text-slate-700 flex-1 break-all">{resolvedShareUrl}</span>
                 <button
                   type="button"
                   onClick={copyReferralLink}

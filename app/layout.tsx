@@ -17,6 +17,14 @@ const META_PIXEL_ID = "YOUR_PIXEL_ID_HERE";
 export const metadata: Metadata = {
   title: `${COMPANY_NAME} - Brand New and Grade A Computing Devices`,
   description: STOREFRONT_META_DESCRIPTION,
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    shortcut: '/favicon.svg',
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 export default function RootLayout({

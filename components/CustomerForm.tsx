@@ -6,9 +6,11 @@ import { Send, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import StateSelect from "@/components/StateSelect";
 import { resolveStorefrontCheckoutError } from "@/lib/checkout-errors";
 import {
+  REFERRAL_CODE_EVENT,
   readPersistedReferralCode,
   clearPersistedReferralCode,
-} from "@/components/ReferralDiscountBanner";
+  captureReferralCodeFromUrl,
+} from "@/components/useReferralDiscount";
 import { formatNgn } from "@/lib/referral/config";
 import { persistLastOrderPhone, readLastOrderPhone } from "@/lib/customer-phone-storage";
 
@@ -86,11 +88,22 @@ export default function CustomerForm({
   const router = useRouter();
 
   useEffect(() => {
-    setReferralCode(readPersistedReferralCode());
+    const syncReferral = () => {
+      setReferralCode(captureReferralCodeFromUrl() ?? readPersistedReferralCode());
+    };
+    syncReferral();
+    window.addEventListener(REFERRAL_CODE_EVENT, syncReferral);
+    const t0 = window.setTimeout(syncReferral, 0);
+    const t1 = window.setTimeout(syncReferral, 150);
     const savedPhone = readLastOrderPhone();
     if (savedPhone) {
       setFormData((prev) => ({ ...prev, phone: savedPhone }));
     }
+    return () => {
+      window.removeEventListener(REFERRAL_CODE_EVENT, syncReferral);
+      window.clearTimeout(t0);
+      window.clearTimeout(t1);
+    };
   }, []);
 
   const resetCheckoutUiState = useCallback(() => {
@@ -137,6 +150,10 @@ export default function CustomerForm({
     setErrorMessage("");
 
     try {
+      // Re-read at submit so ?ref= captured after mount still applies.
+      const resolvedReferralCode =
+        captureReferralCodeFromUrl() ?? readPersistedReferralCode() ?? referralCode;
+
       console.log("[Order] Submitting order request", {
         productId,
         productName,
@@ -144,6 +161,7 @@ export default function CustomerForm({
         productStorage,
         productColor,
         customerData: formData,
+        referralCode: resolvedReferralCode,
       });
 
       const response = await fetch("/api/create-holdam-deal", {
@@ -159,7 +177,7 @@ export default function CustomerForm({
           deliveryDays,
           doorDeliveryFeeNgn: doorDeliveryFee ?? 0,
           customerData: formData,
-          referralCode,
+          referralCode: resolvedReferralCode,
           applyStoreCredit: applyStoreCredit && storeCreditBalanceNgn > 0,
         }),
       });
@@ -195,7 +213,7 @@ export default function CustomerForm({
         persistLastOrderPhone(formData.phone);
       }
 
-      if (referralCode) {
+      if (resolvedReferralCode) {
         clearPersistedReferralCode();
       }
       

@@ -5,12 +5,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Truck, ShieldCheck, Package } from "lucide-react";
 import CustomerForm from "@/components/CustomerForm";
+import ReferralDiscountBanner from "@/components/ReferralDiscountBanner";
+import { useReferralDiscount } from "@/components/useReferralDiscount";
 import { getSelectedVariant } from "@/lib/product-utils";
 import {
   storefrontDisplayPrice,
+  storefrontDoorDeliveryLineFee,
+  storefrontCheckoutDoorFeeNgn,
   storefrontOrderTotal,
   STOREFRONT_DOOR_DELIVERY_FEE_NGN,
 } from "@/lib/storefront-display-price";
+import { storefrontOrderTotalAfterReferral } from "@/lib/referral/display-price";
+import { formatNgn } from "@/lib/referral/config";
 import { DELIVERY_ESTIMATE_COPY } from "@/lib/delivery-deadline";
 import type { Product } from "@/lib/product-utils";
 
@@ -52,8 +58,15 @@ export default function CheckoutView({
     [product, storageIndex, colorIndex]
   );
 
+  const { discountNgn } = useReferralDiscount(variant.price);
   const productDisplayPrice = storefrontDisplayPrice(variant.price, product);
-  const totalPrice = storefrontOrderTotal(variant.price, product, doorDelivery);
+  const deliveryFee = storefrontDoorDeliveryLineFee(product, doorDelivery);
+  const undiscountedTotal = storefrontOrderTotal(variant.price, product, doorDelivery);
+  const totalPrice = storefrontOrderTotalAfterReferral(
+    productDisplayPrice,
+    deliveryFee,
+    discountNgn
+  );
 
   const changeVariantHref = useMemo(() => {
     const base = `/products/${product.slug}`;
@@ -83,8 +96,9 @@ export default function CheckoutView({
         </p>
       </div>
 
+      <ReferralDiscountBanner catalogPriceNgn={variant.price} />
+
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        {/* Order summary */}
         <div className="order-2 lg:order-1 lg:col-span-2">
           <div className="bg-white rounded-3xl border border-slate-100 shadow-card overflow-hidden sticky top-24">
             <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-4">
@@ -95,7 +109,6 @@ export default function CheckoutView({
             </div>
 
             <div className="p-6">
-              {/* Product thumbnail + name */}
               <div className="flex gap-4 mb-6 pb-6 border-b border-slate-100">
                 <div className="relative h-20 w-20 flex-shrink-0 bg-slate-50 rounded-xl overflow-hidden border border-slate-100">
                   <Image
@@ -123,7 +136,6 @@ export default function CheckoutView({
                 </div>
               </div>
 
-              {/* Price breakdown */}
               <div className="space-y-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600">Product price</span>
@@ -131,6 +143,13 @@ export default function CheckoutView({
                     &#8358;{productDisplayPrice.toLocaleString()}
                   </span>
                 </div>
+
+                {discountNgn > 0 && (
+                  <div className="flex items-center justify-between text-emerald-700">
+                    <span>Referral discount</span>
+                    <span className="font-medium">-{formatNgn(discountNgn)}</span>
+                  </div>
+                )}
 
                 <label className="flex items-center justify-between gap-3 cursor-pointer group rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:border-primary-200 hover:bg-primary-50/40 transition-colors">
                   <div className="flex items-center gap-2.5">
@@ -155,13 +174,19 @@ export default function CheckoutView({
 
                 <div className="border-t border-slate-200 pt-3 flex items-center justify-between">
                   <span className="font-semibold text-slate-900 text-base">Total</span>
-                  <span className="text-2xl font-bold text-slate-900">
-                    &#8358;{totalPrice.toLocaleString()}
-                  </span>
+                  <div className="text-right">
+                    <span className="text-2xl font-bold text-slate-900">
+                      &#8358;{totalPrice.toLocaleString()}
+                    </span>
+                    {discountNgn > 0 && (
+                      <p className="text-xs text-slate-400 line-through">
+                        &#8358;{undiscountedTotal.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Escrow trust note */}
               <div className="mt-5 flex items-start gap-2.5 rounded-xl bg-emerald-50 border border-emerald-100 p-3.5">
                 <ShieldCheck className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-emerald-700 leading-relaxed">
@@ -172,18 +197,18 @@ export default function CheckoutView({
           </div>
         </div>
 
-        {/* Delivery form */}
         <div className="order-1 lg:order-2 lg:col-span-3">
           <CustomerForm
             title="Delivery Details"
             subtitle="Enter your delivery information to complete your order."
-            productPrice={totalPrice}
+            productPrice={variant.price}
             productName={variant.displayName}
             productId={product.id}
             productSlug={product.slug}
             productStorage={variant.storage}
             productColor={variant.color}
             deliveryDays={deliveryDays}
+            doorDeliveryFee={storefrontCheckoutDoorFeeNgn(product, doorDelivery)}
           />
         </div>
       </div>
