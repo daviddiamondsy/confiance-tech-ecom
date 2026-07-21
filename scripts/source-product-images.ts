@@ -36,6 +36,11 @@ const SOURCES: Array<{ file: string; url: string }> = [
     url: "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-17-pro-max-finish-select-deepblue-202509?wid=940",
   },
   {
+    file: "iphone-17e.png",
+    // Official Apple Store black finish select (transparent PNG)
+    url: "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-17e-finish-select-black-202603?wid=940&hei=1112&fmt=png-alpha",
+  },
+  {
     file: "airpods-4.png",
     url: "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-4-select-202409?wid=940",
   },
