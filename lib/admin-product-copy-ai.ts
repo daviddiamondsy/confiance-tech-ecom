@@ -1,8 +1,4 @@
-import {
-  BATTERY_HEALTH_FEATURE,
-  BATTERY_HEALTH_SPEC,
-  IPHONE_QUALITY_TAIL,
-} from "@/lib/device-quality-copy";
+import { BATTERY_HEALTH_FEATURE, BATTERY_HEALTH_SPEC } from "@/lib/device-quality-copy";
 import { ensureIphoneProductCopy } from "@/lib/iphone-product-copy";
 import {
   CLEAN_PRODUCT_FILTER_SLUG,
@@ -108,17 +104,17 @@ function buildUserPrompt(input: GenerateProductCopyInput): string {
 
   const lines = [
     `Product name: ${input.productName.trim()}`,
-    `Condition tag: ${condition}`,
+    `Condition tag (for features/specs only, never for description): ${condition}`,
     input.storage?.trim() ? `Default storage label: ${input.storage.trim()}` : null,
     isIphone
-      ? "Device family: iPhone (include Unlocked, and 90+ battery health claims for Like New units)"
+      ? "Device family: iPhone (include Unlocked in features/Connectivity; for Like New also include 90+ battery health in features/specs, not in description)"
       : null,
   ].filter(Boolean);
 
   return lines.join("\n");
 }
 
-const SYSTEM_PROMPT = `You write product copy for Confiance Tech, a Nigerian e-commerce store selling brand new and Grade A phones and laptops.
+const SYSTEM_PROMPT = `You write product copy for Confiance Tech, a Nigerian e-commerce store selling phones and laptops.
 
 Return JSON only with this shape:
 {
@@ -128,15 +124,14 @@ Return JSON only with this shape:
 }
 
 Rules:
-- description: 2-3 sentences. Mention key specs and trust (inspected, tested, certified).
+- description: 2-3 sentences focused on the product itself - display, chip, camera, battery, design, and everyday use. You may end with a short quality line such as inspected and tested. Do NOT mention condition anywhere in the description.
+- Never put condition language in the description. Forbidden in description: brand new, factory-fresh, factory fresh, Like New, Grade A, Clean, New product, accessories included, or similar condition claims. Condition belongs only in features when the rules below require it.
 - features: 6-8 short bullet strings (no leading bullets in the strings).
 - specifications: 5-8 rows as label/value pairs (Display, Processor, Camera, Battery, Connectivity). Use title case labels.
 - Do NOT include a Storage specification row (storage is managed separately).
 - For all iPhones: include "Unlocked" in features and mention Unlocked in the Connectivity specification value.
-- For Like New / Grade A iPhones: include "90+ Battery Health" in features and a Battery health spec row with value "90%+".
-- For New products: emphasize brand new, factory-fresh, inspected and certified.
-- For Like New products: emphasize Grade A, accessories included, inspected and certified.
-- Be accurate to the real product model. Do not invent wrong chip names or screen sizes.
+- For Like New / Grade A iPhones (condition tag clean): include "90+ Battery Health" in features and a Battery health spec row with value "90%+". Do not put battery-health or Grade A wording in the description.
+- Be accurate to the real product model. Do not invent wrong chip names or screen sizes (e.g. iPhone 17e uses A19, not A17).
 - Never use em dashes. Use periods or hyphens instead.
 - Plain text only. No markdown.`;
 
@@ -218,6 +213,22 @@ async function requestGroqProductCopy(
   });
 }
 
+/** Condition phrases that must not appear in product descriptions. */
+const DESCRIPTION_CONDITION_PATTERN =
+  /\b(brand\s*new|factory[-\s]?fresh|like\s*new|grade\s*a|accessories\s+included|clean\s+condition|new\s+product)\b/gi;
+
+/** Strip condition claims from description text while keeping product and trust copy. */
+export function stripConditionFromDescription(description: string): string {
+  return description
+    .replace(DESCRIPTION_CONDITION_PATTERN, "")
+    .replace(/\b(this|the|a|an)\s+(device|product|unit|phone|iphone)\s+is\s*[.!?]/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([.,;:])/g, "$1")
+    .replace(/([.!?])\s*[.!?]+/g, "$1")
+    .replace(/^\s*[.!?]\s*/g, "")
+    .trim();
+}
+
 /** Post-process AI output to match storefront conventions when tags imply condition. */
 export function finalizeGeneratedProductCopy(
   copy: GeneratedProductCopy,
@@ -225,7 +236,7 @@ export function finalizeGeneratedProductCopy(
 ): GeneratedProductCopy {
   const condition = conditionLabel(input.filterSlugs);
   const isIphone = /iphone/i.test(input.productName);
-  let description = copy.description;
+  let description = stripConditionFromDescription(copy.description);
   let features = [...copy.features];
   let specifications = { ...copy.specifications };
 
@@ -236,14 +247,6 @@ export function finalizeGeneratedProductCopy(
     if (!specifications["Battery health"]) {
       specifications["Battery health"] = BATTERY_HEALTH_SPEC;
     }
-    if (!description.includes("90+")) {
-      description = `${description} ${IPHONE_QUALITY_TAIL}`.trim();
-    }
-  } else if (condition === "new" && !/brand new|factory/i.test(description)) {
-    description = `${description} Brand new product. Inspected, tested, and certified.`.trim();
-  } else if (condition === "clean" && !/grade a|accessories/i.test(description)) {
-    description =
-      `${description} Grade A condition with accessories included. Inspected, tested, and certified.`.trim();
   }
 
   if (isIphone) {

@@ -4,9 +4,17 @@ import {
   finalizeGeneratedProductCopy,
   parseAiJsonContent,
   parseGeneratedProductCopy,
+  stripConditionFromDescription,
 } from "@/lib/admin-product-copy-ai";
 
 describe("admin-product-copy-ai", () => {
+  it("stripConditionFromDescription removes condition claims", () => {
+    expect(
+      stripConditionFromDescription(
+        "Get the brand new Apple iPhone 17e. This factory-fresh device is Grade A. Inspected and tested."
+      )
+    ).toBe("Get the Apple iPhone 17e. Inspected and tested.");
+  });
   it("extractGroqChatContent returns the assistant message content", () => {
     expect(
       extractGroqChatContent({
@@ -91,6 +99,49 @@ describe("admin-product-copy-ai", () => {
 
     expect(copy.features).toContain("Unlocked");
     expect(copy.specifications.Connectivity).toBe("Unlocked, 5G, Wi-Fi 6, Bluetooth 5.3");
-    expect(copy.description).toContain("90+ battery health");
+    expect(copy.specifications["Battery health"]).toBe("90%+");
+  });
+
+  it("finalizeGeneratedProductCopy keeps condition out of the description", () => {
+    const description =
+      "Get the Apple iPhone 17e with a stunning 6.1-inch Super Retina XDR display, powered by the advanced A19 chip.";
+
+    const likeNew = finalizeGeneratedProductCopy(
+      {
+        description,
+        features: ["A19 Chip", "48MP Fusion Camera"],
+        specifications: {
+          Display: "6.1-inch Super Retina XDR",
+          Connectivity: "5G, Wi-Fi 6, Bluetooth 5.3",
+        },
+      },
+      {
+        productName: "Apple iPhone 17e (Like New)",
+        filterSlugs: ["clean"],
+      }
+    );
+
+    expect(likeNew.description).toBe(description);
+    expect(likeNew.description).not.toMatch(/grade a|brand new|factory.?fresh|like new|accessories included/i);
+    expect(likeNew.features).toContain("90+ Battery Health");
+    expect(likeNew.specifications["Battery health"]).toBe("90%+");
+
+    const brandNew = finalizeGeneratedProductCopy(
+      {
+        description,
+        features: ["A19 Chip", "48MP Fusion Camera"],
+        specifications: {
+          Display: "6.1-inch Super Retina XDR",
+          Connectivity: "5G, Wi-Fi 6, Bluetooth 5.3",
+        },
+      },
+      {
+        productName: "Apple iPhone 17e (New)",
+        filterSlugs: ["new"],
+      }
+    );
+
+    expect(brandNew.description).toBe(description);
+    expect(brandNew.description).not.toMatch(/grade a|brand new|factory.?fresh|like new/i);
   });
 });
