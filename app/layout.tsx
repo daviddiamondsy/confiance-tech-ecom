@@ -9,7 +9,7 @@ import { Suspense } from "react";
 import ReferralCapture from "@/components/ReferralCapture";
 import "./globals.css";
 import { STOREFRONT_META_DESCRIPTION } from "@/lib/device-quality-copy";
-import { COMPANY_NAME } from "@/lib/storefront-brand";
+import { COMPANY_LOGO_SRC, COMPANY_NAME } from "@/lib/storefront-brand";
 
 // Replace with your actual Meta Pixel ID
 const META_PIXEL_ID = "YOUR_PIXEL_ID_HERE";
@@ -18,12 +18,8 @@ export const metadata: Metadata = {
   title: `${COMPANY_NAME} - Brand New and Grade A Computing Devices`,
   description: STOREFRONT_META_DESCRIPTION,
   icons: {
-    icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
-    ],
-    shortcut: '/favicon.svg',
-    apple: '/apple-touch-icon.png',
+    icon: COMPANY_LOGO_SRC,
+    apple: COMPANY_LOGO_SRC,
   },
 };
 
