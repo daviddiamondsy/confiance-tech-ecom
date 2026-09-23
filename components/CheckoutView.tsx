@@ -190,7 +190,7 @@ export default function CheckoutView({
               <div className="mt-5 flex items-start gap-2.5 rounded-xl bg-emerald-50 border border-emerald-100 p-3.5">
                 <ShieldCheck className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-emerald-700 leading-relaxed">
-                  Your payment is protected by escrow. Funds are held safely and only released once you confirm delivery.
+                  Your payment is protected with trade protection. Funds are held safely and only released once you confirm delivery.
                 </p>
               </div>
             </div>

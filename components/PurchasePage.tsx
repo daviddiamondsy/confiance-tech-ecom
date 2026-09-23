@@ -230,7 +230,7 @@ export default function PurchasePage({
             <div className="flex items-center gap-2.5 p-3.5 bg-emerald-50 rounded-xl border border-emerald-100">
               <Shield className="h-4 w-4 text-emerald-600 flex-shrink-0" />
               <span className="text-xs font-medium text-emerald-800 leading-snug">
-                Payment secured by escrow
+                Payment secured with trade protection
               </span>
             </div>
             <div className="flex items-center gap-2.5 p-3.5 bg-blue-50 rounded-xl border border-blue-100">
