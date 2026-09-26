@@ -58,7 +58,11 @@ function previewFromForm(form: ProductFormState, pricing: PricingConfig): {
   };
 }
 
-export default function AdminDashboard() {
+export default function AdminDashboard({
+  holdamDemoMode = false,
+}: {
+  holdamDemoMode?: boolean;
+}) {
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
@@ -593,7 +597,12 @@ export default function AdminDashboard() {
   }
 
   return (
-    <AdminShell activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout}>
+    <AdminShell
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      onLogout={handleLogout}
+      holdamDemoMode={holdamDemoMode}
+    >
       {activeTab === "overview" && (
         <div className="space-y-8">
           <p className="text-sm text-slate-500">

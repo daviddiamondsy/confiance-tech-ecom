@@ -20,6 +20,7 @@ interface AdminShellProps {
   activeTab: AdminTab;
   onTabChange: (tab: AdminTab) => void;
   onLogout: () => void;
+  holdamDemoMode?: boolean;
   children: React.ReactNode;
 }
 
@@ -36,6 +37,7 @@ export default function AdminShell({
   activeTab,
   onTabChange,
   onLogout,
+  holdamDemoMode = false,
   children,
 }: AdminShellProps) {
   const activeLabel = NAV_ITEMS.find((item) => item.id === activeTab)?.label ?? "";
@@ -54,6 +56,11 @@ export default function AdminShell({
           <p className="font-display text-base font-bold text-slate-900 mt-2 leading-tight">
             Store Admin
           </p>
+          {holdamDemoMode ? (
+            <p className="mt-3 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-2 text-[11px] font-medium leading-snug text-amber-900">
+              Demo mode: Holdam checkout is bypassed. Order payment status is updated manually, not from Holdam webhooks as the source of truth.
+            </p>
+          ) : null}
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-0.5" aria-label="Admin sections">
@@ -161,6 +168,11 @@ export default function AdminShell({
 
       {/* ── Main content ── */}
       <div className="flex-1 min-w-0">
+        {holdamDemoMode ? (
+          <div className="lg:hidden mx-4 mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+            Demo mode: Holdam checkout is bypassed. Payment status is not driven by Holdam webhooks.
+          </div>
+        ) : null}
         {/* Desktop page header */}
         <div className="hidden lg:flex items-center justify-between px-8 pt-8 pb-2">
           <div>

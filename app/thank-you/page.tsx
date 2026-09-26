@@ -4,11 +4,12 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 type ThankYouPageProps = {
-  searchParams?: { orderRef?: string };
+  searchParams?: { orderRef?: string; demo?: string };
 };
 
 export default function ThankYouPage({ searchParams }: ThankYouPageProps) {
   const orderRef = searchParams?.orderRef?.trim() || null;
+  const isDemoMode = searchParams?.demo === "1";
 
   return (
     <div className="min-h-screen bg-surface-muted">
@@ -38,6 +39,18 @@ export default function ThankYouPage({ searchParams }: ThankYouPageProps) {
               Your order has been received and sent to our team. We will contact you shortly to
               confirm your delivery details.
             </p>
+
+            {isDemoMode ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-8 text-left max-w-md mx-auto">
+                <p className="text-xs font-semibold uppercase tracking-wider text-amber-800 mb-1">
+                  Demo mode
+                </p>
+                <p className="text-sm text-amber-900 leading-relaxed">
+                  This storefront recorded your order without Holdam hosted checkout. Payment status
+                  will be confirmed by our team, not updated automatically from Holdam.
+                </p>
+              </div>
+            ) : null}
 
             {orderRef && (
               <div className="bg-primary-50 border border-primary-100 rounded-2xl p-5 mb-8 text-left max-w-md mx-auto">

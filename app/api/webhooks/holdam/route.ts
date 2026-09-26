@@ -10,17 +10,18 @@ import { ensureOrdersReady } from "@/lib/orders/db-ready";
 
 export async function POST(req: NextRequest) {
   try {
-    if (isHoldamBypassEnabled()) {
-      console.log("[Webhook][holdam] Skipped; BYPASS_HOLDAM is enabled");
-      return NextResponse.json({ received: true, skipped: "holdam_bypass" });
-    }
-
     const apiKey = process.env.HOLDAM_API_KEY;
     const webhookSecret = process.env.HOLDAM_WEBHOOK_SECRET;
 
     if (!apiKey || !webhookSecret) {
       console.error("[Webhook][holdam] Missing HOLDAM_API_KEY or HOLDAM_WEBHOOK_SECRET");
       return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
+    }
+
+    if (isHoldamBypassEnabled()) {
+      console.log(
+        "[Webhook][holdam] Demo mode (BYPASS_HOLDAM): verifying and processing webhook for local testing"
+      );
     }
 
     const rawBody = await req.text();
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
       status,
       amount,
       metadata,
+      holdamBypass: isHoldamBypassEnabled(),
     });
 
     switch (event.event) {

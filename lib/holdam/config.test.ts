@@ -15,25 +15,33 @@ describe("isHoldamBypassEnabled", () => {
     process.env.NODE_ENV = originalNodeEnv;
   });
 
-  it("returns true when BYPASS_HOLDAM is true", () => {
+  it("returns true in development when BYPASS_HOLDAM is true", () => {
+    process.env.NODE_ENV = "development";
     process.env.BYPASS_HOLDAM = "true";
     expect(isHoldamBypassEnabled()).toBe(true);
   });
 
   it("returns false when BYPASS_HOLDAM is false", () => {
+    process.env.NODE_ENV = "development";
     process.env.BYPASS_HOLDAM = "false";
     expect(isHoldamBypassEnabled()).toBe(false);
   });
 
-  it("defaults to true in development when unset", () => {
+  it("defaults to false in development when unset", () => {
     delete process.env.BYPASS_HOLDAM;
     process.env.NODE_ENV = "development";
-    expect(isHoldamBypassEnabled()).toBe(true);
+    expect(isHoldamBypassEnabled()).toBe(false);
   });
 
   it("defaults to false in production when unset", () => {
     delete process.env.BYPASS_HOLDAM;
     process.env.NODE_ENV = "production";
+    expect(isHoldamBypassEnabled()).toBe(false);
+  });
+
+  it("ignores BYPASS_HOLDAM=true in production (fail closed)", () => {
+    process.env.NODE_ENV = "production";
+    process.env.BYPASS_HOLDAM = "true";
     expect(isHoldamBypassEnabled()).toBe(false);
   });
 });

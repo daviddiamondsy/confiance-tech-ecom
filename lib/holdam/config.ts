@@ -1,3 +1,18 @@
+/**
+ * When true, checkout skips Holdam deal creation and hosted payment.
+ * Records the order locally and sends the ops notification email only.
+ *
+ * Fail closed in production: bypass is always off regardless of env.
+ * In non-production, requires an explicit BYPASS_HOLDAM=true opt-in.
+ */
+export function isHoldamBypassEnabled(): boolean {
+  if (process.env.NODE_ENV === "production") {
+    return false;
+  }
+
+  return parseEnvFlag(process.env.BYPASS_HOLDAM) === true;
+}
+
 function parseEnvFlag(raw: string | undefined): boolean | undefined {
   if (raw === undefined || raw.trim() === "") {
     return undefined;
@@ -12,19 +27,4 @@ function parseEnvFlag(raw: string | undefined): boolean | undefined {
   }
 
   return undefined;
-}
-
-/**
- * When true, checkout skips Holdam deal creation and hosted payment.
- * Records the order locally and sends the ops notification email only.
- *
- * Defaults to true in development when BYPASS_HOLDAM is unset.
- */
-export function isHoldamBypassEnabled(): boolean {
-  const explicit = parseEnvFlag(process.env.BYPASS_HOLDAM);
-  if (explicit !== undefined) {
-    return explicit;
-  }
-
-  return process.env.NODE_ENV === "development";
 }

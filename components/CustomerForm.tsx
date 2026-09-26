@@ -200,11 +200,12 @@ export default function CustomerForm({
       const responseData = await response.json();
       console.log("[Order] Full API response:", JSON.stringify(responseData));
 
-      const { deal, checkoutUrl, orderReference } = responseData;
+      const { deal, checkoutUrl, orderReference, holdamBypass } = responseData;
       console.log("[Order] Holdam deal created successfully", {
         dealId: deal?.id,
         checkoutUrl,
         orderReference,
+        holdamBypass,
       });
 
       trackLead();
@@ -223,10 +224,15 @@ export default function CustomerForm({
       }
 
       setIsSubmitting(false);
-      const thankYouPath = orderReference
-        ? `/thank-you?orderRef=${encodeURIComponent(orderReference)}`
-        : "/thank-you";
-      router.push(thankYouPath);
+      const thankYouParams = new URLSearchParams();
+      if (orderReference) {
+        thankYouParams.set("orderRef", String(orderReference));
+      }
+      if (holdamBypass) {
+        thankYouParams.set("demo", "1");
+      }
+      const thankYouQuery = thankYouParams.toString();
+      router.push(thankYouQuery ? `/thank-you?${thankYouQuery}` : "/thank-you");
     } catch (error) {
       console.error("[Order] Order submission error:", error);
       setErrorMessage("We could not submit your order. Please check your connection and try again.");
